@@ -68,7 +68,7 @@ dev.off()
 
 #+RESULTS:
 
-[[file:img/corr_bp.png]]
+[[img/corr_bp.png]]
 
 What is the nrj distance between the prediction and the MFE
 #+begin_src R :session *test* :results file :file img/nrj_comp.png
@@ -80,7 +80,7 @@ dev.off()
 
 #+RESULTS:
 
-[[file:img/nrj_comp.png]]
+[[img/nrj_comp.png]]
 
 What is the number of BPs (positive values means more BP in the predictions)
 #+begin_src R :session *test* :file img/bp_nb.png :results file
@@ -92,4 +92,4 @@ dev.off()
 
 #+RESULTS:
 
-[[file:img/bp_nb.png]]
+[[img/bp_nb.png]]
