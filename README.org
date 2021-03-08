@@ -1,0 +1,92 @@
+* FFT-based RNA folding
+
+* Test on large random sequences
+
+Generate a random sequence
+#+begin_src python :results output
+from random import choices
+nuc = ['A', 'C', 'G', 'U']
+
+with open("./test_data/random_large.seq", "w") as out:
+    out.write("{}".format("".join(choices(nuc, k=10000))))
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash :results output
+time python pred_struct.py -sf test_data/random_large.seq > test_data/random_large.log
+#+end_src
+
+#+RESULTS:
+
+* Test on Eterna sequences (must be changed to a reasonable dataset)
+#+begin_src bash :results output
+cd test_data
+python bench.py > bench.csv
+#+end_src
+
+#+RESULTS:
+
+What are the sequences badly predicted
+#+begin_src R :session *test* :results output
+dat = read.csv("./test_data/bench.csv")
+head(dat[order(dat$hamm_dist), "mfe_struct"], n = 20)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] ".....((((.(((((....)).))).(((.(((....)))))).((((((....)).)))).(((((....))).))))))......................."                                                                                                                                                                                                                                                                                   
+ [2] ".....((((.((((((.(((.(((((.((((.((((.((.((.((.((.((.((.....))))))))))))))))))))))))))))))))))))))....."                                                                                                                                                                                                                                                                                     
+ [3] ".....((((.(((((....)).))).(((.(((....)))))).((((((....)).)))).(((((....))).))))))......................."                                                                                                                                                                                                                                                                                   
+ [4] ".(((((((((((...)))))....))))))."                                                                                                                                                                                                                                                                                                                                                            
+ [5] "(((((((.(.(.(.(((((((....)))))))))))))))))"                                                                                                                                                                                                                                                                                                                                                 
+ [6] ".....((((((((....))))((((.((((....))))(((((....))))).((((....))))))))((((....))))))))(((.....)))........."                                                                                                                                                                                                                                                                                  
+ [7] ".....((((.((((((.(((.(((((.((((.((((.((.((.((.((.((.((.....))))))))))))))))))))))))))))))))))))))....."                                                                                                                                                                                                                                                                                     
+ [8] "(((((((((((........)))).((...............))....(((((.......))))))))))))....(((((((..((((........))))(((.............)))....(((((.......))))))))))))....(((((((..((((........))))((((((.......))))))....(((((.......))))))))))))....(((((((..((((........))))((((((.......))))))....(((((.......))))))))))))....(((((((..((((........))))((((((.......))))))....(((((.......))))))))))))...."
+ [9] "(((((((((((........))))(((...............)))...(((((.......))))))))))))....(((((((..((((........))))(((.............)))....(((((.......))))))))))))....(((((((..(((((......)))))((((((.......))))))....(((((.......))))))))))))....(((((((..((((........))))((((((.......))))))....(((((.......))))))))))))....(((((((..((((........))))((((((.......))))))....(((((.......))))))))))))...."
+[10] "...((.....))..((.........))..."                                                                                                                                                                                                                                                                                                                                                             
+[11] ".....(((((.(.(.((.(.(((((((((....)))))))))))))))))))....."                                                                                                                                                                                                                                                                                                                                  
+[12] ".....((((.((((((.(((.(((((.((((.((((.((.((.((.((.((.((.....))))))))))))))))))))))))))))))))))))))....."                                                                                                                                                                                                                                                                                     
+[13] ".......(.(.(.(.(.((.((.(....).)).)).).).).).)"                                                                                                                                                                                                                                                                                                                                              
+[14] "...........(.(.(.((.((.(....).)).)).).).)...."                                                                                                                                                                                                                                                                                                                                              
+[15] "....(((((.(((((....))))).(((....))).)).))).((((((((((....))))...........)))))).................."                                                                                                                                                                                                                                                                                           
+[16] ".....((((((((...((((((((((..((((..........))))..((((..........))))..((((..........))))..))))))))))...((((((((((..((((..........))))..((((..........))))..((((..........))))..))))))))))...((((((((((..((((..........))))..((((..........))))..((((..........))))..))))))))))...))))))))....."                                                                                               
+[17] ".....((((((..(((((........)))))..(((.(((.(((((.....))))).((((....)))).))))))..))))))...................."                                                                                                                                                                                                                                                                                   
+[18] ".....((((.((((((.(((.(((((.((((.((((.((.((.((.((.((.((.....))))))))))))))))))))))))))))))))))))))....."                                                                                                                                                                                                                                                                                     
+[19] ".....(((((((...((((...((((...((((.........(((((............)))))...))))....((((..........))))...))))...(((........)))...))))..((......))...)))))))....."                                                                                                                                                                                                                                    
+[20] ".....((...((....))...((....))...((....))...((....))...((....))...((....))...))...................."
+#+end_example
+
+What is the hamming distance between the prediction and the MFE
+
+#+begin_src R :session *test* :results file :file img/corr_bp.png
+png("img/corr_bp.png")
+boxplot(dat$hamm_dist~dat$len_seq, main="Heuristic %correct base pair/length", ylab="%correct bp", xlab="Length")
+grid()
+dev.off()
+#+end_src
+
+#+RESULTS:
+[[file:img/corr_bp.png]]
+
+What is the nrj distance between the prediction and the MFE
+#+begin_src R :session *test* :results file :file img/nrj_comp.png
+png("img/nrj_comp.png")
+boxplot(dat$vrna_mfe - dat$nrj_pred~dat$len_seq, main="MFE-nrj(struct. pred.)/length", ylab="MFE-nrj(pred)", xlab="Length")
+grid()
+dev.off()
+#+end_src
+
+#+RESULTS:
+[[file:img/nrj_comp.png]]
+
+What is the number of BPs (positive values means more BP in the predictions)
+#+begin_src R :session *test* :file img/bp_nb.png :results file
+png("img/bp_nb.png")
+boxplot((dat$nb_bp_pred - dat$nb_bp_mfe)~dat$len_seq, main="Nb BP(FFT) - Nb BP(VRNA)", ylab="Nb BPs", xlab="length")
+grid()
+dev.off()
+#+end_src
+
+#+RESULTS:
+[[file:img/bp_nb.png]]
