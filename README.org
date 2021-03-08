@@ -67,6 +67,7 @@ dev.off()
 #+end_src
 
 #+RESULTS:
+
 [[file:img/corr_bp.png]]
 
 What is the nrj distance between the prediction and the MFE
@@ -78,6 +79,7 @@ dev.off()
 #+end_src
 
 #+RESULTS:
+
 [[file:img/nrj_comp.png]]
 
 What is the number of BPs (positive values means more BP in the predictions)
@@ -89,4 +91,5 @@ dev.off()
 #+end_src
 
 #+RESULTS:
+
 [[file:img/bp_nb.png]]
