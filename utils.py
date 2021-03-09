@@ -5,6 +5,7 @@ from numpy import array, zeros, flip
 from numpy import sum as npsum
 from scipy.signal import convolve
 import matplotlib.pyplot as plt
+from RNA import fold, fold_compound, bp_distance
 
 
 ENCODING = {"A": [1, 0, 0, 0], "G": [0, 1, 0, 0], "C": [0, 0, 1, 0], "U": [0, 0, 0, 1]}
@@ -94,3 +95,18 @@ def plot_bp_matrix(sequence, pair_list, str_struct):
     mat_f.plot([len_seq+1, 0], [len_seq+1, 0], linestyle="--", color="grey", linewidth=0.3)
     mat_f.grid(True, color="grey", linestyle="--", linewidth=0.2)
     plt.show()
+
+
+def benchmark_vrna(sequence, pred_struct):
+    "compute MFE structure and energy"
+    vrna_struct, vrna_mfe = fold(sequence)
+    bp_dist = bp_distance(pred_struct, vrna_struct)
+    nb_bps_fft_st = pred_struct.count("(")
+    nb_bps_vrn_st = vrna_struct.count("(")
+    tot_nb = nb_bps_fft_st + nb_bps_vrn_st
+    bp_dist = bp_distance(pred_struct, vrna_struct)
+    if tot_nb > 0:
+       norm_bp_dist = (tot_nb - bp_dist) / float(tot_nb)
+    else:
+        norm_bp_dist = 1.0
+    return vrna_struct, vrna_mfe, norm_bp_dist

@@ -1,0 +1,180 @@
+* Compare algorithms
+
+#+begin_src python :results output
+from RNA import hamming_distance, bp_distance
+import matplotlib.pyplot as plt
+from matplotlib import rcParams, artist
+from matplotlib.patches import Patch
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.weight"] = "bold"
+plt.rcParams["font.size"] = 8
+plt.rcParams["figure.figsize"] = 7, 5
+
+def read_csv(infile):
+    results = {}
+    first = True
+    for l in open(infile):
+        if not first:
+            seq, len_seq, struct, nrj, nb_bp = l.strip().split(",")
+            results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp))
+        else:
+            first = False
+    return results
+
+fft_pred = read_csv("./test_data/bench_fft.csv")
+nussinov = read_csv("./test_data/bench_nussinov.csv")
+naive = read_csv("./test_data/bench_naive.csv")
+vrna_mfe = read_csv("./test_data/bench_mfe.csv")
+
+fft_to_plot, nus_to_plot, nai_to_plot = {}, {}, {}
+for seq in fft_pred:
+    len_seq, fft_st, fft_nrj, fft_nbp = fft_pred[seq]
+    len_seq, nus_st, nus_nrj, nus_nbp = nussinov[seq]
+    len_seq, nai_st, nai_nrj, nai_nbp = naive[seq]
+    len_seq, mfe_st, mfe_nrj, mfe_nbp = vrna_mfe[seq]
+
+    tot_fft_nb = mfe_nbp + fft_nbp
+    tot_nai_nb = mfe_nbp + nai_nbp
+    tot_nus_nb = mfe_nbp + nus_nbp
+
+    bp_fft_dist = bp_distance(mfe_st, fft_st)
+    bp_nai_dist = bp_distance(mfe_st, nai_st)
+    bp_nus_dist = bp_distance(mfe_st, nus_st)
+
+    nbpd_fft = (tot_fft_nb - bp_fft_dist) / tot_fft_nb if tot_fft_nb > 0 else 1.0
+    nbpd_nai = (tot_nai_nb - bp_nai_dist) / tot_nai_nb if tot_nai_nb > 0 else 1.0
+    nbpd_nus = (tot_nus_nb - bp_nus_dist) / tot_nus_nb if tot_nus_nb > 0 else 1.0
+
+    # if len_seq in fft_to_plot:
+    #     fft_to_plot[len_seq] += [fft_nbp-nus_nbp]
+    #     nus_to_plot[len_seq] += [mfe_nbp-nus_nbp]
+    #     nai_to_plot[len_seq] += [nai_nbp-nus_nbp]
+    # else:
+    #     fft_to_plot[len_seq] = [fft_nbp-nus_nbp]
+    #     nus_to_plot[len_seq] = [mfe_nbp-nus_nbp]
+    #     nai_to_plot[len_seq] = [nai_nbp-nus_nbp]
+
+    if len_seq in fft_to_plot:
+        fft_to_plot[len_seq] += [fft_nrj - mfe_nrj]
+        nus_to_plot[len_seq] += [nus_nrj - mfe_nrj]
+        nai_to_plot[len_seq] += [nai_nrj - mfe_nrj]
+    else:
+        fft_to_plot[len_seq] = [fft_nrj - mfe_nrj]
+        nus_to_plot[len_seq] = [nus_nrj - mfe_nrj]
+        nai_to_plot[len_seq] = [nai_nrj - mfe_nrj]
+
+    # if len_seq in fft_to_plot:
+    #     fft_to_plot[len_seq] += [nbpd_fft]
+    #     nus_to_plot[len_seq] += [nbpd_nus]
+    #     nai_to_plot[len_seq] += [nbpd_nai]
+    # else:
+    #     fft_to_plot[len_seq] = [nbpd_fft]
+    #     nus_to_plot[len_seq] = [nbpd_nus]
+    #     nai_to_plot[len_seq] = [nbpd_nai]
+            
+
+list_len = list(fft_to_plot.keys())
+list_len.sort()
+nb_el = len(list_len)
+
+
+bpros = dict(color="darkgrey", linewidth=0.2)
+fig = plt.figure(1)
+fft_f = fig.add_subplot(111)
+fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+# fft_f.set_ylim(0, 1.1)
+box_nus = fft_f.boxplot([nus_to_plot[len_] for len_ in list_len], positions=[i+0.0 for i in range(nb_el)], boxprops=bpros, widths=0.12, showfliers=False, patch_artist=True)
+box_fft = fft_f.boxplot([fft_to_plot[len_] for len_ in list_len], positions=[i+0.2 for i in range(nb_el)], boxprops=bpros, widths=0.12, showfliers=False, patch_artist=True)
+box_nai = fft_f.boxplot([nai_to_plot[len_] for len_ in list_len], positions=[i+0.4 for i in range(nb_el)], boxprops=bpros, widths=0.12, showfliers=False, patch_artist=True)
+
+
+for box_f, box_a, box_n in zip(box_fft["boxes"], box_nai["boxes"], box_nus["boxes"]):
+    box_f.set_facecolor(color="orange")
+    box_a.set_facecolor(color="skyblue")
+    # box_n.set_facecolor(color="tomato")
+    box_n.set_facecolor(color="silver")
+    
+for box_f, box_a, box_n in zip(box_fft["medians"], box_nai["medians"], box_nus["medians"]):
+    box_f.set(linewidth=1, color="black")
+    box_a.set(linewidth=1, color="black")
+    box_n.set(linewidth=1, color="black")
+    
+for box_f, box_a, box_n in zip(box_fft["whiskers"], box_nai["whiskers"], box_nus["whiskers"]):
+    box_f.set(linewidth=0.3, color="black")
+    box_a.set(linewidth=0.3, color="black")
+    box_n.set(linewidth=0.3, color="black")
+    
+for box_f, box_a, box_n in zip(box_fft["caps"], box_nai["caps"], box_nus["caps"]):
+    box_f.set(linewidth=0.5, color="black")
+    box_a.set(linewidth=0.5, color="black")
+    box_n.set(linewidth=0.5, color="black")
+
+fft_l = Patch(color="orange", label="FFT")
+nai_l = Patch(color="skyblue", label="Naive")
+nus_l = Patch(color="silver", label="Nussinov")
+# nus_l = Patch(color="tomato", label="MFE")
+
+fft_f.xaxis.set_ticklabels(list_len, rotation=45)
+fft_f.xaxis.set_ticks([i+0.2 for i in range(nb_el)])
+fft_f.legend(handles=(nus_l, fft_l, nai_l), loc="upper center", ncol=3, fontsize=5)
+fft_f.set_xlabel("Length")
+fft_f.set_ylabel("Energy(S) - MFE (kcal/mol)")
+# fft_f.set_ylabel("BP distance")
+# fft_f.set_ylabel("Nb BPs - Max BPs")
+plt.savefig("img/nrj_dist.png", dpi=300)
+plt.show()
+#+end_src
+
+#+RESULTS:
+
+* Test on large random sequences
+Generate a random sequence
+#+begin_src python :results output
+from random import choices
+nuc = ['A', 'C', 'G', 'U']
+
+with open("./test_data/random_large.seq", "w") as out:
+    out.write("{}".format("".join(choices(nuc, k=10000))))
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash :results output
+time python pred_struct.py -sf test_data/random_large.seq > test_data/random_large.log
+#+end_src
+
+#+RESULTS:
+* Alignment 
+
+#+begin_src python :results output
+from utils import prep_sequence, auto_cor, seq_conv
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import convolve
+
+seq_x = "CACUC"
+seq_y = "GAAAC"
+lx, ly = len(seq_x), len(seq_y)
+
+eseqx, cseqx = prep_sequence(seq_x)
+eseqy, cseqy = prep_sequence(seq_y)
+
+cor_x = seq_conv(eseqx, cseqx)
+cor_y = seq_conv(eseqy, cseqy)
+
+plt.plot(cor_x)
+plt.plot(cor_y)
+
+conv_2 = convolve(cor_x, cor_y[::-1])
+# plt.plot(conv_2)
+mi, ci = max([(i, c) for i, c in enumerate(conv_2)], key=lambda el: el[1])
+print(mi, ci)
+
+print(np.array(cor_x[:6])*np.array(cor_y[:6]))
+
+plt.show()
+#+end_src
+
+#+RESULTS:
+: 8 4
+: [0 0 0 0 4 0]
