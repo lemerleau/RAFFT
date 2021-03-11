@@ -50,7 +50,7 @@ def window_slide(seq, cseq, pos, pos_list):
     # pairs with a sliding window
     tot = npsum(seq_[:, :len_2]*cseq_[:, :len_2], axis=0)
 
-    max_nb, max_i, max_j = 0, 0, 0
+    max_nb, tmp_max, max_score, max_i, max_j = 0, 0, 0, 0, 0
     for i in range(len_2):
         # print(i, tot.shape)
         if pos < len_seq:
@@ -63,13 +63,19 @@ def window_slide(seq, cseq, pos, pos_list):
            pos_list[jp+1] - pos_list[jp] == 1:
             tot[i] = (tot[i-1]+tot[i])*tot[i]
 
+        if tot[i] == 0:
+            tmp_max = 0
+        else:
+            tmp_max += 1
+
         # search for the highest number of consecutive BPs
         # and test if at least MIN_HP unpaired positions in between
-        if tot[i] >= max_nb and pos_list[jp] - pos_list[ip] > MIN_HP:
-            max_nb = tot[i]
+        if tot[i] >= max_score and pos_list[jp] - pos_list[ip] > MIN_HP:
+            max_score = tot[i]
+            max_nb = tmp_max
             max_i, max_j = ip, jp
 
-    return max_nb, max_i, max_j
+    return max_nb, max_i, max_j, max_score
 
 
 def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
@@ -81,12 +87,12 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     cor_l.sort(key=lambda el: el[1])
 
     # find largest bp region
-    max_bp, max_i, max_j = 0, 0, 0
+    max_bp, max_i, max_j, max_s = 0, 0, 0, 0
     for pos, c in cor_l[::-1][:nb_mode]:
-        mx_i, mip, mjp = window_slide(seq, cseq, pos, pos_list)
+        mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
 
-        if mx_i > max_bp:
-            max_bp, max_i, max_j = mx_i, mip, mjp
+        if ms > max_s:
+            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
 
     # If no BP found, end the recursion
     if max_bp < MIN_BP:
@@ -135,6 +141,9 @@ def parse_arguments():
     parser.add_argument('--pk', action="store_true", help="pseudoknot")
     parser.add_argument('--plot', action="store_true", help="plot bp matrix")
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
+    parser.add_argument('--GC', type=float, help="GC weight", default=1.0)
+    parser.add_argument('--AU', type=float, help="GC weight", default=1.0)
+    parser.add_argument('--GU', type=float, help="GU weight", default=1.0)
     return parser.parse_args()
 
 
@@ -166,7 +175,7 @@ def main():
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))
     # encode the sequence into 2 mirror strands
-    eseq, cseq = prep_sequence(sequence)
+    eseq, cseq = prep_sequence(sequence, args.GC, args.AU, args.GU)
     pair_list = recursive_struct(eseq, cseq, [], pos_list, args.pad, args.n_mode)
     str_struct = dot_bracket(pair_list, len_seq)
     nrj_pred = SEQ_COMP.eval_structure(str_struct)

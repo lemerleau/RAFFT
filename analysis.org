@@ -127,54 +127,141 @@ plt.show()
 
 #+RESULTS:
 
-* Test on large random sequences
-Generate a random sequence
-#+begin_src python :results output
-from random import choices
-nuc = ['A', 'C', 'G', 'U']
 
-with open("./test_data/random_large.seq", "w") as out:
-    out.write("{}".format("".join(choices(nuc, k=10000))))
-#+end_src
-
-#+RESULTS:
-
-#+begin_src bash :results output
-time python pred_struct.py -sf test_data/random_large.seq > test_data/random_large.log
-#+end_src
-
-#+RESULTS:
-* Alignment 
+* Compare algorithms
 
 #+begin_src python :results output
-from utils import prep_sequence, auto_cor, seq_conv
-import numpy as np
+from RNA import hamming_distance, bp_distance
 import matplotlib.pyplot as plt
-from scipy.signal import convolve
+from matplotlib import rcParams, artist
+from matplotlib.patches import Patch
+from numpy import mean, std, median
+from utils import MCC_bench
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.weight"] = "bold"
+plt.rcParams["font.size"] = 7
+plt.rcParams["figure.figsize"] = 8, 6
 
-seq_x = "CACUC"
-seq_y = "GAAAC"
-lx, ly = len(seq_x), len(seq_y)
+def read_true_struct(infile="./test_data/benchmark_data.csv"):
+    results = {}
+    for l in open(infile):
+        seq, struct = l.strip().split(",")
+        results[seq] = struct
+    return results
 
-eseqx, cseqx = prep_sequence(seq_x)
-eseqy, cseqy = prep_sequence(seq_y)
 
-cor_x = seq_conv(eseqx, cseqx)
-cor_y = seq_conv(eseqy, cseqy)
+def read_csv(infile):
+    results = {}
+    first = True
+    for l in open(infile):
+        if not first:
+            seq, len_seq, struct, nrj, nb_bp = l.strip().split(",")
+            results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp))
+        else:
+            first = False
+    return results
 
-plt.plot(cor_x)
-plt.plot(cor_y)
+fft_pred = read_csv("./test_data/results_fft_400.csv")
+vrna_mfe = read_csv("./test_data/results_mfe_400.csv")
+targets = read_true_struct()
 
-conv_2 = convolve(cor_x, cor_y[::-1])
-# plt.plot(conv_2)
-mi, ci = max([(i, c) for i, c in enumerate(conv_2)], key=lambda el: el[1])
-print(mi, ci)
+fft_to_plot, mfe_to_plot  = {}, {}
+for seq in fft_pred:
+    len_seq, fft_st, fft_nrj, fft_nbp = fft_pred[seq]
+    len_seq, mfe_st, mfe_nrj, mfe_nbp = vrna_mfe[seq]
+    true_struct = targets[seq]
+    nbpd_fft = MCC_bench(fft_st, true_struct)
+    nbpd_mfe = MCC_bench(mfe_st, true_struct)
 
-print(np.array(cor_x[:6])*np.array(cor_y[:6]))
+    # if len_seq in fft_to_plot:
+    #     fft_to_plot[len_seq] += [fft_nbp]
+    #     mfe_to_plot[len_seq] += [mfe_nbp]
+    # else:
+    #     fft_to_plot[len_seq] = [fft_nbp]
+    #     mfe_to_plot[len_seq] = [mfe_nbp]
 
+    # if len_seq in fft_to_plot:
+    #     fft_to_plot[len_seq] += [fft_nrj - mfe_nrj]
+    # else:
+    #     fft_to_plot[len_seq] = [fft_nrj - mfe_nrj]
+
+    if len_seq in fft_to_plot:
+        fft_to_plot[len_seq] += [nbpd_fft]
+        mfe_to_plot[len_seq] += [nbpd_mfe]
+    else:
+        fft_to_plot[len_seq] = [nbpd_fft]
+        mfe_to_plot[len_seq] = [nbpd_mfe]
+
+
+list_len = list(fft_to_plot.keys())
+list_len.sort()
+nb_el = len(list_len)
+
+bpros = dict(color="orange", linewidth=0.2)
+fig = plt.figure(1)
+fft_f = fig.add_subplot(211)
+mfe_f = fig.add_subplot(212)
+fft_f.set_xlim([0, nb_el]); fft_f.set_ylim([0, 100.0])
+mfe_f.set_xlim([0, nb_el]); mfe_f.set_ylim([0, 100.0])
+fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+mfe_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+# box_fft = fft_f.boxplot([fft_to_plot[len_] for len_ in list_len], positions=[i+0.0 for i in range(nb_el)], boxprops=bpros, widths=0.2, showfliers=False, patch_artist=True)
+fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len],
+               yerr=[std(fft_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".--",
+               linewidth=0.2, ms=3, label="FFT", c="darkgrey", ecolor="skyblue")
+mfe_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len],
+               yerr=[std(mfe_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".--",
+               linewidth=0.2, ms=3, label="FFT", c="darkgrey", ecolor="tomato")
+fft_mean = mean([mean(fft_to_plot[len_]) for len_ in list_len])
+mfe_mean = mean([mean(mfe_to_plot[len_]) for len_ in list_len])
+mfe_f.plot([0, nb_el], [mfe_mean, mfe_mean], linestyle="--", c="tomato")
+mfe_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
+fft_f.plot([0, nb_el], [mfe_mean, mfe_mean], linestyle="--", c="tomato")
+fft_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
+
+fft_l = Patch(color="skyblue", label="FFT")
+mfe_l = Patch(color="tomato", label="VRNA")
+
+fft_f.xaxis.set_ticklabels([""]*len(list_len[::50]), rotation=45)
+fft_f.xaxis.set_ticks([i for i in range(nb_el)][::50])
+mfe_f.xaxis.set_ticklabels(list_len[::50], rotation=45)
+mfe_f.xaxis.set_ticks([i for i in range(nb_el)][::50])
+# fft_f.legend(handles=(fft_l), loc="upper center", ncol=1, fontsize=5)
+fft_f.set_title(f"FFT ({fft_mean:.1f})")
+mfe_f.set_title(f"VRNA ({mfe_mean:.1f})")
+# fft_f.set_yscale("log")
+# mfe_f.set_yscale("log")
+# plt.savefig("img/nrj_dist.png", dpi=300)
 plt.show()
 #+end_src
 
 #+RESULTS:
-: 8 4
-: [0 0 0 0 4 0]
+
+#+begin_src python :results output
+import matplotlib.pyplot as plt
+plt.errorbar(range(10), range(10), yerr=range(10))
+plt.show()
+#+end_src
+
+#+RESULTS:
+#+end_src
+* example
+
+#+begin_src python  :results output
+from utils import prep_sequence, auto_cor
+import matplotlib.pyplot as plt
+
+sequence = "UCGUGGUCGAAUGCAUUUGCCAGCGAAUCAGCUUUC"
+
+eseq, cseq = prep_sequence(sequence, 1.0, 1.0, 1.0)
+cor_l = [c for _, c in auto_cor(eseq, cseq, 1)]
+
+eseq_, cseq_ = prep_sequence(sequence, 1.0, 2.0, 1.0)
+cor_l_ = [c for _, c in auto_cor(eseq_, cseq_, 1)]
+
+plt.plot(cor_l)
+plt.plot(cor_l_)
+plt.show()
+#+end_src
+
+#+RESULTS:
