@@ -86,14 +86,32 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     cor_l = auto_cor(seq, cseq, pad)
     cor_l.sort(key=lambda el: el[1])
 
-    # find largest bp region
-    max_bp, max_i, max_j, max_s = 0, 0, 0, 0
+    # find largest bp region with lowest free energy
+    max_bp, max_i, max_j, max_s, min_loop_energy = 0, 0, 0, 0, 1
     for pos, c in cor_l[::-1][:nb_mode]:
         mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
 
-        if ms > max_s:
-            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+        #Update made by Nono to compute the energy of each region of bp
+        if mx_i > 0 :
+            tmp_bp = []
+            for i in range(mx_i):
+                tmp_bp += [(pos_list[mip-i], pos_list[mjp+i])]
+            tmp_dot_bracket = dot_bracket(tmp_bp,len(SEQ))
 
+            if (mjp+mx_i)> len(pos_list)-1 :
+                tmp_seq = SEQ[pos_list[mip-mx_i+1]:]
+                tmp_strc = tmp_dot_bracket[pos_list[mip-mx_i+1]:]
+            else :
+                tmp_seq = SEQ[pos_list[mip-mx_i+1]:pos_list[mjp+mx_i]]
+                tmp_strc = tmp_dot_bracket[pos_list[mip-mx_i+1]:pos_list[mjp+mx_i]]
+
+            tmp_fc = fold_compound(tmp_seq)
+            tmp_mfe = tmp_fc.eval_structure(tmp_strc)
+
+            #if ms > max_s: previous if statement.
+            if tmp_mfe < min_loop_energy:
+                max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+        ##########################End modif################################
     # If no BP found, end the recursion
     if max_bp < MIN_BP:
         return pair_list
@@ -165,12 +183,13 @@ def main():
 
     sequence = sequence.replace("N", "")
     len_seq = len(sequence)
-    global PK_MODE, MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP
+    global PK_MODE, MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP,SEQ #Update by Nono: Added SEQ as global var
     PK_MODE = args.pk
     MIN_BP = args.min_bp
     MIN_HP = args.min_hp
     LEN_SEQ = len_seq
     SEQ_COMP = fold_compound(sequence)
+    SEQ = sequence #Set SEQ to be the sequence to fold.
 
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))
