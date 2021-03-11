@@ -7,7 +7,7 @@ from os import popen
 from sys import argv
 
 
-cmd_line = "python ../pred_struct.py -s {} -n 200 -mb 5 -mh 3 --GC 3 --AU 3 --GU 1"
+cmd_line = "python ../pred_struct.py -s {} --GC 0.9 --AU 0.8 --GU 0.7 -mb 1 -mh 4 -n 100"
 # cmd_line = "python ../pred_struct.py -s {} -n 50 -mb 2 -mh 4 --GC 1 --AU 1 --GU 1"
 
 

@@ -95,7 +95,7 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
             max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
 
     # If no BP found, end the recursion
-    if max_bp < MIN_BP:
+    if max_s < MIN_BP:
         return pair_list
 
     # save the largest number of consecutive BPs

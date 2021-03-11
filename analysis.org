@@ -161,8 +161,8 @@ def read_csv(infile):
             first = False
     return results
 
-fft_pred = read_csv("./test_data/results_fft_400.csv")
-vrna_mfe = read_csv("./test_data/results_mfe_400.csv")
+fft_pred = read_csv("./test_data/results_fft.csv")
+vrna_mfe = read_csv("./test_data/results_mfe.csv")
 targets = read_true_struct()
 
 fft_to_plot, mfe_to_plot  = {}, {}
@@ -222,10 +222,10 @@ fft_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
 fft_l = Patch(color="skyblue", label="FFT")
 mfe_l = Patch(color="tomato", label="VRNA")
 
-fft_f.xaxis.set_ticklabels([""]*len(list_len[::50]), rotation=45)
-fft_f.xaxis.set_ticks([i for i in range(nb_el)][::50])
-mfe_f.xaxis.set_ticklabels(list_len[::50], rotation=45)
-mfe_f.xaxis.set_ticks([i for i in range(nb_el)][::50])
+fft_f.xaxis.set_ticklabels([""]*len(list_len[::10]), rotation=45)
+fft_f.xaxis.set_ticks([i for i in range(nb_el)][::10])
+mfe_f.xaxis.set_ticklabels(list_len[::10], rotation=45)
+mfe_f.xaxis.set_ticks([i for i in range(nb_el)][::10])
 # fft_f.legend(handles=(fft_l), loc="upper center", ncol=1, fontsize=5)
 fft_f.set_title(f"FFT ({fft_mean:.1f})")
 mfe_f.set_title(f"VRNA ({mfe_mean:.1f})")
