@@ -78,7 +78,7 @@ def window_slide(seq, cseq, pos, pos_list):
     return max_nb, max_i, max_j, max_score
 
 
-def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
+def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3,mle=0):
     """Recursive scheme
     """
     len_seq = seq.shape[1]
@@ -87,7 +87,7 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     cor_l.sort(key=lambda el: el[1])
 
     # find largest bp region with lowest free energy
-    max_bp, max_i, max_j, max_s, min_loop_energy = 0, 0, 0, 0, 1
+    max_bp, max_i, max_j, max_s, min_loop_energy = 0, 0, 0, 0, mle
     for pos, c in cor_l[::-1][:nb_mode]:
         mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
 
@@ -111,6 +111,7 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
             #if ms > max_s: previous if statement.
             if tmp_mfe < min_loop_energy:
                 max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+                min_loop_energy = tmp_mfe
         ##########################End modif################################
     # If no BP found, end the recursion
     if max_bp < MIN_BP:
@@ -125,21 +126,21 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
         oseq = concatenate((seq[:, :max_i-max_bp+1], seq[:, max_i+1:max_j], seq[:, max_j+max_bp:]), axis=1)
         ocseq = concatenate((cseq[:, :len_seq - (max_j+max_bp)], cseq[:, len_seq-max_j:len_seq-max_i-1], cseq[:, len_seq-(max_i-max_bp+1):]), axis=1)
         pos_list_2 = pos_list[:max_i-max_bp+1] + pos_list[max_i+1:max_j] + pos_list[max_j+max_bp:]
-        recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode)
+        recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode,mle)
     else:
         if max_i - (max_bp - 1) > 0 or max_j + max_bp < len_seq:
             # Outer loop case
             oseq = concatenate((seq[:, :max_i-max_bp+1], seq[:, max_j+max_bp:]), axis=1)
             ocseq = concatenate((cseq[:, :len_seq - (max_j+max_bp)], cseq[:, len_seq-(max_i-max_bp+1):]), axis=1)
             pos_list_2 = pos_list[:max_i-max_bp+1] + pos_list[max_j+max_bp:]
-            recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode)
+            recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode,mle)
 
         if max_j - max_i > 1:
             # Inner loop case
             oseq = seq[:, max_i+1:max_j]
             ocseq = cseq[:, len_seq-max_j:len_seq-max_i-1]
             pos_list_2 = pos_list[max_i+1:max_j]
-            recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode)
+            recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode,mle)
 
     return pair_list
 
@@ -162,6 +163,7 @@ def parse_arguments():
     parser.add_argument('--GC', type=float, help="GC weight", default=1.0)
     parser.add_argument('--AU', type=float, help="GC weight", default=1.0)
     parser.add_argument('--GU', type=float, help="GU weight", default=1.0)
+    parser.add_argument('--min_loop_energy', '-mle', help="minimum loop free energy to be detectable", type=int, default=0)
     return parser.parse_args()
 
 
@@ -195,7 +197,7 @@ def main():
     pos_list = list(range(len_seq))
     # encode the sequence into 2 mirror strands
     eseq, cseq = prep_sequence(sequence, args.GC, args.AU, args.GU)
-    pair_list = recursive_struct(eseq, cseq, [], pos_list, args.pad, args.n_mode)
+    pair_list = recursive_struct(eseq, cseq, [], pos_list, args.pad, args.n_mode,args.min_loop_energy)
     str_struct = dot_bracket(pair_list, len_seq)
     nrj_pred = SEQ_COMP.eval_structure(str_struct)
 
