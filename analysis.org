@@ -127,7 +127,6 @@ plt.show()
 
 #+RESULTS:
 
-
 * Compare algorithms
 
 #+begin_src python :results output
@@ -201,37 +200,47 @@ bpros = dict(color="orange", linewidth=0.2)
 fig = plt.figure(1)
 fft_f = fig.add_subplot(211)
 mfe_f = fig.add_subplot(212)
+
 fft_f.set_xlim([0, nb_el]); fft_f.set_ylim([0, 100.0])
 mfe_f.set_xlim([0, nb_el]); mfe_f.set_ylim([0, 100.0])
+
 fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 mfe_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+
 # box_fft = fft_f.boxplot([fft_to_plot[len_] for len_ in list_len], positions=[i+0.0 for i in range(nb_el)], boxprops=bpros, widths=0.2, showfliers=False, patch_artist=True)
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len],
                yerr=[std(fft_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".--",
                linewidth=0.2, ms=3, label="FFT", c="darkgrey", ecolor="skyblue")
+
 mfe_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len],
                yerr=[std(mfe_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".--",
                linewidth=0.2, ms=3, label="FFT", c="darkgrey", ecolor="tomato")
+
 fft_mean = mean([mean(fft_to_plot[len_]) for len_ in list_len])
 mfe_mean = mean([mean(mfe_to_plot[len_]) for len_ in list_len])
-mfe_f.plot([0, nb_el], [mfe_mean, mfe_mean], linestyle="--", c="tomato")
-mfe_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
+
 fft_f.plot([0, nb_el], [mfe_mean, mfe_mean], linestyle="--", c="tomato")
 fft_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
+
+mfe_f.plot([0, nb_el], [mfe_mean, mfe_mean], linestyle="--", c="tomato")
+mfe_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
 
 fft_l = Patch(color="skyblue", label="FFT")
 mfe_l = Patch(color="tomato", label="VRNA")
 
 fft_f.xaxis.set_ticklabels([""]*len(list_len[::10]), rotation=45)
 fft_f.xaxis.set_ticks([i for i in range(nb_el)][::10])
+
 mfe_f.xaxis.set_ticklabels(list_len[::10], rotation=45)
 mfe_f.xaxis.set_ticks([i for i in range(nb_el)][::10])
-# fft_f.legend(handles=(fft_l), loc="upper center", ncol=1, fontsize=5)
+# fft_f.xaxis.set_ticklabels(list_len[::10], rotation=45)
+# fft_f.xaxis.set_ticks([i for i in range(nb_el)][::10])
+
 fft_f.set_title(f"FFT ({fft_mean:.1f})")
 mfe_f.set_title(f"VRNA ({mfe_mean:.1f})")
 # fft_f.set_yscale("log")
 # mfe_f.set_yscale("log")
-# plt.savefig("img/nrj_dist.png", dpi=300)
+plt.savefig("img/comp_vrna.png", dpi=300)
 plt.show()
 #+end_src
 
@@ -250,18 +259,81 @@ plt.show()
 #+begin_src python  :results output
 from utils import prep_sequence, auto_cor
 import matplotlib.pyplot as plt
+from scipy.signal import convolve
+from numpy.fft import fft, ifft
 
-sequence = "UCGUGGUCGAAUGCAUUUGCCAGCGAAUCAGCUUUC"
+sequence = open("./raw_data/archiveII/23s_H.pylori.seq").readlines()[2].replace("1", "").strip()
 
 eseq, cseq = prep_sequence(sequence, 1.0, 1.0, 1.0)
-cor_l = [c for _, c in auto_cor(eseq, cseq, 1)]
+cor_l = [c for _, c in auto_cor(eseq, eseq, 1)]
 
-eseq_, cseq_ = prep_sequence(sequence, 1.0, 2.0, 1.0)
-cor_l_ = [c for _, c in auto_cor(eseq_, cseq_, 1)]
+# eseq_, cseq_ = prep_sequence(sequence, 1.0, 2.0, 1.0)
+# cor_l_ = [c for _, c in auto_cor(eseq_, cseq_, 1)]
 
-plt.plot(cor_l)
-plt.plot(cor_l_)
+figure, axis = plt.subplots(3, 1) 
+axis[0].plot(cor_l)
+ft = fft(cor_l)
+axis[1].plot(ft[1:])
+ft[ft<2] = 0.0
+axis[2].plot(ifft(ft))
 plt.show()
 #+end_src
 
 #+RESULTS:
+
+* alingment
+
+#+begin_src python :results output
+from utils import dot_bracket
+from align_utils import align_seq, backtracking, prep_sequence
+from numpy import flip, concatenate
+
+seq = "GC.AU"
+len_seq = len(seq)
+eseq, cseq, ccseq = prep_sequence(seq, 1.0, 1.0, 1.0)
+pos_list = list(range(eseq.shape[1]))
+
+dp_el = align_seq(eseq, cseq, 0)
+pair_list, first, last = backtracking(dp_el, len(seq), pos_list)
+struct = dot_bracket(pair_list, len(seq))
+print(first, last)
+print(seq)
+print(struct)
+
+eseq_right = eseq[:, last+1:]
+cseq_right = cseq[:, :first-1]
+eseq_left = eseq[:, :first-1]
+cseq_left = cseq[:, last+1:]
+
+oeseq = concatenate((eseq_left, eseq_right), axis = 1)
+ocseq = concatenate((cseq_left, cseq_right), axis = 1)
+pos_list_ = pos_list[:first] + pos_list[last+1:]
+print(pos_list_)
+print(seq[:first] + seq[last+1:])
+dp_el = align_seq(oeseq, ocseq, 0)
+pair_list_, first, last = backtracking(dp_el, oeseq.shape[1], pos_list_)
+# struct = dot_bracket(pair_list_, len(seq))
+# print(pair_list_)
+
+print(seq)
+print(struct)
+# eseq_, cseq_ = concatenate(eseq[:, 0:first-1], eseq[:, last+1:]), concatenate(cseq[:, 0:first-1], cseq[:, last+1:])
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+1 0
+0 1
+0 1
+GC.AU
+.....
+[2, 3, 4]
+.AU
+6 2
+5 3
+1 4
+0 5
+GC.AU
+.....
+#+end_example

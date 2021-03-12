@@ -40,8 +40,8 @@ def paired_positions(structure):
 def prep_sequence(sequence, gc_wei, au_wei, gu_wei):
     """Encode the sequence into two mirror strands
     """
-    ENCODING = {"A": [1, 0, 0, 0], "G": [0, 1, 0, 0], "C": [0, 0, 1, 0], "U": [0, 0, 0, 1]}
-    CENCODING = {"A": [0, 0, 0, au_wei], "G": [0, 0, gc_wei, gu_wei], "C": [0, gc_wei, 0, 0], "U": [au_wei, gu_wei, 0, 0]}
+    ENCODING = {"A": [1, 0, 0, 0], "G": [0, 1, 0, 0], "C": [0, 0, 1, 0], "U": [0, 0, 0, 1], ".": [0, 0, 0, 0]}
+    CENCODING = {"A": [0, 0, 0, au_wei], "G": [0, 0, gc_wei, gu_wei], "C": [0, gc_wei, 0, 0], "U": [au_wei, gu_wei, 0, 0], ".": [0, 0, 0, 0]}
     CAN_PAIR = [('A', 'U'), ('U', 'A'), ('G', 'C'), ('C', 'G'), ('G', 'U'), ('U', 'G')]
 
     # the foward strand use the normal encoding
@@ -124,3 +124,10 @@ def MCC_bench(pred_struct, target_struct):
     pcc = true_pos / (true_pos + false_pos)
     return pcc * 100.0
     # return sensitivy * 100.0
+
+
+def eval_dynamic(seq_comp, pair_list, moves, len_seq):
+    "eval individual loop moves"
+    dot_struct = dot_bracket(pair_list, len_seq)
+    tmp_struct = dot_bracket(pair_list+moves, len_seq)
+    return seq_comp.eval_structure(tmp_struct) - seq_comp.eval_structure(dot_struct)

@@ -17,7 +17,7 @@ The inner and outer loops are treated recursively until no BP can be formed
 from numpy import concatenate
 from numpy import sum as npsum
 from utils import plot_bp_matrix, auto_cor, dot_bracket
-from utils import prep_sequence, benchmark_vrna
+from utils import prep_sequence, benchmark_vrna, eval_dynamic
 import argparse
 from RNA import fold_compound
 
@@ -27,6 +27,9 @@ PK_MODE = False
 MIN_BP = 1
 # Min number of internal unpaired positions
 MIN_HP = 3
+# Min nrj loop
+MIN_NRJ = 0
+
 
 def window_slide(seq, cseq, pos, pos_list):
     """Slide a window along the align pair of sequence to find the consecutive paired positions
@@ -87,15 +90,22 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     cor_l.sort(key=lambda el: el[1])
 
     # find largest bp region
-    max_bp, max_i, max_j, max_s = 0, 0, 0, 0
+    max_bp, max_i, max_j, max_s, best_nrj, tmp_nrj = 0, 0, 0, 0, MIN_NRJ, MIN_NRJ
     for pos, c in cor_l[::-1][:nb_mode]:
         mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
 
-        if ms > max_s:
+        if mx_i > 0:
+            tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
+            tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ)
+
+        # if ms > max_s:
+        if best_nrj > tmp_nrj:
             max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+            best_nrj = tmp_nrj
+            # print(best_nrj)
 
     # If no BP found, end the recursion
-    if max_s < MIN_BP:
+    if max_bp < MIN_BP:
         return pair_list
 
     # save the largest number of consecutive BPs
@@ -138,6 +148,7 @@ def parse_arguments():
     parser.add_argument('--pad', '-p', help="padding, a normalization constant for the autocorrelation", type=float, default=1.0)
     parser.add_argument('--min_bp', '-mb', help="minimum bp to be detectable", type=int, default=3)
     parser.add_argument('--min_hp', '-mh', help="minimum unpaired positions in internal loops", type=int, default=3)
+    parser.add_argument('--min_nrj', '-mn', help="minimum nrj loop", type=float, default=0)
     parser.add_argument('--pk', action="store_true", help="pseudoknot")
     parser.add_argument('--plot', action="store_true", help="plot bp matrix")
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
