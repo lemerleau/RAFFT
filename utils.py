@@ -37,10 +37,10 @@ def paired_positions(structure):
     return pairs
 
 
-def prep_sequence(sequence, gc_wei, au_wei, gu_wei):
+def prep_sequence(sequence, gc_wei=1.0, au_wei=1.0, gu_wei=1.0):
     """Encode the sequence into two mirror strands
     """
-    ENCODING = {"A": [1, 0, 0, 0], "G": [0, 1, 0, 0], "C": [0, 0, 1, 0], "U": [0, 0, 0, 1], ".": [0, 0, 0, 0]}
+    ENCODING = {"A": [1., 0, 0, 0], "G": [0, 1., 0, 0], "C": [0, 0, 1., 0], "U": [0, 0, 0, 1.], ".": [0, 0, 0, 0]}
     CENCODING = {"A": [0, 0, 0, au_wei], "G": [0, 0, gc_wei, gu_wei], "C": [0, gc_wei, 0, 0], "U": [au_wei, gu_wei, 0, 0], ".": [0, 0, 0, 0]}
     CAN_PAIR = [('A', 'U'), ('U', 'A'), ('G', 'C'), ('C', 'G'), ('G', 'U'), ('U', 'G')]
 
@@ -64,12 +64,12 @@ def seq_conv(seq, cseq):
     return npsum(array(cor_), axis=0)
 
 
-def auto_cor(seq, cseq, pad):
+def auto_cor(seq, cseq, pad=1.0):
     """Compute the auto correlation between the two strands
     """
     len_seq = seq.shape[1]
     cor = seq_conv(seq, cseq)
-    norm = [el+pad for el in list(range(len_seq)) + list(range(len_seq-1))[::-1]]
+    norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_seq-1))[::-1]]
     cor_l = [(i, c) for i, c in enumerate(cor/norm)]
     return cor_l
 
@@ -117,13 +117,18 @@ def MCC_bench(pred_struct, target_struct):
     target_pl = set(paired_positions(target_struct))
     pred_up = set([i for i, el in enumerate(pred_struct) if el == "."])
     target_up = set([i for i, el in enumerate(target_struct) if el == "."])
-    true_pos = len(pred_pl & target_pl)
-    false_neg = len(target_pl-pred_pl)
-    false_pos = len(pred_pl-target_pl)
-    sensitivy = true_pos / (false_neg + true_pos) if (false_neg + true_pos) > 0 else 1.0
-    pcc = true_pos / (true_pos + false_pos)
-    return pcc * 100.0
-    # return sensitivy * 100.0
+    true_pos = len(pred_pl & target_pl)  #  in both
+    false_neg = len(target_pl-pred_pl)  # in true but not in pred struct
+    false_pos = len(pred_pl-target_pl)  # in pred but not in true struct
+
+    # put zero if not BP formed
+    sensitivity = true_pos / (false_neg + true_pos) if (false_neg + true_pos) > 0 else 0.0
+    pvv = true_pos / (true_pos + false_pos)
+    if sensitivity  + pvv > 0:
+        F1 = (2 * sensitivity * pvv)/(sensitivity  + pvv)
+    else:
+        F1 = 0.
+    return sensitivity * 100.0, pvv * 100.0, F1 * 100
 
 
 def eval_dynamic(seq_comp, pair_list, moves, len_seq):
