@@ -18,6 +18,7 @@ from numpy import concatenate
 from numpy import sum as npsum
 from utils import plot_bp_matrix, auto_cor, dot_bracket
 from utils import prep_sequence, benchmark_vrna, eval_dynamic
+from align_utils import align_seq, backtracking
 import argparse
 from RNA import fold_compound
 
@@ -30,56 +31,7 @@ MIN_HP = 3
 # Min nrj loop
 MIN_NRJ = 0
 
-
-def window_slide(seq, cseq, pos, pos_list):
-    """Slide a window along the align pair of sequence to find the consecutive paired positions
-    """
-    len_seq = seq.shape[1]
-    # the position of the spike gives the relative position between both
-    # strands
-    if pos < len_seq:
-        seq_ = seq[:, :pos+1]
-        cseq_ = cseq[:, len_seq-pos-1:]
-    else:
-        seq_ = seq[:, pos-len_seq+1:]
-        cseq_ = cseq[:, :2*len_seq-pos-1]
-
-    # test if it represents the average bp
-    # tmp = mean(npsum(seq_*cseq_, axis=0))
-    # print(tmp == cor, pos, len_seq)
-    len_2 = int(seq_.shape[1]/2) + seq_.shape[1]%2
-
-    # When the strands are appropriatly aligned, we have to search for base
-    # pairs with a sliding window
-    tot = npsum(seq_[:, :len_2]*cseq_[:, :len_2], axis=0)
-
-    # search for consecutive BPs
-    max_nb, tmp_max, max_score, max_i, max_j = 0, 0, 0, 0, 0
-    for i in range(len_2):
-        if pos < len_seq:
-            ip, jp = i, pos-i
-        else:
-            ip, jp = pos-len_seq+1+i, len_seq-i-1
-
-        # check if positions are contiguous
-        if i > 0 and pos_list[ip] - pos_list[ip-1] == 1 and \
-           pos_list[jp+1] - pos_list[jp] == 1:
-            tot[i] = (tot[i-1]+tot[i])*tot[i]
-
-        if tot[i] == 0:
-            tmp_max = 0
-        else:
-            tmp_max += 1
-
-        # search for the highest number of consecutive BPs
-        # and test if at least MIN_HP unpaired positions in between
-        if tot[i] >= max_score and pos_list[jp] - pos_list[ip] > MIN_HP:
-            max_score = tot[i]
-            max_nb = tmp_max
-            max_i, max_j = ip, jp
-
-    return max_nb, max_i, max_j, max_score
-
+CAN_PAIR = [('A' ,'U'), ('U', 'A'), ('G', 'C'), ('C', 'G'), ('G', 'U'), ('U', 'G')]
 
 def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     """Recursive scheme
@@ -89,44 +41,58 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     cor_l = auto_cor(seq, cseq, pad)
     cor_l.sort(key=lambda el: el[1])
 
-    # find largest bp region
     max_bp, max_i, max_j, max_s, best_nrj, tmp_nrj = 0, 0, 0, 0, MIN_NRJ, MIN_NRJ
-    for pos, c in cor_l[::-1][:nb_mode]:
-        mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
+    best_pair_list = []
+    for id_c, (pos, c) in enumerate(cor_l[::-1][:nb_mode]):
 
-        if mx_i > 0:
+        if pos < len_seq:
+            seq_ = seq[:, :pos+1]
+            cseq_ = cseq[:, len_seq-pos-1:]
+            pos_list_ = [el for el in pos_list[:pos+1]]
+        else:
+            seq_ = seq[:, pos-len_seq+1:]
+            cseq_ = cseq[:, :2*len_seq-pos-1]
+            pos_list_ = [el for el in pos_list[pos-len_seq+1:]]
+
+        # find largest bp region
+        dp_el = align_seq(seq_, cseq_, BULGE, SEQ, MIN_HP, pos_list_, MAX_BULGE)
+        if dp_el is not None:
             if BP_ONLY:
                 # use the number of BPs only
-                tmp_nrj = -mx_i
+                tmp_nrj = -dp_el.score
             else:
-                tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
+                tmp_pair = [(pos_list[pi], pos_list[pj]) for pi, pj in backtracking(dp_el, len_seq, pos)]
                 tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ)
+        else:
+            tmp_nrj = 0
 
-        # if ms > max_s:
-        if best_nrj > tmp_nrj:
-            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+        if dp_el is not None and best_nrj > tmp_nrj:
             best_nrj = tmp_nrj
+            best_pair_list = backtracking(dp_el, len_seq, pos)
+            in_i, in_j = best_pair_list[0]
+            out_i, out_j = best_pair_list[-1]
+            id_c_m = id_c
 
-    # If no BP found, end the recursion
-    if max_bp < MIN_BP or best_nrj > MIN_NRJ:
+    if len(best_pair_list) <= MIN_BP:
         return pair_list
 
     # save the largest number of consecutive BPs
-    for i in range(max_bp):
-        pair_list += [(pos_list[max_i-i], pos_list[max_j+i])]
+    for ip, jp in best_pair_list:
+        assert (SEQ[pos_list[ip]], SEQ[pos_list[jp]]) in CAN_PAIR, "error {}".format((SEQ[pos_list[ip]], SEQ[pos_list[jp]]))
+        pair_list += [(pos_list[ip], pos_list[jp])]
 
-    if max_i - (max_bp - 1) > 0 or max_j + max_bp < len_seq:
+    if out_i > 1 or out_j < len_seq-1:
         # Outer loop case
-        oseq = concatenate((seq[:, :max_i-max_bp+1], seq[:, max_j+max_bp:]), axis=1)
-        ocseq = concatenate((cseq[:, :len_seq - (max_j+max_bp)], cseq[:, len_seq-(max_i-max_bp+1):]), axis=1)
-        pos_list_2 = pos_list[:max_i-max_bp+1] + pos_list[max_j+max_bp:]
+        oseq = concatenate((seq[:, :out_i], seq[:, out_j+1:]), axis=1)
+        ocseq = concatenate((cseq[:, :(len_seq-out_j-1)], cseq[:, (len_seq-(out_i)):]), axis=1)
+        pos_list_2 = pos_list[:out_i] + pos_list[out_j+1:]
         recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode)
 
-    if max_j - max_i > 1:
+    if in_j - in_i > 2:
         # Inner loop case
-        oseq = seq[:, max_i+1:max_j]
-        ocseq = cseq[:, len_seq-max_j:len_seq-max_i-1]
-        pos_list_2 = pos_list[max_i+1:max_j]
+        oseq = seq[:, in_i+1:in_j]
+        ocseq = cseq[:, (len_seq-in_j):(len_seq-in_i-1)]
+        pos_list_2 = pos_list[in_i+1:in_j]
         recursive_struct(oseq, ocseq, pair_list, pos_list_2, pad, nb_mode)
 
     return pair_list
@@ -145,13 +111,16 @@ def parse_arguments():
     parser.add_argument('--min_bp', '-mb', help="minimum bp to be detectable", type=int, default=3)
     parser.add_argument('--min_hp', '-mh', help="minimum unpaired positions in internal loops", type=int, default=3)
     parser.add_argument('--min_nrj', '-mn', help="minimum nrj loop", type=float, default=0)
+    parser.add_argument('--fasta', action="store_true", help="fasta output")
     parser.add_argument('--bp_only', action="store_true", help="don't use the NRJ")
+    parser.add_argument('--pk', action="store_true", help="pseudoknot")
     parser.add_argument('--plot', action="store_true", help="plot bp matrix")
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
-    parser.add_argument('--fasta', action="store_true", help="fasta output")
     parser.add_argument('--GC', type=float, help="GC weight", default=3.0)
     parser.add_argument('--AU', type=float, help="GC weight", default=2.0)
     parser.add_argument('--GU', type=float, help="GU weight", default=1.0)
+    parser.add_argument('--bulge', type=float, help="GU weight", default=-4.0)
+    parser.add_argument('--max_b', '-mbu', help="max bulge", type=int, default=1)
     return parser.parse_args()
 
 
@@ -173,12 +142,15 @@ def main():
 
     sequence = sequence.replace("N", "")
     len_seq = len(sequence)
-    global MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY
-    BP_ONLY = args.bp_only
+    global PK_MODE, MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY, SEQ, BULGE, MAX_BULGE
+    PK_MODE, BP_ONLY = args.pk, args.bp_only
     MIN_BP = args.min_bp
     MIN_HP = args.min_hp
     LEN_SEQ = len_seq
     SEQ_COMP = fold_compound(sequence)
+    SEQ = sequence
+    BULGE = args.bulge
+    MAX_BULGE = args.max_b
 
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))
@@ -199,6 +171,11 @@ def main():
         print(f"{str_struct}")
     else:
         print(sequence, len_seq, str_struct, nrj_pred, str_struct.count("("))
+        # print(sequence)
+        # print(str_struct)
+        # print("SCORE:", len(pair_list))
+        # print("LEN:", len_seq)
+        # print("VNRA_NRJ:", nrj_pred)
 
     if args.plot:
         if args.vrna:

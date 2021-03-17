@@ -63,6 +63,15 @@ def seq_conv(seq, cseq):
         cor_ += [convolve(seq[i, ], cseq[i, ])]
     return npsum(array(cor_), axis=0)
 
+def auto_cor_xy(seq, cseq, pad=1.0):
+    """Compute the auto correlation between the two strands
+    """
+    len_seq = seq.shape[1]
+    len_cseq = cseq.shape[1]
+    cor = seq_conv(seq, cseq)
+    norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_cseq-1))[::-1]]
+    cor_l = [(i, c) for i, c in enumerate(cor/norm)]
+    return cor_l
 
 def auto_cor(seq, cseq, pad=1.0):
     """Compute the auto correlation between the two strands
