@@ -36,7 +36,7 @@ def align_seq(seq_x, cseq_x, penalty, SEQ, theta, pos_list, MAX_BULGE):
     saved_max, saved_el = 0, None
 
     # for i in range(1, len_x+1):
-    for i in range(1, len_x+1-MAX_BULGE+1):
+    for i in range(1, len_x+1-MAX_BULGE):
         # for j in range(1, len_x+1-i-theta):
         for j in range(max(1, i-MAX_BULGE), min(i+MAX_BULGE+1, (len_x+1)-i-theta+1)):
             # if j - i > 5:

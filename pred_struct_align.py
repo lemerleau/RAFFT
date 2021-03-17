@@ -73,7 +73,7 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
             out_i, out_j = best_pair_list[-1]
             id_c_m = id_c
 
-    if len(best_pair_list) <= MIN_BP:
+    if len(best_pair_list) < MIN_BP:
         return pair_list
 
     # save the largest number of consecutive BPs
