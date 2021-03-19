@@ -15,13 +15,12 @@ def align_seq(seq_x, cseq_x, penalty, SEQ, theta, pos_list, MAX_BULGE):
     len_x = seq_x.shape[1]
     # len_x = int(seq_x.shape[1]/2) + seq_x.shape[1]%2
 
-    dp_mat = [[Aligned_el(0, None, i, j, 0) for j in range(len_x+1)] for i in range(len_x+1)]
+    # dp_mat = [[Aligned_el(0, None, i, j, 0) for j in range(len_x+1)] for i in range(len_x+1)]
 
-    # dp_mat = [[None for j in range(len_x+1)] for i in range(len_x+1)]
-    # print("len, max", len_x, MAX_BULGE)
-    # for i in range(0, len_x+1-MAX_BULGE+1):
-    #     for j in range(max(0, i-MAX_BULGE), min(i+MAX_BULGE+2, len_x+1-i-theta+1)):
-    #         dp_mat[i][j] = Aligned_el(0, None, i, j, 0)
+    dp_mat = [[None for j in range(len_x+1)] for i in range(len_x+1)]
+    for i in range(0, len_x+1-MAX_BULGE+2):
+        for j in range(max(0, i-MAX_BULGE-1), min(i+MAX_BULGE+2, (len_x+1)-i-theta-MAX_BULGE+2)):
+            dp_mat[i][j] = Aligned_el(0, None, i, j, 0)
 
     def comp_score(ss, cs, prev, pi, pj):
         sco = dot(ss, cs)
@@ -38,7 +37,8 @@ def align_seq(seq_x, cseq_x, penalty, SEQ, theta, pos_list, MAX_BULGE):
     # for i in range(1, len_x+1):
     for i in range(1, len_x+1-MAX_BULGE):
         # for j in range(1, len_x+1-i-theta):
-        for j in range(max(1, i-MAX_BULGE), min(i+MAX_BULGE+1, (len_x+1)-i-theta+1)):
+        for j in range(max(1, i-MAX_BULGE), min(i+MAX_BULGE+1, (len_x+1)-i-theta-MAX_BULGE+1)):
+            # print(i, j)
             # if j - i > 5:
             #     pass
             options = [
@@ -56,7 +56,14 @@ def align_seq(seq_x, cseq_x, penalty, SEQ, theta, pos_list, MAX_BULGE):
                 saved_el = dp_mat[i][j]
                 saved_max = m_score
 
-    return saved_el
+    list_sol = []
+    for i in range(1, len_x+1-MAX_BULGE):
+        # for j in range(1, len_x+1-i-theta):
+        for j in range(max(1, i-MAX_BULGE), min(i+MAX_BULGE+1, (len_x+1)-i-theta-MAX_BULGE+1)):
+            list_sol += [dp_mat[i][j]]
+
+    list_sol.sort(key=lambda el: el.score)
+    return list_sol[::-1]
 
 
 def backtracking(dp_el, len_seq, pos):

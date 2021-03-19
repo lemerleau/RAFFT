@@ -41,7 +41,8 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
     cor_l = auto_cor(seq, cseq, pad)
     cor_l.sort(key=lambda el: el[1])
 
-    max_bp, max_i, max_j, max_s, best_nrj, tmp_nrj = 0, 0, 0, 0, MIN_NRJ, MIN_NRJ
+    max_bp, max_i, max_j, max_s, tmp_nrj = 0, 0, 0, 0, 1000
+    best_nrj = MIN_NRJ
     best_pair_list = []
     for id_c, (pos, c) in enumerate(cor_l[::-1][:nb_mode]):
 
@@ -55,25 +56,28 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
             pos_list_ = [el for el in pos_list[pos-len_seq+1:]]
 
         # find largest bp region
-        dp_el = align_seq(seq_, cseq_, BULGE, SEQ, MIN_HP, pos_list_, MAX_BULGE)
-        if dp_el is not None:
-            if BP_ONLY:
-                # use the number of BPs only
-                tmp_nrj = -dp_el.score
+        # dp_el = align_seq(seq_, cseq_, BULGE, SEQ, MIN_HP, pos_list_, MAX_BULGE)
+        for dp_el in align_seq(seq_, cseq_, BULGE, SEQ, MIN_HP, pos_list_, MAX_BULGE)[:10]:
+            if dp_el is not None:
+                if BP_ONLY:
+                    # use the number of BPs only
+                    tmp_nrj = -dp_el.score
+                else:
+                    tmp_pair = [(pos_list[pi], pos_list[pj]) for pi, pj in backtracking(dp_el, len_seq, pos)]
+                    tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ)
             else:
-                tmp_pair = [(pos_list[pi], pos_list[pj]) for pi, pj in backtracking(dp_el, len_seq, pos)]
-                tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ)
-        else:
-            tmp_nrj = 0
+                tmp_nrj = 0
 
-        if dp_el is not None and best_nrj > tmp_nrj:
-            best_nrj = tmp_nrj
-            best_pair_list = backtracking(dp_el, len_seq, pos)
-            in_i, in_j = best_pair_list[0]
-            out_i, out_j = best_pair_list[-1]
-            id_c_m = id_c
+            if dp_el is not None and best_nrj > tmp_nrj:
+                best_nrj = tmp_nrj
+                best_pair_list = backtracking(dp_el, len_seq, pos)
+                in_i, in_j = best_pair_list[0]
+                out_i, out_j = best_pair_list[-1]
+                id_c_m = id_c
 
-    if len(best_pair_list) < MIN_BP:
+    # if True:
+    #     return pair_list
+    if len(best_pair_list) < MIN_BP or best_nrj > MIN_NRJ:
         return pair_list
 
     # save the largest number of consecutive BPs
@@ -142,7 +146,7 @@ def main():
 
     sequence = sequence.replace("N", "")
     len_seq = len(sequence)
-    global PK_MODE, MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY, SEQ, BULGE, MAX_BULGE
+    global PK_MODE, MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY, SEQ, BULGE, MAX_BULGE, MIN_NRJ
     PK_MODE, BP_ONLY = args.pk, args.bp_only
     MIN_BP = args.min_bp
     MIN_HP = args.min_hp
@@ -151,6 +155,7 @@ def main():
     SEQ = sequence
     BULGE = args.bulge
     MAX_BULGE = args.max_b
+    MIN_NRJ = args.min_nrj
 
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))
@@ -166,7 +171,8 @@ def main():
         vrna_struct, vrna_mfe, bp_dist = benchmark_vrna(sequence, str_struct)
         print(len_seq, vrna_mfe, nrj_pred, bp_dist, sequence, str_struct, vrna_struct)
     elif args.fasta:
-        print(f">fft {nrj_pred}")
+        nb_bp = str_struct.count("(")
+        print(f">fft {nrj_pred} {nb_bp}")
         print(f"{sequence}")
         print(f"{str_struct}")
     else:

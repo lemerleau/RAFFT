@@ -1,7 +1,7 @@
 """Utils functions for the structure prediction
 """
 
-from numpy import array, zeros, flip
+from numpy import array, zeros, flip, concatenate
 from numpy import sum as npsum
 from scipy.signal import convolve
 import matplotlib.pyplot as plt
@@ -9,11 +9,13 @@ from RNA import fold, fold_compound, bp_distance
 
 
 
-def dot_bracket(pair_list, len_seq):
+def dot_bracket(pair_list, len_seq, SEQ=None):
     """convert the list of BPs into a dot bracket notation
     """
     str_struct = list("."*len_seq)
     for pi, pj in pair_list:
+        if SEQ is not None:
+            print(SEQ[pi], SEQ[pj])
         str_struct[pi], str_struct[pj] = "(", ")"
     return "".join(str_struct)
 
@@ -72,6 +74,7 @@ def auto_cor_xy(seq, cseq, pad=1.0):
     norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_cseq-1))[::-1]]
     cor_l = [(i, c) for i, c in enumerate(cor/norm)]
     return cor_l
+
 
 def auto_cor(seq, cseq, pad=1.0):
     """Compute the auto correlation between the two strands
@@ -140,8 +143,40 @@ def MCC_bench(pred_struct, target_struct):
     return sensitivity * 100.0, pvv * 100.0, F1 * 100
 
 
-def eval_dynamic(seq_comp, pair_list, moves, len_seq):
+def eval_dynamic(seq_comp, pair_list, moves, len_seq, SEQ):
     "eval individual loop moves"
     dot_struct = dot_bracket(pair_list, len_seq)
     tmp_struct = dot_bracket(pair_list+moves, len_seq)
     return seq_comp.eval_structure(tmp_struct) - seq_comp.eval_structure(dot_struct)
+
+
+def eval_one_struct(seq_comp, pair_list, len_seq, SEQ):
+    "eval individual loop moves"
+    dot_struct = dot_bracket(pair_list, len_seq)
+    # print("EVAL")
+    # print(SEQ)
+    # print(dot_struct)
+    # print("EVAL")
+    return seq_comp.eval_structure(dot_struct)
+
+
+def get_outer_loop(seq, cseq, max_i, max_j, max_bp, pos_list, len_seq):
+    oseq = concatenate((seq[:, :max_i-max_bp+1], seq[:, max_j+max_bp:]), axis=1)
+    ocseq = concatenate((cseq[:, :len_seq - (max_j+max_bp)], cseq[:, len_seq-(max_i-max_bp+1):]), axis=1)
+    pos_list_2 = pos_list[:max_i-max_bp+1] + pos_list[max_j+max_bp:]
+    return oseq, ocseq, [el for el in pos_list_2]
+
+
+def get_inner_loop(seq, cseq, max_i, max_j, max_bp, pos_list, len_seq):
+    oseq = seq[:, max_i+1:max_j]
+    ocseq = cseq[:, len_seq-max_j:len_seq-max_i-1]
+    pos_list_2 = pos_list[max_i+1:max_j]
+    return oseq, ocseq, [el for el in pos_list_2]
+
+
+def merge_pair_list(pair_1, pair_2):
+    pair_3 = set(pair_1) | set(pair_2)
+    for el in pair_2:
+        if el not in pair_1:
+            pair_1 += [el]
+    
