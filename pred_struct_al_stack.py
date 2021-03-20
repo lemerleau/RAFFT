@@ -20,6 +20,7 @@ from utils import plot_bp_matrix, auto_cor, dot_bracket
 from utils import prep_sequence, benchmark_vrna, eval_dynamic
 from utils import get_inner_loop, get_outer_loop, eval_one_struct
 from utils import merge_pair_list
+from itertools import product
 import argparse
 from RNA import fold_compound
 
@@ -55,7 +56,7 @@ def window_slide(seq, cseq, pos, pos_list):
 
     # search for consecutive BPs
     max_nb, tmp_max, max_score, max_i, max_j = 0, 0, 0, 0, 0
-    list_sol = []
+    # list_sol = []
     for i in range(len_2):
         if pos < len_seq:
             ip, jp = i, pos-i
@@ -81,11 +82,11 @@ def window_slide(seq, cseq, pos, pos_list):
             max_score = tot[i]
             max_nb = tmp_max
             max_i, max_j = ip, jp
-            list_sol += [(max_nb, max_i, max_j, max_score)]
+            # list_sol += [(max_nb, max_i, max_j, max_score)]
 
-    # return max_nb, max_i, max_j, max_score
-    list_sol.sort(key=lambda el: el[0])
-    return list_sol
+    # list_sol.sort(key=lambda el: el[0])
+    # return list_sol
+    return max_nb, max_i, max_j, max_score
 
 
 def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
@@ -95,21 +96,21 @@ def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     max_bp, max_i, max_j, max_s, tmp_nrj = 0, 0, 0, 0, MIN_NRJ
     best_nrj = MIN_NRJ
     for pos, c in cor_l[::-1][:NB_MODE]:
-        # mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
-        for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
+        mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
+        # for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
 
-            if mx_i > 0:
-                tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
-                tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
-            else:
-                tmp_nrj = MIN_NRJ
+        if mx_i > 0:
+            tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
+            tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
+        else:
+            tmp_nrj = MIN_NRJ
 
-            # if ms > max_s:
-            if tmp_nrj < MIN_NRJ:
-                max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
-                best_tmp = tmp_pair
-                best_nrj = tmp_nrj
-                best_sol += [(max_bp, max_s, max_i, max_j, best_nrj, best_tmp)]
+        # if ms > max_s:
+        if tmp_nrj < MIN_NRJ:
+            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+            best_tmp = tmp_pair
+            best_nrj = tmp_nrj
+            best_sol += [(max_bp, max_s, max_i, max_j, best_nrj, best_tmp)]
 
     best_sol.sort(key=lambda el: el[4])
     return best_sol
@@ -132,7 +133,7 @@ def create_childs(seq, cseq, pair_list, pos_list):
         for el in pair_list:
             best_tmp += [el]
 
-        cur_nrj = eval_one_struct(SEQ_COMP, best_tmp, LEN_SEQ, SEQ)
+        # cur_nrj = eval_one_struct(SEQ_COMP, best_tmp, LEN_SEQ, SEQ)
 
         if max_j - max_i > 1:
             # Inner loop case
@@ -148,7 +149,7 @@ def create_childs(seq, cseq, pair_list, pos_list):
         else:
             out_side = None
 
-        cur_list_sol += [(in_side, out_side, best_tmp, cur_nrj)]
+        cur_list_sol += [(in_side, out_side, best_tmp, best_nrj)]
     return cur_list_sol
 
 
@@ -178,49 +179,59 @@ def bfs_pairs(glob_tree):
             if in_side is not None:
                 iseq, icseq, ipos_list = in_side
                 icur_list = create_childs(iseq, icseq, pair_list, ipos_list)
-                # print("in", len(icur_list))
+                if len(icur_list) > 0:
+                    # print("i", len(icur_list))
+                    tmp_tree += [icur_list]
 
             if out_side is not None:
                 oseq, ocseq, opos_list = out_side
                 ocur_list = create_childs(oseq, ocseq, pair_list, opos_list)
-                # print("out", len(ocur_list))
+                if len(ocur_list) > 0:
+                    # print("o", len(ocur_list))
+                    tmp_tree += [ocur_list]
 
             if len(icur_list) == 0 and len(ocur_list) == 0:
                 new_glob_tree += [[(in_side, out_side, pair_list, cur_nrj)]]
             else:
-                tmp_tree += [(icur_list, ocur_list)]
                 new_sol = True
-        tmp_glob_tree += [tmp_tree]
 
-    # print(len(new_glob_tree))
+        if len(tmp_tree) > 0:
+            tmp_glob_tree += [tmp_tree]
+
+
+    # if not new tree formed, print out the results
+    if not new_sol:
+        all_pairs = []
+        for tree in glob_tree:
+            all_pairs += [tree[0][2]]
+        return all_pairs
+
+    nb_branch = 0
     for tree in tmp_glob_tree:
-        for nt in range(20):
-            for ntt in range(20):
+        if len(tree) > 1:
+            for comp in product(*tree):
                 tmp_tree = []
                 cur_pair_list = []
-                for in_side, out_side in tree:
-                    # print([el_i[-1] for el_i in in_side])
-                    # print(len(in_side), len(out_side))
-                    if len(in_side) > nt:
-                        i_in_side, i_out_side, i_pair_list, i_cur_nrj = in_side[nt]
-                        merge_pair_list(cur_pair_list, i_pair_list)
-                        tmp_tree += [(i_in_side, i_out_side, cur_pair_list, 0)]
-                    if len(out_side) > ntt:
-                        o_in_side, o_out_side, o_pair_list, o_cur_nrj = out_side[ntt]
-                        merge_pair_list(cur_pair_list, o_pair_list)
-                        tmp_tree += [(o_in_side, o_out_side, cur_pair_list, 0)]
-
-                if len(tmp_tree) > 0:
-                    new_glob_tree += [tmp_tree]
-
-    # print("G", "-"*10)
-    # # print(glob_tree)
-    # for tree in new_glob_tree:
-    #     tmp_pair_l = tree[0][2]
-    #     tmp_str = dot_bracket(tmp_pair_l, LEN_SEQ)
-    #     print(tmp_str, eval_one_struct(SEQ_COMP, tmp_pair_l, LEN_SEQ, SEQ))
-    # input()
-
+                for one_side in list(comp):
+                    in_side, out_side, pair_list, cur_nrj = one_side
+                    merge_pair_list(cur_pair_list, pair_list)
+                    tmp_tree += [(in_side, out_side, cur_pair_list, cur_nrj)]
+                new_glob_tree += [tmp_tree]
+                if nb_branch > MAX_BRANCH:
+                    break
+                nb_branch += 1
+        else:
+            one_side_pos = tree[0]
+            for one_side in one_side_pos:
+                tmp_tree = []
+                cur_pair_list = []
+                in_side, out_side, pair_list, cur_nrj = one_side
+                merge_pair_list(cur_pair_list, pair_list)
+                tmp_tree += [(in_side, out_side, cur_pair_list, cur_nrj)]
+                new_glob_tree += [tmp_tree]
+                if nb_branch > MAX_BRANCH:
+                    break
+                nb_branch += 1
 
     # XXX: another workaround to remove
     seen = set()
@@ -231,19 +242,12 @@ def bfs_pairs(glob_tree):
             seen.add(tmp_str)
             unique += [pi]
     new_glob_tree = [new_glob_tree[pi] for pi in unique]
-
-    # if all(len(ttree) == 0 for ttree in glob_tree):
-    if not new_sol:
-        all_pairs = []
-        for tree in glob_tree:
-            all_pairs += [tree[0][2]]
-        return all_pairs
  
-
+    # prune forest of tree
     if len(new_glob_tree) > MAX_STACK:
-        new_glob_tree.sort(key=lambda el: eval_one_struct(SEQ_COMP, el[0][2] if len(el) > 0 else [] ,LEN_SEQ, SEQ))
+        new_glob_tree.sort(key=lambda el: eval_one_struct(SEQ_COMP, el[0][2],LEN_SEQ, SEQ))
         new_glob_tree = new_glob_tree[:MAX_STACK]
-    new_glob_tree.sort(key=lambda el: eval_one_struct(SEQ_COMP, el[0][2] if len(el) > 0 else [] ,LEN_SEQ, SEQ))
+
     return bfs_pairs(new_glob_tree)
 
 
@@ -262,14 +266,15 @@ def parse_arguments():
     parser.add_argument('--min_hp', '-mh', help="minimum unpaired positions in internal loops", type=int, default=3)
     parser.add_argument('--min_nrj', '-mn', help="minimum nrj loop", type=float, default=0)
     parser.add_argument('--max_stack', '-ms', help="maximum stored stacks", type=int, default=1)
+    parser.add_argument('--max_stack_branch', '-msb', help="maximum branches to explor", type=int, default=100)
     parser.add_argument('--bp_only', action="store_true", help="don't use the NRJ")
     parser.add_argument('--plot', action="store_true", help="plot bp matrix")
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
     parser.add_argument('--fasta', action="store_true", help="fasta output")
     parser.add_argument('--one', action="store_true", help="output onlyt one struct")
-    parser.add_argument('--GC', type=float, help="GC weight", default=3.0)
-    parser.add_argument('--AU', type=float, help="GC weight", default=2.0)
-    parser.add_argument('--GU', type=float, help="GU weight", default=1.0)
+    parser.add_argument('--GC', type=float, help="GC weight", default=1.0)
+    parser.add_argument('--AU', type=float, help="GC weight", default=0.75)
+    parser.add_argument('--GU', type=float, help="GU weight", default=0.50)
     return parser.parse_args()
 
 
@@ -292,7 +297,7 @@ def main():
     sequence = sequence.replace("N", "")
     len_seq = len(sequence)
     global MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY, SEQ, MIN_NRJ, OUT_DONE, GLOB_PAIRS, NB_MODE, PAD
-    global POS_LIST, MAX_STACK
+    global POS_LIST, MAX_STACK, MAX_BRANCH
     BP_ONLY = args.bp_only
     MIN_BP = args.min_bp
     MIN_HP = args.min_hp
@@ -305,6 +310,7 @@ def main():
     PAD = args.pad
     POS_LIST = list(range(len(sequence)))
     MAX_STACK = args.max_stack
+    MAX_BRANCH = args.max_stack
 
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))

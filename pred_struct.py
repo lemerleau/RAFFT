@@ -158,9 +158,9 @@ def parse_arguments():
     parser.add_argument('--plot', action="store_true", help="plot bp matrix")
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
     parser.add_argument('--fasta', action="store_true", help="fasta output")
-    parser.add_argument('--GC', type=float, help="GC weight", default=3.0)
-    parser.add_argument('--AU', type=float, help="GC weight", default=2.0)
-    parser.add_argument('--GU', type=float, help="GU weight", default=1.0)
+    parser.add_argument('--GC', type=float, help="GC weight", default=1.0)
+    parser.add_argument('--AU', type=float, help="GC weight", default=0.75)
+    parser.add_argument('--GU', type=float, help="GU weight", default=0.50)
     return parser.parse_args()
 
 

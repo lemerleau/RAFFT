@@ -36,7 +36,7 @@ def read_csv(infile):
             first = False
     return results
 
-fft_pred = read_csv("./test_data/results_fft_3_scores.csv")
+fft_pred = read_csv("./test_data/results_fft_7_scores.csv")
 # cont_pred = read_csv("./test_data/results_mxfold_scores.csv")
 cont_pred = read_csv("./test_data/results_linear_scores.csv")
 # cont_pred = read_csv("./test_data/results_context_scores.csv")
@@ -46,35 +46,46 @@ fft_all_v, mfe_all_v, cont_all_v = [], [], []
 fft_to_plot, mfe_to_plot, cont_to_plot = {}, {}, {}
 
 nb = 0
-for seq, (struct, name) in true_str.items():
-    if seq in fft_pred and seq in vrna_pred and seq in cont_pred and len(seq) > 0:
-        len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
-        len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
-        len_seq, cont_st, cont_nrj, cont_nbp, cont_pvv, cont_sens = cont_pred[seq]
-        save_fft, save_mfe, save_cont = fft_pvv, mfe_pvv, cont_pvv
-        fft_all_v += [save_fft]
-        mfe_all_v += [save_mfe]
-        cont_all_v += [save_cont]
+with open("analysis.log", "w") as out:
+    for seq, (struct, name) in true_str.items():
+        seq_comp = fold_compound(seq)
 
-        if fft_nrj > cont_nrj and len(seq) < 100:
-            seq_comp = fold_compound(seq)
-            print(name)
-            print(seq, fft_pvv, cont_pvv)
-            # print("FFT", fft_nrj, "CON", cont_nrj, "DIFF", fft_nrj - cont_nrj, "TRUE", seq_comp.eval_structure(struct) - mfe_nrj)
-            print("FFT", fft_nrj, "CON", cont_nrj, "DIFF", fft_nrj - cont_nrj, "TRUE", mfe_nrj)
-            print("fft ", fft_st, fft_nbp)
-            print("con ", cont_st, cont_nbp)
-            print("true", mfe_st, struct.count("("))
-            nb += 1
+        true_nb_bp = struct.count("(")
+        true_nrj = seq_comp.eval_structure(struct)
+        if seq in fft_pred and seq in vrna_pred and seq in cont_pred and len(seq) > 0:
+            len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
+            len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
+            len_seq, cont_st, cont_nrj, cont_nbp, cont_pvv, cont_sens = cont_pred[seq]
+            # save_fft, save_mfe, save_cont = fft_nrj - cont_nrj, mfe_nrj, cont_nrj - mfe_nrj
+            save_fft, save_mfe, save_cont = fft_pvv, mfe_pvv, cont_pvv
+            fft_all_v += [save_fft]
+            mfe_all_v += [save_mfe]
+            cont_all_v += [save_cont]
+            # print(fft_nrj, cont_nrj)
 
-        if len_seq in fft_to_plot:
-            fft_to_plot[len_seq] += [save_fft]
-            mfe_to_plot[len_seq] += [save_mfe]
-            cont_to_plot[len_seq] += [save_cont]
-        else:
-            fft_to_plot[len_seq] = [save_fft]
-            mfe_to_plot[len_seq] = [save_mfe]
-            cont_to_plot[len_seq] = [save_cont]
+            # out.write(f"{name} {fft_nrj} {cont_nrj} {len_seq}\n")
+            if fft_nrj > cont_nrj:
+                seq_comp = fold_compound(seq)
+
+                true_nb_bp = struct.count("(")
+                true_nrj = seq_comp.eval_structure(struct)
+                out.write(f"{seq} {fft_pvv} {cont_pvv}\n")
+                out.write(f"FFT {fft_nrj}, CON {cont_nrj}, MFE {mfe_nrj}, TRUE {true_nrj}\n")
+                out.write(f"fft {fft_st} {fft_nbp}\n")
+                out.write(f"con {cont_st} {cont_nbp}\n")
+                out.write(f"mfe {mfe_st} {mfe_nbp}\n")
+                out.write(f"tru {struct} {true_nb_bp}\n")
+
+                nb += 1
+
+            if len_seq in fft_to_plot:
+                fft_to_plot[len_seq] += [save_fft]
+                mfe_to_plot[len_seq] += [save_mfe]
+                cont_to_plot[len_seq] += [save_cont]
+            else:
+                fft_to_plot[len_seq] = [save_fft]
+                mfe_to_plot[len_seq] = [save_mfe]
+                cont_to_plot[len_seq] = [save_cont]
 
 list_len = list(fft_to_plot.keys())
 list_len.sort()
@@ -84,13 +95,17 @@ fft_mean = mean([mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0])
 mfe_mean = mean([mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0])
 cont_mean = mean([mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0])
 
+slide_mean_fft = [mean([mean(fft_to_plot[l]) for l in list_len[max(0, i-10):min(nb_el, i+10)]]) for i, len_ in enumerate(list_len)]
+slide_mean_mfe = [mean([mean(mfe_to_plot[l]) for l in list_len[max(0, i-10):min(nb_el, i+10)]]) for i, len_ in enumerate(list_len)]
+slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-10):min(nb_el, i+10)]]) for i, len_ in enumerate(list_len)]
+
 # fft_mean = mean(fft_all_v)
 # mfe_mean = mean(mfe_all_v)
 # cont_mean = mean(cont_all_v)
 
-fft_all_v = [mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0]
-mfe_all_v = [mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0]
-cont_all_v = [mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0]
+# fft_all_v = [mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0]
+# mfe_all_v = [mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0]
+# cont_all_v = [mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0]
 
 bpros = dict(color="orange", linewidth=0.2)
 fig = plt.figure(1)
@@ -122,20 +137,21 @@ fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len],
                yerr=[std(fft_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".",
-               linewidth=0.2, ms=3, c="skyblue", ecolor="skyblue", alpha=0.3)
+               linewidth=0.2, ms=3, c="skyblue", ecolor="deepskyblue", alpha=0.2)
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len],
                yerr=[std(mfe_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".",
-               linewidth=0.2, ms=3, c="coral", ecolor="tomato", alpha=0.3)
+               linewidth=0.2, ms=3, c="coral", ecolor="orangered", alpha=0.2)
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len],
                yerr=[std(cont_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".",
-               linewidth=0.2, ms=3, c="green", ecolor="green", alpha=0.3)
+               linewidth=0.2, ms=3, c="palegreen", ecolor="green", alpha=0.2)
 
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len], c="deepskyblue", s=0.5)
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len], c="orangered", s=0.5)
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len], c="green", s=0.5)
-fft_f.plot([0, nb_el], [mfe_mean, mfe_mean], linestyle="--", c="tomato")
-fft_f.plot([0, nb_el], [fft_mean, fft_mean], linestyle="--", c="skyblue")
-fft_f.plot([0, nb_el], [cont_mean, cont_mean], linestyle="--", c="green")
+
+fft_f.plot(range(nb_el), slide_mean_fft, linestyle="--", c="deepskyblue", alpha = 0.8)
+fft_f.plot(range(nb_el), slide_mean_mfe, linestyle="--", c="orangered", alpha = 0.8)
+fft_f.plot(range(nb_el), slide_mean_cont, linestyle="--", c="green", alpha = 0.8)
 
 fft_l = Patch(color="skyblue", label="FFT")
 mfe_l = Patch(color="tomato", label="VRNA")
@@ -146,491 +162,21 @@ fft_f.xaxis.set_ticks([i for i in range(nb_el)][::20])
 
 name_fft = "FFT"
 name_mfe = "VRNA"
-name_cont = "Context"
+name_cont = "Linear"
 fft_f.set_title(f"Sens")
 fft_f.legend((fft_l,mfe_l,cont_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})"), loc="upper center", ncol=3)
-plt.savefig("img/comp_context_pvv.png", dpi=300)
+plt.savefig("img/comp_small_pvv.png", dpi=300)
 plt.show()
 #+end_src
 
 #+RESULTS:
-#+begin_example
-tRNA_tdbR00000347-Enterobacteria_phage_T4-10665-Arg-NCU
-GUCCCGCUGGUGUAAUGGAUAGCAUACGAUCCUUCUAAGUUUGCGGUCCUGGUUCGAUCCCAGGGCGGGAUACCA 70.59 55.0
-FFT -21.399999618530273 CON -21.700000762939453 DIFF 0.3000011444091797 TRUE -23.200000762939453
-fft  (((((((..............(((.((...........)).)))...(((((.......)))))))))))).... 17
-con  ((((((((.........(((.(((.((...........)).))).)))((((.......)))))))))))).... 20
-true (((((((((((..(((((((.(((.((...........)).))).))))..)))..)))....)))))))).... 20
-tRNA_tdbR00000612-Sinorhizobium_meliloti-382-Trp-CCA
-AGGGGUAUAGCUCAGUUGGUAGAGCGGCGGUCUCCAAAACCGCAGGUCGGGGGUUCGAGCCCCUCUGCCCCUGCCA 42.86 95.45
-FFT -29.399999618530273 CON -31.700000762939453 DIFF 2.3000011444091797 TRUE -31.700000762939453
-fft  .........((((........)))).(((((.......))))).((.(((((((..(((...))).))))))))). 21
-con  (((((((..((((........)))).(((((.......))))).....((((((....)))))).))))))).... 22
-true (((((((..((((........)))).(((((.......))))).....((((((....)))))).))))))).... 21
-srp_Burk.pseu._CP000572
-CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCCGCCAGUGCCG 0.0 0.0
-FFT -22.100000381469727 CON -24.600000381469727 DIFF 2.5 TRUE -25.5
-fft  ((((((.((((((...)))))).)))....(((((......((((((((...........)))))))).)))))..))) 25
-con  ...(((.((((((...)))))).)))......((((.(((.((((((((...........)))))))).))).).))). 24
-true .(((((.((((((...)))))).)))...)).((((.((.(((((((((...........))).)))))))).).))). 22
-tRNA_tdbR00000564-Drosophila_melanogaster-7227-Tyr-QPA
-CCUUCGAUAGCUCAGUUGGUAGAGCGGUGGACUGUAGAUCCAUAGGUCGCUGGUUCAAAUCCGGCUCGAAGGACCA 29.17 100.0
-FFT -23.899999618530273 CON -25.600000381469727 DIFF 1.7000007629394531 TRUE -25.600000381469727
-fft  (((((((.......(((((..((((((((..((((......))))..))))).)))....)))))))))))).... 24
-con  (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-tRNA_tdbR00000371-Saccharomyces_cerevisiae-4932-Arg-1CU
-GCUUGCGUGGCGUAAUGGCAACGCGUCUGACUUCUAAUCAGAAGAUUAUGGGUUCGACCCCCAUCGUGAGUCCCA 0.0 42.31
-FFT -17.799999237060547 CON -19.899999618530273 DIFF 2.1000003814697266 TRUE -19.899999618530273
-fft  ...(((((.((......)).))))).....(((((....)))))....(((((((.((.......))))).)))) 21
-con  (((((((((((((.......))))(((.(((((.(((((....))))).))))).)))...)).))))))).... 26
-true (((((((((((((.......))))(((.(((((.(((((....))))).))))).)))...)).))))))).... 21
-tRNA_tdbR00000418-Nicotiana_rustica-4093-Ser-IGA
-GUGGACGUGCCGGAGUGGUUAUCGGGCAUGACUAGAAAUCAUGUGGGCUUUGCCCGCGCAGGUUCGAAUCCUGCCGUCCACGCCA 58.33 66.67
-FFT -35.400001525878906 CON -37.099998474121094 DIFF 1.6999969482421875 TRUE -37.29999923706055
-fft  (((((((((((.((.......)).))))))............((((((...))))))(((((.......)))))..))))).... 24
-con  (((((((((((.((.......)).))))..............((((((...))))))(((((.......)))))))))))).... 24
-true (((((((.(((.((.......)).)))((((.......))))((((((...))))))(((((.......)))))))))))).... 22
-tRNA_tdbR00000366-Rattus_norvegicus-10116-Arg-UCG
-AUGGUAAUUAGUUUAAAUAAAAUUAAUGAUUUCGACUCAUUAGAUUAUGAUAAUAAUCAUAAUUACCAACCA 68.0 61.9
-FFT -13.0 CON -13.899999618530273 DIFF 0.8999996185302734 TRUE -13.899999618530273
-fft  .(((((((((((((.....))))((((((.......))))))((((((....)))))).))))))))).... 25
-con  .(((((((((.............((((((.......))))))((((((....)))))).))))))))).... 21
-true .(((((((((.............((((((.......))))))((((((....)))))).))))))))).... 22
-tRNA_tdbR00000006-Mycoplasma_mycoides-2102-Ala-UGC
-GGGCCCUUAGCUCAGCUGGGAGAGCACCUGCCUUGCACGCAGGGGGUCGACGGUUCGAUCCCGUUAGGGUCCACCA 69.57 65.22
-FFT -34.0 CON -34.5 DIFF 0.5 TRUE -34.900001525878906
-fft  (((((((..((((........)))).(((((.......)))))(((((((....)))))))....))))))).... 23
-con  (((((((..((((........))))..((((.......))))((((((((....))))))))...))))))).... 23
-true (((((((.(((...((((.(((.((....))))).)).))..((((((((....)))))))))))))))))).... 21
-tRNA_tdbR00000065-Bacillus_subtilis-1423-Phe-AA
-GGCUCGGUAGCUCAGUUGGUAGAGCAACGGACUGAAAAUCCGUGUGUCGGCGGUUCGAUUCCGUCCCGAGCCACCA 45.83 100.0
-FFT -30.100000381469727 CON -30.700000762939453 DIFF 0.6000003814697266 TRUE -30.700000762939453
-fft  (((((((..((((........)))).(((((.((((...((((......))))))))..))))).))))))).... 24
-con  (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-tRNA_tdbR00000333-Escherichia_coli-562-Gln-NUG
-UGGGGUAUCGCCAAGCGGUAAGGCACCGGUUUUUGAUACCGGCAUUCCCUGGUUCGAAUCCAGGUACCCCAGCCA 95.0 100.0
-FFT -26.799999237060547 CON -28.100000381469727 DIFF 1.3000011444091797 TRUE -28.100000381469727
-fft  ((((((((.(((.........))).(((((.......)))))......((((.......)))))))))))).... 20
-con  (((((((..(((.........))).(((((.......))))).....(((((.......)))))))))))).... 20
-true (((((((..(((.........))).(((((.......))))).....(((((.......)))))))))))).... 20
-tRNA_tdbR00000408-Saccharomyces_cerevisiae-4932-Ser-IGA
-GGCAACUUGGCCGAGUGGUUAAGGCGAAAGAUUAGAAAUCUUUUGGGCUUUGCCCGCGCAGGUUCGAGUCCUGCAGUUGUCGCCA 33.33 62.07
-FFT -28.100000381469727 CON -29.799999237060547 DIFF 1.6999988555908203 TRUE -31.0
-fft  ......((((((....))))))(((((((((((...)))))).(((((...))))).(((((.......))))).....))))). 27
-con  (((((((.......((((.(((((((((((((.....)))))))..)))))).))))(((((.......)))))))))))).... 29
-true (((..(((((((....)))))))..((((((((...))))))))((((...))))..(((((.......))))).......))). 21
-tRNA_tdbR00000567-Homo_sapiens-9606-Tyr-9PA
-CCUUCGAUAGCUCAGUUGGUAGAGCGGAGGACUGUAGAUCCUUAGGUCGCUGGUUCGAUUCCGGCUCGAAGGACCA 48.0 100.0
-FFT -24.5 CON -25.5 DIFF 1.0 TRUE -26.100000381469727
-fft  (((((((..(((.((((((...(((((((((.......)))))....))))...))))))..)))))))))).... 25
-con  (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((........))))....((((..((...))..))))(((((.......)))))))))))).... 21
-tRNA_tdbR00000007-Bacillus_subtilis-1423-Ala-5GC
-GGAGCCUUAGCUCAGCUGGGAGAGCGCCUGCUUUGCACGCAGGAGGUCAGCGGUUCGAUCCCGCUAGGCUCCACCA 63.64 100.0
-FFT -29.700000762939453 CON -32.0 DIFF 2.299999237060547 TRUE -32.79999923706055
-fft  (((((((.(((...(((((.......(((((.......)))))...)))))((......)).)))))))))).... 22
-con  (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((.((((((((((...((.(.(((((.......))))).).))..))))).))....)))))))))).... 21
-tRNA_tdbR00000436-Bacillus_subtilis-1423-Thr-5GU
-GCCGGUGUAGCUCAAUUGGUAGAGCAACUGACUUGUAAUCAGUAGGUUGGGGGUUCAAGUCCUCUUGCCGGCACCA 45.45 63.64
-FFT -24.100000381469727 CON -25.200000762939453 DIFF 1.1000003814697266 TRUE -25.200000762939453
-fft  ((((((((.((((........)))).)).((((((.((((...........)))))))))).....)))))).... 22
-con  ...(((((.((((........)))).(((((.......))))).(((.(((((.......))))).))).))))). 22
-true ...(((((.((((........)))).(((((.......))))).(((.(((((.......))))).))).))))). 21
-tRNA_tdbR00000610-Caulobacter_crescentus_CB15-190650-His-GUG
-GCCGGCUUAGCUCAGUUGGUUAGAGCGCUAGAUUGUGGAUCUAGAGGUCCUCGGUUCGAGCCCGAGAGCUGGUACCA 42.86 44.0
-FFT -26.0 CON -27.299999237060547 DIFF 1.2999992370605469 TRUE -27.299999237060547
-fft  ((((((((.((((((((((...((.(.(((((((...))))))).).)).)))))).))))....)))))))).... 28
-con  ((((((((.((((.........))))(((.(((((.(((((....))))).)))))..)))....)))))))).... 25
-true ((((((((.((((.........))))(((.(((((.(((((....))))).)))))..)))....)))))))).... 21
-srp_Legi.pneu._CR628336
-UUAUUGGUUUCUCGCAGCAGAAUUCAGCUUACUUAGUCAGGGCCGGAAGGAAGCAGCUUGGGUUGAAUUUCUGGGUGCCGGGAGUCGCUGGUAAUACC 57.69 81.25
-FFT -23.100000381469727 CON -25.200000762939453 DIFF 2.1000003814697266 TRUE -28.399999618530273
-fft  ..............(((..((((((((((((...(((.....((....)).....))))))))))))))))))..((((((......))))))..... 26
-con  ((((((((..((((((.(((((((((((((....(((.....((....)).....))).)))))))).)))))..)))...)))..)))))))).... 32
-true ((((((((((((((((.((((((((((((((...(((.....((....)).....)))))))))))).)))))..)).))))))..)))))))).... 32
-tRNA_tdbR00000023-Haloferax_volcanii-2246-Asp-GUC
-GCCCGGGUGGUGUAGUGGCCCAUCAUACGACCCUGUCACGGUCGUGACGCGGGUUCAAAUCCCGCCUCGGGCGCCA 54.17 61.9
-FFT -33.900001525878906 CON -34.70000076293945 DIFF 0.7999992370605469 TRUE -36.79999923706055
-fft  ((((((((((.((...(((((....(((((((.......)))))))....)))))...)).)))))).)))).... 24
-con  ((((((((((......(((((.....((((((.......)))))).....)))))......))))).))))).... 21
-true ((((((((((.(...((((((....(((((((.......)))))))....))).)))...)))))).))))).... 21
-srp_Burk.pseu._CP000570
-CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCUGCCAGUGCCG 0.0 0.0
-FFT -22.100000381469727 CON -25.100000381469727 DIFF 3.0 TRUE -25.799999237060547
-fft  ((((((.((((((...)))))).)))....(((((......((((((((...........)))))))).)))))..))) 25
-con  ...(((.((((((...)))))).)))......((((.(((.((((((((...........)))))))).))).).))). 24
-true .(((((.((((((...)))))).)))...)).((((.(((.((((((((...........)))))))).))).).))). 22
-tRNA_tdbR00000370-Saccharomyces_cerevisiae-4932-Arg-1CU
-GCUCGCGUGGCGUAAUGGCAACGCGUCUGACUUCUAAUCAGAAGAUUAUGGGUUCGACCCCCAUCGUGAGUGCCA 100.0 42.31
-FFT -20.799999237060547 CON -23.299999237060547 DIFF 2.5 TRUE -23.299999237060547
-fft  (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-con  (((((((((((((.......))))(((.(((((.(((((....))))).))))).)))...)).))))))).... 26
-true (((((((((((((.......))))(((.(((((.(((((....))))).))))).)))...)).))))))).... 21
-tRNA_tdbR00000550-Neurospora_crassa-5141-Tyr-GUA
-AGGAGGGUUCCGUUUGUUGGUAUGACGGGUUAAGCUGUAAACUUAAUGACUAAUUAGUCGUCGAAGGUUCAAUUCCUUUCUCUCCUACCA 71.43 81.48
-FFT -22.5 CON -23.0 DIFF 0.5 TRUE -23.0
-fft  (((((((.((((((.........)))))).((((.......))))((((((....)))))).(((((.......)))))))))))).... 28
-con  (((((((..(((((.........)))))((((((.......))))))((((....))))...(((((.......)))))))))))).... 27
-true (((((((..(((((.........)))))((((((.......))))))((((....))))...(((((.......)))))))))))).... 22
-srp_Proc.mari._BX572096
-GACUCGGACCCAUGCGGCCGCGACGCCUAAAUCUGGUCAGGACCGGAAGGGAGCAGCCACACGGGAUGCUCGUGACAGGCGUGGACUCCGGGUCACC 46.67 41.18
-FFT -42.0 CON -44.70000076293945 DIFF 2.700000762939453 TRUE -44.70000076293945
-fft  ((((((((.(((((((((......)))....((((((....))))))...(((((.((.....)).))))).......))))))..))))))))... 30
-con  ((((((((.(((((((((.((....(((...((((((....)))))))))..)).))).((((((...))))))....))))))..))))))))... 34
-true ((((((((.(((((((((.((....(((...((((((....)))))))))..)).))).((((((...))))))....))))))..))))))))... 31
-srp_Xant.camp._AE012197
-CCGUCGGUCCCUCGCGACGCUAGAUCGAAAAUCCCGCCAGGGCCGGAAGGCAGCAACGGUAUCGAUUGAUGCGGGCGCCGAGGUCAACCGGCGGGGGC 0.0 93.33
-FFT -38.0 CON -43.29999923706055 DIFF 5.299999237060547 TRUE -43.29999923706055
-fft  .(((((........)))))............(((((((..((((....(((.((....(((((....)))))..)))))..))))....))))))).. 26
-con  ((((((((.(((((((.(((..((((((.....(((.....(((....))).....)))..))))))...)))..))).))))...)))))))).... 30
-true ((((((((.(((((((.(((..((((((.....(((.....(((....))).....)))..))))))...)))..)).)))))...)))))))).... 29
-tRNA_tdbR00000147-Drosophila_melanogaster-7227-His-GUG
-GGCCGUGAUCGUCUAGUGGUUAGGACCCCACGUUGUGGCCGUGGUAACCCAGGUUCGAAUCCUGGUCACGGCACCA 48.0 48.0
-FFT -28.899999618530273 CON -29.100000381469727 DIFF 0.20000076293945312 TRUE -29.100000381469727
-fft  .(((((((((....((.((((.((((((((((.......))))).......))))).))))))))))))))).... 25
-con  .(((((((....((((.((((.((((((((((.......))))).......))))).))))))))))))))).... 25
-true .(((((((....((((.((((.((((((((((.......))))).......))))).))))))))))))))).... 21
-tRNA_tdbR00000214-Haloferax_volcanii-2246-Leu-UAA
-GCGGGGGUGGCUGAGCCAGGCCAAAAGCGGCGGACUUAAGAUCCGCUCCCGUAGGGGUUCGCGAGUUCGAAUCUCGUCCCCCGCACCA 17.86 50.0
-FFT -38.599998474121094 CON -38.900001525878906 DIFF 0.3000030517578125 TRUE -40.29999923706055
-fft  ((((((((((.((((((..(((......))))).))))....)))))))))).((((...(((((.......))))).))))...... 28
-con  ((((((((((((......))))).....((((((.......))))))......((((((((......))))))))..))))))).... 26
-true ((((((((((((......))))).....((((((.......))))))(((....)))...(((((.......)))))))))))).... 21
-tRNA_tdbR00000275-Thermus_thermophilus-274-Met-CAU
-CGCGGGGUGGAGCAGCCUGGUAGCUCGUCGGGCUCAUAACCCGAAGGUCGCGGGUUCAAAUCCCGCCCCCGCAACCA 47.83 100.0
-FFT -31.600000381469727 CON -33.0 DIFF 1.3999996185302734 TRUE -33.0
-fft  .(((((((((...((((((..(.((..(((((.......))))))).)..))))))......))))))).))..... 23
-con  .((((((..((((.........)))).(((((.......))))).....(((((.......)))))))))))..... 20
-true .((((((..((((.........)))).(((((.......))))).....(((((.......)))))))))))..... 20
-tRNA_tdbR00000225-Synechococcus_elongatus_PCC_6301-269084-Leu-CAA
-GGGCAAGUGGCGGAAUUGGUAGACGCAGCAGACUCAAAAUCUGCCGCUAGCGAUAGUGUGUGGGUUCGAGUCCCACCUUGCCCACCA 37.04 37.04
-FFT -29.200000762939453 CON -31.899999618530273 DIFF 2.6999988555908203 TRUE -32.900001525878906
-fft  ((((((((((((((.(((((.(......)..)).)))..))))))))).((....))..(((((.......)))))..))))).... 27
-con  (((((((..(((...........)))....(((((..((((((((((((....))))).))))))).)))))....))))))).... 27
-true ((((((((((((...........)))....(((((..((((((((((((....))))).))))))).))))).)).))))))).... 20
-tRNA_tdbR00000291-Halobacterium_salinarum-2242-Asn-GUU
-GCCGCCAUAGCUCAGUUGGUAGAGCACGUGGUUGUUACCCACGUUGUCCCAGGUUCGGACCCUGGUGGCGGCGAAC 78.26 100.0
-FFT -29.799999237060547 CON -33.5 DIFF 3.700000762939453 TRUE -33.5
-fft  (((((((..(((.....))).((..((((((.......))))))..))(((((.......)))))))))))).... 23
-con  (((((((..((((........))))((((((.......))))))....(((((.......)))))))))))).... 22
-true (((((((..((((........))))((((((.......))))))....(((((.......)))))))))))).... 22
-tRNA_tdbR00000084-Saccharomyces_cerevisiae-4932-Phe-AA
-GCGGACUUAGCUCAGUUGGGAGAGCGCCAGACUGAAGAUCUGGAGGUCCUGUGUUCGAUCCACAGAGUUCGCACCA 50.0 100.0
-FFT -24.399999618530273 CON -24.700000762939453 DIFF 0.3000011444091797 TRUE -24.700000762939453
-fft  (((((((....((((((.((......)).)))))).((((....))))(((((.......)))))))))))).... 24
-con  (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-srp_Bifi.long._AE014295
-GGAUCCCGUGCGGCGUUUAUCUUGUGAACUCCCCCAGGGCAGGAAUGCAGCAAGGGUCAGCGAGCUCUGACGGGUGCGCGGGAUCCCCU 37.93 92.59
-FFT -37.099998474121094 CON -39.599998474121094 DIFF 2.5 TRUE -39.599998474121094
-fft  ((((((((((((.(.....((((((...(((((...))).)).......))))))(((((......))))).).))))))))))))... 29
-con  ((((((((((((.((((...(((((.....(((.....(((....))).....)))...)))))....))))..))))))))))))... 27
-true ((((((((((((.((((...(((((.....(((.....(((....))).....)))...)))))....))))..))))))))))))... 26
-tRNA_tdbR00000528-Pichia_jadinii-4903-Ini-CAU
-AGCGUCUUGGCGCAGUGGAAGCGCGCAGGGCUCAUAACCCUGAUGUCCCUGGAUCGAAACCAGGAGACGCUACCA 95.24 100.0
-FFT -28.299999237060547 CON -30.200000762939453 DIFF 1.9000015258789062 TRUE -30.200000762939453
-fft  ((((((((.((((.......)))).(((((.......)))))......((((.......)))))))))))).... 21
-con  (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-srp_Neis.meni._AL157959
-GCGGGUCUCCCCGCAUGGCAAAUCGGAACACCGGGUCAGGGGCGGAAGCCAGCAGCCCACUCCGAUGCGCCAGUGCCGGGGGUUUGGCCCGC 0.0 93.55
-FFT -35.5 CON -48.400001525878906 DIFF 12.900001525878906 TRUE -50.29999923706055
-fft  (((((....))))).................((((((((((((...........)))).(((((.(((....))).)))))..)))))))). 25
-con  (((((((.(((((((((((..((((((.....((((....(((....)))....))))..))))))..))).))))..))))...))))))) 31
-true (((((((((((((((((((..((((((.....((((....(((....)))....))))..))))))..)))).)).))))))...))))))) 31
-tRNA_tdbR00000297-Azospirillum_lipoferum-193-Asn-QUU
-UUCACAGUCGCUCAGUGGUAGAGCUAUCGGCUGUUAACCGAUCGAUCGUAGGUUCGAGUCCUACCUGUGAAUCCA 45.0 100.0
-FFT -17.5 CON -21.899999618530273 DIFF 4.399999618530273 TRUE -21.899999618530273
-fft  ...((((((((((.......))))....)))))).....(((((...(((((.......)))))...))).)).. 20
-con  (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-srp_Bifi.adol._AP009256
-CGAAGGAUCCCGUGCGGCGUUUAUCUUGUGAACUCCCCCAGGGCAGGAAUGCAGCAAGGGUCAGCGAGCUCUGACGGGUGCGCGGGAUCCCCUAAAAC 37.93 92.59
-FFT -37.29999923706055 CON -39.79999923706055 DIFF 2.5 TRUE -39.79999923706055
-fft  ....((((((((((((.(.....((((((...(((((...))).)).......))))))(((((......))))).).))))))))))))........ 29
-con  ....((((((((((((.((((...(((((.....(((.....(((....))).....)))...)))))....))))..))))))))))))........ 27
-true ....((((((((((((.((((...(((((.....(((.....(((....))).....)))...)))))....))))..))))))))))))........ 27
-tRNA_tdbR00000457-Geobacillus_stearothermophilus-1422-Val-GAC
-GAUUCCGUAGCUCAGCUGGGAGAGCGCCACCUUGACAGGGUGGAGGUCGCUGGUUCGAGCCCAGUCGGAAUCACCA 26.92 46.15
-FFT -31.399999618530273 CON -34.29999923706055 DIFF 2.8999996185302734 TRUE -34.5
-fft  (((((((.......((((((.((((((.(((((.((...)).))))).))..))))...))))))))))))).... 26
-con  (((((((..((((((((((..((.(.((((((.....)))))).).)).)))))).)))).....))))))).... 26
-true (((((((..((((((((((..((.(.(((((((...))))))).).)).)))))).)))).....))))))).... 21
-tRNA_tdbR00000069-Synechococcus_sp._PCC_7002-32049-Phe-GAA
-GCCAGGAUAGCUCAGUUGGUAGAGCAGAGGACUGAAAAUCCUCGUGUCGGCGGUUCAAUUCCGCCUCCCGGCACCA 73.68 100.0
-FFT -24.899999618530273 CON -28.700000762939453 DIFF 3.8000011444091797 TRUE -28.700000762939453
-fft  .........((((........)))).(((((.......)))))((((((((((.......)))))....))))).. 19
-con  (((.(((..((((........)))).(((((.......))))).....(((((.......)))))))).))).... 20
-true (((.(((..((((........)))).(((((.......))))).....(((((.......)))))))).))).... 20
-tRNA_tdbR00000542-Mycoplasma_capricolum-2095-Tyr-GUA
-GGAGGGGUAGCGAAGUGGCUAAACGCGGGUGGCUGUAACCCACUUCCUUACGGUUCGGGGGUUCGAAUCCCUCCCCCUCCACCA 48.0 42.31
-FFT -33.0 CON -33.099998474121094 DIFF 0.09999847412109375 TRUE -33.099998474121094
-fft  (((((((.((.(((((((......((((....))))...)))))))))........(((((.......)))))))))))).... 25
-con  ((((((((((.(((((((......((((....))))...))))))).)))).....(((((.......))))).)))))).... 26
-true ((((((((((.(((((((......((((....))))...))))))).)))).....(((((.......))))).)))))).... 21
-tRNA_tdbR00000043-Haloferax_volcanii-2246-Glu-NUC
-GCUCGGUUGGUGUAGUCCGGCCAAUCAUCUUGGCCUUUCGAGCCGAGGACCAGGGUUCAAAUCCCUGACCGAGCACCA 33.33 54.55
-FFT -30.299999237060547 CON -30.5 DIFF 0.20000076293945312 TRUE -32.20000076293945
-fft  ((((((((((........((((((.....))))))....(((((.........)))))......)))))))))).... 21
-con  (((((((.......((((((((((.....))))))...........))))(((((.......)))))))))))).... 22
-true (((((((((((........)))).....(((((((....).))))))...(((((.......)))))))))))).... 21
-srp_Agro.tume._AE008984
-GGAGGUUGGUGGUGGACGAGCCACUCGCCAACCGGGUCAGGUCCGGAAGGAAGCAGCCCUAACGAGCCAGGCACGGGUCGCCGUGCCAGCCUCCCACC 32.26 23.33
-FFT -46.5 CON -47.29999923706055 DIFF 0.7999992370605469 TRUE -48.099998474121094
-fft  (((((((((((((((.....)))).))))))))((((....(((....)))....))))......((..(((((((....))))))).)).))).... 31
-con  ...((((((((((((.....)))).))))))))((((....(((....)))....))))....(((.(.(((((((....))))))).).)))..... 30
-true ((.((((((((((((.....)))).))))))))((((....(((....)))....))))....(((.(.(((((((....))))))).).)))))... 27
-tRNA_tdbR00000301-Lupinus_luteus-3873-Asn-UU
-GCCUCAGUAGCUCAGUGGUUAGAGCGGUCGGCUGUUAACCGAUAGGUCGUAGGUUCGAGCCCUACUUGGGGCGCCA 28.0 30.43
-FFT -25.5 CON -26.700000762939453 DIFF 1.2000007629394531 TRUE -27.0
-fft  ((((((((((.....((((((((((.....))).)))))))...(((((......))).)))))).)))))).... 25
-con  ((((((((((......((((.((((...(((((...........)))))...)))).))))))))).))))).... 23
-true ((((((((((......((((.((((...((((((((....)))).))))...)))).)))))))).)))))).... 21
-tRNA_tdbR00000341-Rattus_norvegicus-10116-Gln-CUG
-GGUUCCAUGGUGUAAUGGUUAGCACUCUGGACUCUGAAUCCAGCGAUCCGAGUUCAAAUCUCGGUGGAACCUCCA 45.83 95.45
-FFT -23.600000381469727 CON -24.700000762939453 DIFF 1.1000003814697266 TRUE -24.700000762939453
-fft  (((((((((((((........))))).(((((((.((.((....)))).))))))).......)))))))).... 24
-con  (((((((.(((((........)))))(((((.......)))))....(((((.......)))))))))))).... 22
-true (((((((.(((((........)))))(((((.......)))))....(((((.......)))))))))))).... 21
-tRNA_tdbR00000391-Escherichia_coli-562-Ser-GCU
-GGUGAGGUGGCCGAGAGGCUGAAGGCGCUCCCCUGCUAAGGGAGUAUGCGGUCAAAAGCUGCAUCCGGGGUUCGAAUCCCCGCCUCACCGCCA 55.17 54.84
-FFT -39.099998474121094 CON -41.599998474121094 DIFF 2.5 TRUE -43.900001525878906
-fft  ((((((((((((....))........((((((.......))))))(((((((.....)))))))...((((....)))))))))))))).... 29
-con  ((((((((((((....))))...((.((((((.......))))))(((((((.....)))))))))((((.......)))))))))))).... 31
-true ((((((((((((....))))......((((((.......))))))(((((((.....)))))))..((((.......)))))))))))).... 21
-tRNA_tdbR00000141-Salmonella_typhimurium-602-His-QUG
-GGUGGCUAUAGCUCAGUUGGUAGAGCCCUGGAUUGUGAUUCCAGUUGUCGUGGGUUCGAAUCCCAUUAGCCACCCCA 45.83 95.45
-FFT -27.700000762939453 CON -29.899999618530273 DIFF 2.1999988555908203 TRUE -29.899999618530273
-fft  ((((((((..((((........))))...(((((.(((.((((.......)))).))))))))...))))))))... 24
-con  ((((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))))... 22
-true ((((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))))... 21
-tRNA_tdbR00000338-Tetrahymena_thermophila-5911-Gln-JUA
-GGUUCCAUAGUAUAGUGGUUAGUACUGGGGACUUUAAAUCCCUUGACCUGGGUUCGAAUCCCAGUGGGACCUCCA 44.0 95.45
-FFT -22.899999618530273 CON -24.200000762939453 DIFF 1.3000011444091797 TRUE -24.200000762939453
-fft  (((((((((((((........))))).((((.(((.(((((........))))).))))))).)))))))).... 25
-con  (((((((.(((((........)))))(((((.......)))))....(((((.......)))))))))))).... 22
-true ((((((((........(((((.....(((((.......))))))))))((((.......)))))))))))).... 21
-tRNA_tdbR00000440-Neurospora_crassa-5141-Thr-UGU
-GCCUGGUUAGCAUAAAAGUAAUGCAAUUGUUUUGUAAUCAAUAGAAGCAAGUGCGAUACUUGCACUGGGCUCCA 66.67 28.0
-FFT -18.600000381469727 CON -22.299999237060547 DIFF 3.6999988555908203 TRUE -23.0
-fft  (((((((..((((.......)))).....((((((.....))))))(((((((...)))))))))))))).... 24
-con  (((((((..((....(((((.((((.(((((((..........))))))).)))).)))))))))))))).... 25
-true (((((((..(((....((((.((((.(((((((..........))))))).)))).)))))))))))))).... 20
-srp_Trep.pall._AE001187
-CCCGGGGCCUAUGCAAAAAAGGUUUUUCGAACCCCGUCAGAUCCGGAAGGAAGCAGCGGUAGAUUAAUUCUUUUUGUGCCGUAGUGUUCCCGGGUUUU 0.0 62.96
-FFT -27.299999237060547 CON -29.700000762939453 DIFF 2.4000015258789062 TRUE -32.20000076293945
-fft  ..((((((((.........))).........)))))..((((((((..(((.((.((((((.(...........).)))))).)).))))))))))). 28
-con  (((((((.(((((((.((((((...........((((....(((....)))....))))..........)))))).))).))))...))))))).... 27
-true ((((((((((((((((((((((((..((.....((((....(((....)))....))))..))..)).))))))).)).))))).).))))))).... 30
-tRNA_tdbR00000122-Codium_fragile-3133-Gly-UCC
-GCAGUACUGGUGUAAUGGUUAGCGCCUUAGAUUUCCAAUCUAAAGGUAGGGGUUCGAUUCCCCUGUACUGCUCCA 77.27 91.3
-FFT -24.200000762939453 CON -26.600000381469727 DIFF 2.3999996185302734 TRUE -27.100000381469727
-fft  (((((((................((((((((((...))))).)))))(((((.......)))))))))))).... 22
-con  (((((((.(((((........)))))((((((.....))))))....(((((.......)))))))))))).... 23
-true (((((((.(((((........)))))(((((((...)))))))....(((((.......)))))))))))).... 21
-tRNA_tdbR00000008-Escherichia_coli-562-Ala-GGC
-GGGGCUAUAGCUCAGCUGGGAGAGCGCUUGCAUGGCAUGCAAGAGGUCAGCGGUUCGAUCCCGCUUAGCUCCACCA 58.33 95.45
-FFT -25.899999618530273 CON -27.899999618530273 DIFF 2.0 TRUE -29.0
-fft  (((((((.(((...(((((.......(((((((...)))))))...)))))((......)).)))))))))).... 24
-con  (((((((..((((........)))).((((((.....)))))).....(((((.......)))))))))))).... 22
-true (((((((.((((((((((...((.(.(((((((...))))))).).))..))))).))....)))))))))).... 21
-tRNA_tdbR00000494-Saccharomyces_cerevisiae-4932-Trp-BCA
-GAAGCGGUGGCUCAAUGGUAGAGCUUUCGACUCCAAAUCGAAGGGUUGCAGGUUCAAUUCCUGUCCGUUUCACCA 72.73 95.45
-FFT -21.899999618530273 CON -22.600000381469727 DIFF 0.7000007629394531 TRUE -22.700000762939453
-fft  (((((((.(((((.......)))))...(((((.........)))))(((((.......)))))))))))).... 22
-con  (((((((.(((((.......)))))(((((.......))))).....(((((.......)))))))))))).... 22
-true (((((((.(((((.......)))))..((((.((........))))))((((.......)))).))))))).... 22
-tRNA_tdbR00000381-Haloferax_volcanii-2246-Ser-GCU
-GUUGCGGUAGCCAAGCCUGGCCCAAGGCGCUGGGUUGCUAACUCAGUGGCGUCAAGCCCCCGGGGUUCGAAUCCCCGCCGCAACGCCA 18.52 42.86
-FFT -34.79999923706055 CON -36.29999923706055 DIFF 1.5 TRUE -39.20000076293945
-fft  (((..(((((((..((((......))))....))))))))))....((((((...((...(((((.......)))))..)).)))))) 27
-con  (((((((((((..((((((((.......)))))))))))).....(.(((.....))).)(((((.......)))))))))))).... 28
-true ((((((((......((((......))))((((((((...))))))))(((.....)))...((((.......)))))))))))).... 21
-tRNA_tdbR00000497-Bos_taurus-9913-Trp-BCA
-GACCUCGUGGCGCAAUGGUAGCGCGUCUGACUCCAGAUCAGAAGGUUGCGUGUUCGAAUCACGUCGGGGUCACCA 35.0 100.0
-FFT -23.200000762939453 CON -25.100000381469727 DIFF 1.8999996185302734 TRUE -25.700000762939453
-fft  (((((((..(((((((.....(..(((((....)))))..)...))))))).............))))))).... 20
-con  (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((.......))))(((((....))))).........(((((.......)))))))))))).... 21
-srp_Heli.pylo._CP000241
-CUUUUAGACCUGUGCAAUGGGCCCUUGGAGCAAUGCUUCAGGGUGGGAACACAGCAGAGCCCUCCAGAGGUUCAUGUGCCGCAGGUAUCUGAAGGGGGG 66.67 77.78
-FFT -39.79999923706055 CON -40.900001525878906 DIFF 1.1000022888183594 TRUE -40.900001525878906
-fft  (((((((((((((((((((((((.((((((...((((.....(((....))))))).....)))))).))))))).)).)))))))..))))))).... 36
-con  (((((((((((((((((((((((.((((((....((((....(((....)))....)))).)))))).))))))).))).)))))..)))))))).... 36
-true (((((((((((((((((((((((.((((((....((((....(((....)))....)))).)))))).))))))).)).))))))..)))))))).... 33
-tRNA_tdbR00000267-Bos_taurus-9913-Leu-IAG
-GGUAGCGUGGCCGAGCGGUCUAAGGCGCUGGAUUAAGGCUCCAGUCUCUUCGGGGGCGUGGGUUCGAAUCCCACCGCUGCCACCA 44.83 39.29
-FFT -31.700000762939453 CON -32.0 DIFF 0.2999992370605469 TRUE -35.099998474121094
-fft  ((((((((((.(((((.((((((((.((((((.......)))))).))))...))))....)))))....))).))))))).... 29
-con  ......(((((..((((((((((((.((((((.......)))))).))))...))))(((((.......)))))))))))))).. 28
-true (((((((.((((....))))...((.(((.......))).)).(((((....)))))(((((.......)))))))))))).... 21
-tRNA_tdbR00000389-Bacillus_subtilis-1423-Ser-GGA
-GGAGAGCUGUCCGAGUGGUCGAAGGAGCACGAUUGGAAAUCGUGUAGGCGGUCAACUCCGUCUCAAGGGUUCGAAUCCCUUGCUCUCCGCCA 60.71 58.06
-FFT -30.299999237060547 CON -32.20000076293945 DIFF 1.9000015258789062 TRUE -37.29999923706055
-fft  (((((((.(.((....)).)((.(((((((((((...)))))))...........)))).))..(((((.......)))))))))))).... 28
-con  (((((((.(.(.(((((((((.....((((((((...))))))))...))))).)))).).)..(((((.......)))))))))))).... 31
-true (((((((....(((....))).....((((((((...))))))))((((((......)))))).(((((.......)))))))))))).... 21
-tRNA_tdbR00000386-Mycoplasma_mycoides-2102-Ser-UGA
-GGAAGAUUACCCAAGUCCGGCUGAAGGGAUCGGUCUUGAAAACCGAGAGUCGGGGAAACCCGAGCGGGGGUUCGAAUCCCUCAUCUUCCGCCA 25.93 48.0
-FFT -30.700000762939453 CON -32.29999923706055 DIFF 1.5999984741210938 TRUE -34.900001525878906
-fft  (((((((...((......))....((((((.....(((((..((.....(((((....)))))...))..))))))))))).))))))).... 27
-con  (((((((....((((.((((.........)))).))))...........(((((....)))))..(((((.......)))))))))))).... 25
-true (((((((....((((.((((((....)).)))).))))...........(((((....)))))..(((((.......)))))))))))).... 20
-srp_Vibr.harv._CP000789
-CUCUGGUCCUCUCGCAACAAUAGUUCGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCGAAUGACUUGUGUGCCGGGAUGUGGCUGGGGUCCC 0.0 100.0
-FFT -29.899999618530273 CON -30.600000381469727 DIFF 0.7000007629394531 TRUE -33.099998474121094
-fft  .(((((.(((.(((((((....))).))))........))).))))).(((..((((((((.......((....)).......))))))))...))). 28
-con  ((((((((.(((((..((((..((((((.....((((....(((....)))....))))..))))))...))))....)))))...)))))))).... 30
-true ((((((((((((((((((((..((((((.....((((....(((....)))....))))..))))))...)))).)).))))).).)))))))).... 31
-tRNA_tdbR00000373-Triticum_aestivum-4565-Arg-ICG
-GACUCCGUGGCCCAAUGGAUAAGGCGCUGGUCUACGAAACCAGAGAUUCUGGGUUCGAUCCCCAGCGGAGUCGCCA 13.64 40.91
-FFT -26.799999237060547 CON -29.700000762939453 DIFF 2.9000015258789062 TRUE -30.700000762939453
-fft  ((((((((......))))).....((((((....(((..(((((...)))))..)))....))))))..))).... 22
-con  ((((((...(((..........)))(((((....((((.((((.....)))).))))....))))))))))).... 22
-true ((((((...(((..........)))(((((....(((..(((((...)))))..)))....))))))))))).... 20
-tRNA_tdbR00000496-Nicotiana_tabacum-4097-Trp-BCA
-GGAUCCGUGGCGCAAUGGUAGCGCGUCUGACUCCAGAUCAGAAGGUUGCGUGUUCGAUUCACGUCGGGUUCACCA 35.0 100.0
-FFT -20.700000762939453 CON -22.600000381469727 DIFF 1.8999996185302734 TRUE -23.200000762939453
-fft  (((((((..(((((((.....(..(((((....)))))..)...))))))).............))))))).... 20
-con  (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((.......))))(((((....))))).........(((((.......)))))))))))).... 21
-tRNA_tdbR00000437-Escherichia_coli-562-Thr-GGU
-GCUGAUAUAGCUCAGUUGGUAGAGCGCACCCUUGGUAAGGGUGAGGUCGGCAGUUCGAAUCUGCCUAUCAGCACCA 50.0 95.45
-FFT -24.399999618530273 CON -30.700000762939453 DIFF 6.30000114440918 TRUE -31.200000762939453
-fft  (((((((..........((((((.(.(((((((...))))))).).(((......))).))))))))))))).... 24
-con  (((((((..((((........)))).((((((.....)))))).....(((((.......)))))))))))).... 22
-true (((((((..((((........)))).(((((((...))))))).....(((((.......)))))))))))).... 21
-tRNA_tdbR00000541-Haloferax_volcanii-2246-Tyr-GUA
-CCGCUCUUAGCUCAGCCUGGCAGAGCAGCCGACUGUAGAUCGGCUUGUCCCCCGUUCAAAUCGGGGAGAGCGGACCA 78.26 91.67
-FFT -32.400001525878906 CON -35.0 DIFF 2.5999984741210938 TRUE -35.0
-fft  (((((((..(((......))).((..((((((.......))))))..))(((((.......)))))))))))).... 23
-con  (((((((..((((.((...)).))))((((((.......))))))....(((((.......)))))))))))).... 24
-true (((((((..((((.((...)).))))((((((.......))))))....(((((.......)))))))))))).... 22
-tRNA_tdbR00000605-Lupinus_luteus-3873-Leu-CAG
-GUCAGGAUGGCCGAGUGGUCUAAGGCGCCAGUUUCAGGUACUGGUCUCGAACCGGGCAUGGGUUCGAAUCCCAUUCUUGACACCA 50.0 60.0
-FFT -30.200000762939453 CON -30.299999237060547 DIFF 0.09999847412109375 TRUE -30.899999618530273
-fft  (((((((.((((....))))......((((((.......)))))).(((((((.......))))))).......))))))).... 24
-con  (((((((..(((.((....))..)))((((((.......)))))).(((((((.......))))))).......))))))).... 25
-true ((((((((((((.((....))..)))((((((.......)))))).(((((((.......)))))))....)).))))))).... 20
-tRNA_tdbR00000579-Aeropyrum_pernix-56636-Pro-CGG
-GGGCCCGUCGUCUAGCCUGGCUAAGAUGCGGGGUACGGGACCCCGUGGUCCGGGGUUCAAAUCCCCGCGGGCCCACCA 30.77 39.29
-FFT -40.5 CON -45.70000076293945 DIFF 5.200000762939453 TRUE -45.900001525878906
-fft  (((((.....((((((...)))).))(((((((....((((((((.....))))))))....)))))))))))).... 26
-con  (((((((.((((((((...))).)))))(((((....((((((((.....))))))))....)))))))))))).... 28
-true ((((((...(((((((...))).))))((((((....((((((((.....))))))))....)))))))))))).... 21
-tRNA_tdbR00000292-Haloferax_volcanii-2246-Asn-GUU
-GCCGCCGUAGCUCAGUUGGUAGAGCACCUCGCUGUUAACGAGGUUGUCCCAGGUUCGAGUCCUGGCGGUGGCGCCA 52.0 100.0
-FFT -31.799999237060547 CON -33.5 DIFF 1.7000007629394531 TRUE -33.5
-fft  ((((((((.(((((.((((..((..((((((.......))))))..)))))).)..))))....)))))))).... 25
-con  (((((((..((((........))))((((((.......))))))....(((((.......)))))))))))).... 22
-true (((((((..((((........))))((((((.......))))))....(((((.......)))))))))))).... 22
-tRNA_tdbR00000221-Escherichia_coli-562-Leu-CAG
-GCGAAGGUGGCGGAAUUGGUAGACGCGCUAGCUUCAGGUGUUAGUGUCCUUACGGACGUGGGGGUUCAAGUCCCCCCCCUCGCACCA 42.31 19.23
-FFT -28.899999618530273 CON -33.29999923706055 DIFF 4.399999618530273 TRUE -33.599998474121094
-fft  .....(((.((((..((.((((..((((((((.......))))))))..)))).))...(((((.......)))))...))))))). 26
-con  ..((((.(((((.............))))).)))).(((((.((.((((....))))(.(((((.......))))).))).))))). 26
-true ..((((.(((((.............))))).)))).(((((.((.((((....))))..(((((.......)))))..)).))))). 20
-srp_Anae.sp.._CP000769
-GGCCCCUCAUGUGGCGUCAUCCUGUUGAACUCCCCCAGGACCGGAAGGUAGCAAGGGUAGAUGGGCUCUGGCGGGUGCAUGAGGGGUC 30.77 83.33
-FFT -33.20000076293945 CON -40.70000076293945 DIFF 7.5 TRUE -40.70000076293945
-fft  (((((((((((((...(((......)))...((((((((.((.....................)).))))).)))))))))))))))) 26
-con  (((((((((((((.(((((.((((((.....(((.....(((....))).....)))..))))))...)))))..))))))))))))) 30
-true (((((((((((((.(((((.((((((.....(((.....(((....))).....)))..))))))...)))))..))))))))))))) 26
-tRNA_tdbR00000575-Leishmania_tarentolae-5689-Thr-CGU
-GGCCGCUUAGCACAGUGGCAGUGCACCACUCUCGUAAAGUGGGGGUCGCGAGUUCGAUUCUCGCAGUGGCCU 31.82 100.0
-FFT -27.899999618530273 CON -29.200000762939453 DIFF 1.3000011444091797 TRUE -29.200000762939453
-fft  (((((((......(((((.......)))))........((((((((((......))))))))))))))))). 22
-con  (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))). 21
-true (((((((..((((.......)))).(((((.......))))).....(((((.......)))))))))))). 21
-tRNA_tdbR00000332-Escherichia_coli-562-Gln-CUG
-UGGGGUAUCGCCAAGCGGUAAGGCACCGGAUUCUGAUUCCGGCAUUCCGAGGUUCGAAUCCUCGUACCCCAGCCA 41.67 100.0
-FFT -26.899999618530273 CON -28.0 DIFF 1.1000003814697266 TRUE -28.0
-fft  ((((((((.(((.........)))...((((((.((((.(((....))).)))).))))))..)))))))).... 24
-con  (((((((..(((.........))).(((((.......))))).....(((((.......)))))))))))).... 20
-true (((((((..(((.........))).(((((.......))))).....(((((.......)))))))))))).... 20
-tRNA_tdbR00000213-Haloferax_volcanii-2246-Leu-GAG
-GCGUGGGUAGCCAAGCCAGGCCAACGGCGCAGCGUUGAGGGCGCUGUCCUGUAGAGGUCCGCCGGUUCAAAUCCGGUCCCACGCACCA 48.0 66.67
-FFT -33.70000076293945 CON -39.0 DIFF 5.299999237060547 TRUE -39.099998474121094
-fft  (((((((..(((......)))...((((((((((((...))))))).(((....)))..))))).............))))))).... 25
-con  (((((((...........((((.((((.(((((((.....))))))).))))...)))).(((((.......)))))))))))).... 27
-true (((((((...........((((.((((.((((((((...)))))))).))))...)))).(((((.......)))))))))))).... 21
-tRNA_tdbR00000383-Haloferax_volcanii-2246-Ser-GGA
-GCCAGGAUGGCCGAGCGGUAAGGCGCACGCCUGGAAAGCGUGUUCCCUCUGGGAUCGGGGGUUCAAAUCCCUCUCCUGGCGCCA 33.33 64.0
-FFT -27.5 CON -32.599998474121094 DIFF 5.099998474121094 TRUE -36.79999923706055
-fft  .(((((.(((((.........))).))..)))))...(((........((((((..(((((.......)))))))))))))).. 24
-con  (((((((...((((.(((...((.((((((.......)))))).))..)))...))))(((.......)))..))))))).... 25
-true (((((((..(((.........)))((((((.......))))))((((...))))..(((((.......)))))))))))).... 21
-srp_Myco.smeg._CP000480
-GGACCCCGCGCGGCGUCUAUCCUGUGAACUCCCCCAGGGCCGGAAGGCAGCAAGGGUCAACGGGCUCUGUCGGGUGCGCGGGGUCCCC 38.46 84.62
-FFT -43.900001525878906 CON -45.29999923706055 DIFF 1.3999977111816406 TRUE -45.29999923706055
-fft  ((((((((((((..................(((.(((((((.(..(((.......)))..).)))))))..))))))))))))))).. 26
-con  ((((((((((((.((.(...(((((.....(((.....(((....))).....)))...)))))....).))..)))))))))))).. 26
-true ((((((((((((.((.(...(((((.....(((.....(((....))).....)))...)))))....).))..)))))))))))).. 23
-tRNA_tdbR00000614-Nanoarchaeum_equitans-160232-Ini-CAU
-CGCGGGGUGGGGCAGCCUGGAGUGCCCGGGGGGCUCAUAACCCCCAGGUCCCCGGUUCAAAUCCGGGCCCCGCGUCCA 0.0 95.45
-FFT -39.20000076293945 CON -43.70000076293945 DIFF 4.5 TRUE -43.70000076293945
-fft  ...((((((((...(((((((.((.(((((((.((..........)).)))))))..))..)))))))))))).))). 26
-con  (((((((..(((((........)))))(((((........))))).....(((((.......)))))))))))).... 22
-true (((((((..(((((........)))))(((((........))))).....(((((.......)))))))))))).... 21
-tRNA_tdbR00000320-Spinacia_oleracea-3562-Pro-NGG
-AGGGAUGUAGCGCAGCUUGGUAGCGCUUUUGUUUUGGAUACAAAAUGUCACGGGUUCAAAUCCUGUCAUCCCUACCA 66.67 69.57
-FFT -23.5 CON -24.0 DIFF 0.5 TRUE -24.0
-fft  (((((((.(((((.........)))))..(((((((....)))))))..(((((.......)))))))))))).... 24
-con  (((((((.(((((.........)))))...((((((....))))))...(((((.......)))))))))))).... 23
-true (((((((.(((((.........)))))...((((((....))))))...(((((.......)))))))))))).... 22
-tRNA_tdbR00000109-Haloferax_volcanii-2246-Gly-NCC
-GCACCGGUGGUCUAAUGGUAAGACAUUGGCCUUCCAAGCCAAUUAUCUGGGUUCGAUUCCCAGCCGGUGCACCA 60.0 100.0
-FFT -28.200000762939453 CON -29.200000762939453 DIFF 1.0 TRUE -29.200000762939453
-fft  (((((((.((.((((((......))))))))...............(((((.......)))))))))))).... 20
-con  (((((((..((((.......))))((((((.......))))))...(((((.......)))))))))))).... 22
-true (((((((..((((.......))))((((((.......))))))...(((((.......)))))))))))).... 22
-srp_Haem.infl._CP000671
-GGUCCCCCCGCGACGAGUCGCUGUGAACCCCGUCAGGCCCGGAAGGGAGCAGCGGCAGCAGCGAUCCUCGGGCGCCGGGGUGUGGCU 0.0 88.0
-FFT -36.400001525878906 CON -39.29999923706055 DIFF 2.8999977111816406 TRUE -42.0
-fft  .(((.......))).((((((.....((((((....(((((..((((.((.((....)).))..)))))))))..)))))))))))) 28
-con  ....((((.(((.(((((((((((.....((((....(((....)))....))))..)))))))..))))..))).))))....... 25
-true ((((((((((((.(((((((((((.....((((....(((....)))....))))..)))))))..))))..)).))))).).)))) 27
-tRNA_tdbR00000220-Escherichia_coli-562-Leu-HAA
-GCCCGGAUGGUGGAAUCGGUAGACACAAGGGAUUAAAAAUCCCUCGGCGUUCGCGCUGUGCGGGUUCAAGUCCCGCUCCGGGUACCA 37.04 76.92
-FFT -32.599998474121094 CON -36.099998474121094 DIFF 3.5 TRUE -36.599998474121094
-fft  (((((((..(((...........)))..((((((...((((((.(((((....))))).).)))))..))))))..))))))).... 27
-con  (((((((..(((...........))).((((((.....))))))(((((....))))).(((((.......)))))))))))).... 26
-true (((((((..(((...........))).(((((((...)))))))(((((....))))).(((((.......)))))))))))).... 20
-srp_Syne.spec._BX569693
-GACUCGGACCCAUGCGGUUCUGACGCCCAAAUCUGGUCAGGACCGGAAGGUAGCAGCCACACGGGAUGCUCAGGACAGGCGUGGACUCCGGGUCACC 48.28 100.0
-FFT -41.400001525878906 CON -43.599998474121094 DIFF 2.1999969482421875 TRUE -45.599998474121094
-fft  ((((((((.(((((((((((((((...........))))))))).......((((.((.....)).))))........))))))..))))))))... 29
-con  ((((((((.((((((.(((((((..(((.....((((....(((....)))....))))...)))....)))))))..))))))..))))))))... 31
-true ((((((((.((((((.((((((((((((...((((((....)))))).(((....)))....))).)).)))))))..))))))..))))))))... 33
-tRNA_tdbR00000508-Thermus_thermophilus-274-Ini-CAU
-CGCGGGGUGGAGCAGCCUGGUAGCUCGUCGGGCUCAUAACCCGAAGGUCGCCGGUUCAAAUCCGGCCCCCGCAACCA 38.1 100.0
-FFT -27.100000381469727 CON -33.0 DIFF 5.899999618530273 TRUE -33.70000076293945
-fft  .(((((((.....(((((((.......)))))))....))))...((..(((((.......))))).)))))..... 21
-con  .((((((..((((.........)))).(((((.......))))).....(((((.......)))))))))))..... 20
-true .((((((((((..((((.(((.(((..(((((.......))))).))).)))))))....))))..))))))..... 20
-tRNA_tdbR00000083-Saccharomyces_cerevisiae-4932-Phe-AA
-GCGGAUUUAGCUCAGUUGGGAGAGCGCCAGACUGAAGAUCUGGAGGUCCUGUGUUCGAUCCACAGAAUUCGCACCA 27.27 100.0
-FFT -22.100000381469727 CON -22.399999618530273 DIFF 0.2999992370605469 TRUE -22.399999618530273
-fft  ((((((.....((((((.((......)).))))))...((((..((((........))))..)))))))))).... 22
-con  (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-true (((((((..((((........)))).(((((.......))))).....(((((.......)))))))))))).... 21
-tRNA_tdbR00000325-Pichia_jadinii-4903-Pro-GG
-GGCCGCGUGGUCUAGUGGUAUGAUACUCGCUUUGGGUGUGAGUGGUCCAGGGUUCAAUUCCCUGCUCGGCCCCCA 68.18 55.0
-FFT -23.700000762939453 CON -25.399999618530273 DIFF 1.6999988555908203 TRUE -25.399999618530273
-fft  (((((.((((.....(((.....(((((((.......)))))))..)))(((......))))))).))))).... 22
-con  .(((((........))))).....((((((.......))))))(((((((((.......)))))...)))).... 20
-true .(((((........))))).....((((((.......))))))(((((((((.......)))))...)))).... 20
-tRNA_tdbR00000074-Tetrahymena_pyriformis-5908-Phe-GAA
-UGCUUAAGUAGCUCAGUGGUAGAGCGUCAGGCUGAAAACCUGAAGGUCAUUGGUCCGAUUCCAUUCUUAGGCACCA 95.0 45.83
-FFT -18.899999618530273 CON -20.5 DIFF 1.6000003814697266 TRUE -20.5
-fft  ((((((((..((((.......)))).(((((.......))))).......(((.......)))..))))))))... 20
-con  ((((((((..((((.......))))(((.((((((..(((....)))..)))))).)))......))))))))... 24
-true ((((((((..((((.......))))(((.((((((..(((....)))..)))))).)))......))))))))... 20
-#+end_example
 
+#+begin_src R :results output :session *compt*
+dat = read.table("./analysis.log")
+boxplot(dat$V2 -dat$V3 ~ dat$V4)
+#+end_src
+
+#+RESULTS:
 
 * compare loop contents
 
@@ -687,7 +233,7 @@ def get_loop_content(struct):
         return 0.0, 0.0, 0.0, 0.0, 0.0
 
 
-fft_pred = read_csv("./test_data/results_fft_3_scores.csv")
+fft_pred = read_csv("./test_data/results_fft_7_scores.csv")
 vrna_mfe = read_csv("./test_data/results_linear_scores.csv")
 targets = read_true_struct()
 
@@ -764,276 +310,336 @@ plt.show()
 
 #+RESULTS:
 #+begin_example
-CUCGGCCUUUCGCGGUUUUAACGCCUAAACCUGGUCAGGACCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -18.200000762939453
+CCGUCGGUCCCUCGCGACGCUAGAUCGAAAAUCCCGCCAGGGCCGGAAGGCAGCAACGGUAUCGAUUGAUGCGGGCGCCGAGGUCAACCGGCGGGGAC -37.70000076293945
+((((((((.((((((..(((..((((((.....(((.....(((....))).....)))..))))))...))).)...)))))...))))))))....
+.(((((........)))))............(((((((..((((....(((.((....(((((....)))))..)))))..))))....)))))))..
+CUCGGCCUUUCGCGGUUUUAACGCCUAAACCUGGUCAGGACCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -27.0
 ........(((((.((((((((((((.....((((....(((....)))....))))...))).)).)))))))..)))))
-((((((((((((.(((((........)))))..........))))))))((((.((.....)).)))))))).........
-GUCGGGCGGACGGUGCUGUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGAAUUUUUAUCGGGUCGUUCCGGC -19.5
+....((((((..(((((((...(((.......))).))))))))))))).((.(((.((((.....)))).)))..))...
+AUGGUACGGUCAUACCACGGCUAAUGCGCCCGAUCCCAUCCGAACUCGGAAGCCAAGCGCCGUUGGGCCGGAAUAGUACUGGGAUGGGUGACCUCCUGGGAAGUCCCGGUGCUGUACCUAU -42.900001525878906
+(.(..(((((....(((((((......((((((............))))..)).....))))).)).((((.(.....(((((..((....)).)))))....).)))).))))).).)..
+.(((((......)))))((((((((((((.........((((....))))......)))).))).)))))..(((((((((((((......((....))...)))))))))))))......
+GUCGGGCGGACGGUGCUGUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGAAUUUUUAUCGGGUCGUUCCGGC -23.600000381469727
 (((((((((.(((((...(((......((((....(((....)))....))))...))).....)))))..)))))).)))
-.((((((((.((....)))))))...((((......))))..((......))....))).......(((((....))))).
-CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCCGCCAGUGCCG -19.0
+(((.....))).(.(((((..((...((((......))))..))..))))))..............(((((....))))).
+ACGGUGGCGAAAGCAAGAAGGAUACACCUGUUCCCAUGCCGAACACAGAAGUUAAGCUUCUUAACGCCGAAAGUAGUUGGUGGGCAACUGCCUGCGAGGAUAGGAAGCUGCCGUGCU -30.700000762939453
+(((((((.....(.((((((.....((((((.............))))..))....))))))..).((.(.....((.(((((....))))).)).....).))...)))))))...
+..((((..................))))(((((.......)))))....(((..(((((((((.(..((...(((((((.....)))))))...))..).))))))))).....)))
+CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCCGCCAGUGCCG -24.799999237060547
 ..........(((.((((((((((((.....((((....(((....)))....))))..))))))..)))))))...))
-((((....))))..(((((.(((((((.((((....))))))(((((((...........))))))))))))..)))))
-ACCGGGCUUGGCAACGCUUGCCUAUAACUCAAGUGAGGGUAAGAAAAAGGGUUGGAAUUGAAAGGG -12.300000190734863
-(((((((..(......)..))))....((((..)))))))..........................
-..(.(((((.......(((((((...((....))..))))))).....))))).)...........
-CGAAGCGUGUCAGGACCUGACGGUAGCAGCACUAAG -4.800000190734863
+.(((((.((((((...)))))).)))...))(((((.(((.((((((((...........)))))))).))).).))))
+CGAAGCGUGUCAGGACCUGACGGUAGCAGCACUAAG -6.699999809265137
 (.....((((....(((....)))....))))...)
-....((.(((((.....)))))...)).........
-GGAGGAAUACCCAAGUCUGGCUGAAGGGAUCGGUCUUGAAAACCGACAGGGUGUCAAAGCCCGCGGGGGUUCGAAUCCCUCUUCCUCCGCCA -25.0
-(((((((..(((.............))).(((((.......)))))..................(((((.......))))))))))))....
-((.(.....)))......((((((.....)))))).............((((......))))(((((((...((.....))..)))))))..
-AUAGUGGAGCAACAGUUCUGCGUGAAGCGGGUCAGGGGAGGAAUCCAGCAGCCCUAAGCGAUUUGAAUUGUGUGCUCUUUUU -16.200000762939453
-..((.((((((.(((((...(((.....((((....(((....)))....))))...))).....)))))))..))))..))
-...(((((((....)))))))......((((((((((..(........)..))))....)))))).................
-GUCGCAAUGGUGUAGUUGGGAGCAUGACAGACUGAAGAUCUGUUGGUCAUCGGUUCGAUCCCGGUUUGUGACACCA -16.200000762939453
+....((.((((((...))))))...)).........
+UAGCGUUGCGAUGCAUGUGGAGUGUAUACACCCGAUCCCAUCGCGAACUCGGCCGUGAAACACUCCAGCGCCUAUGGUACUGCGGCUUAAGCGGCGGGAGAGUCGGUCAGCGCCGAGCU -43.29999923706055
+.(((.(((...(.......(.(.......((((((.............))))..)).......).)....((.((....((((.((....)).))))....)).))...)...))))))
+.....((((((((....(((.(((....))))))....)))))))).((((((..(((...((((...((((...(((......))).....))))...))))...)))..))))))..
+AGCCGGAGCGCAUUGCUCUGUAACCUUCGGGGGCUGAUCCCGCUUAGCGGGGACGUCUUGGACAAGCGGGGGUUCUGUUGCGUUGACUUGGUGUUCUGCUUGGUUGCGUGUCGGUGUUGAGGUCGCCACUGUAGAGAGGCGUUCUCGCGCCGUUAAAGUGGGGGGAACGGGUCAGGCCGGUGACGGAGCAGCCCACCUUGCGCACGUUCCCGUUGCAGAAGCACACCGAGGAGCAUCUCAGGACUUUGCGCCCCAAGUGUCGUCGCGAGGCGG -90.19999694824219
+((((((((((...))))))....(((..)))))))....((((((.((((.((((.(((((....(((.((((((((.(((.((..(((((((((((((..((..((((((((((((.((((.((((.((....)).)))).))))))))))(...)(((.(((....((((....(((....)))....)))).))))))))))))..))...)))))...)))))))))))))...)))))).)).))).))))))))).)))).))))))
+..(((..((((((((((((((.(((...((.((((..((((((((.(((((((((((((...(((((((((.....((((...))))......))))))))).(((((.((.((((.......))))))))))).))))))))))))).......))))))))......))))...))))).))))))))).......)))))..(((((((.(((....)))...)).))))).........(((((((.(.........).))))))))))
+GCUGGGCGUGGUGGCGUGCGCCUGUAAUCUAGCUACUUGGAGGCCAGGGUGCGGGAUUUCGUGGGACCGGGAGUUCUGGCAUAUGGGUGCUCAUGUUGAUCGGGCGUCCACGCUAAGCACGGCGCCGAUAUGGAUGAGCUGUCGGAGGACGGGUUGUCCAGGUCGUCUAAGGAGGGGCGGACCGGCCCAGGGGGGAAACCCAGCAGGCAAAAGUCCCCGCGUGGUGCGGUAGCGGGAUAGCGCCUGUGAAUGGUGUCCAUGUGACAGCCCGGUUGGCGCGUGAAGACCGCCUCCUUUU -107.80000305175781
+((((((((((......)))))))....(((........)))))).((((.((((..(((.....(((((((....(((.((((.((((..((((.(....(((((((((.(((((.((((.((((((((.(((((((.(((((....))))).))))))).))))((...)).(((((......(((....(((....)))....)))....))))).)))).))))..)))))))...))))))).).)))).)))).)))).)))))))))).......)))..)))).))))...
+.........((.((((.(((((((((..((((((.(((((...(((.((.........)).)))..)))))))..))))..)))))))))...((((((((((((((((.((((......))))((((((.(......))))))).((((((.((....)).))))))......((((......)))).(((......))).((((((....(((((((((...))))).....))))...))))))..((((...))))).))).)))))))))))).((....)))))).))....
+GUCGCAAUGGUGUAGUUGGGAGCAUGACAGACUGAAGAUCUGUUGGUCAUCGGUUCGAUCCCGGUUUGUGACACCA -21.299999237060547
 (((((((..((((........))))((((((.......))))))....(((((.......))))))))))))....
-.......((((((...((....))..((((((((..((((...(.(....).)...)))).)))))))).))))))
-GGCCGUUUGGCCGAGUGGUCUAAGGCGUCUGACUCAAGAUCAGAUCUCGUAAGAGGCGUGUGUUCGAACCACACAGCGGUCACCA -22.600000381469727
-(((((((..(((...........)))((((((.......))))))............(((((.......))))))))))))....
-((((....))))..((((((..(.((((((....(.(((.....))).)....)))))).)....).))))).............
-AACCGGGUCAGGUCCGGAAGGAAGCAGCCCUAA -7.400000095367432
-....((((....(((....)))....))))...
-..(((((.....))))).(((.......)))..
-GCUGUGUUAGUAUAAAGUAAUAUAUGUGAUUUCUAAUCAUGGGAUCCUUUAGGGACGUAGUACCA -8.199999809265137
-(((((((..((((......)))).(((((.......)))))...((((..)))))))))))....
-(((((((((........))))))).))((((((.......)))))).....((.........)).
-GGAGCAACACUUGUGCGUGAAGUGGGUCAGGGGAGGAAUCCAGCAGCCCUAAGCGAU -11.199999809265137
-...............(((.....((((....(((....)))....))))...)))..
-.((.(..(((((.......)))))).))((((..(........)..)))).......
-GGGCAAAGCGUGAGGCUGGUUUCACAGAGCAGCGACAACCUCCCUCUCCUUGCAGUGGAAGGAUAAC -15.800000190734863
+.......((((((((((((((........((((((.((((....)))).))))))...))))))))....))))))
+UUGCUGGUGCAGCGCAGCGCGGACGCCCGAACCUGGUCAGAGCCGGAAGGCAGCAGCCAUAAGGGAUGCUUUGCGGGUGCCGUUGCCUUCCGGCAAUGCU -41.29999923706055
+........(((((((.(((.(....(((.....((((....(((....)))....))))...)))....).))).)....))))))..............
+.(((((...))))).....(((....))).....((.((..(((((((((((((.(((.(((((....)))))..)))...)))))))))))))..))))
+GGGCGGAGGGAAGCUCAUCAGUGGGGUCACAUGCAGGGUGCUUGUCACUCAACCAAUCACCUUGGGGAAGGUCUGAGACAAGAGCCAAUCACUUCCCUAGCAGGGUAUCACCUGAUGUGAGUGAGUGCACAGAGAAUAUGAGCCAUUGUGAGCUGUCUUUACAGGAGAAACCAGCCAGUGCAGCUCUCCAGCACUACUGGUGGAUGUGACCUCACUGGCUUGGAAACACUCAUGGCUGGCAUAUGAGUGCAAUGUGUGAGUUGGAGUACACCUCCAGAACCCAAUUCAGACCACUCUCC -100.19999694824219
+.......(((...((((.....((((.........(((((.....))))).........))))......(..(((((.....((((......(.(((.....))).)((((.....))))(((((((..............(((........................................................................))).......)))))))))))...................))))((((((.....)))))).......))))).).....)))
+....((((((....((((((((((((((((((.....((((...(((((((..........(((((((((.....................)))))))))((((......))))...)))))))..))))..........(((((...)).))).(((((...)))))..((.(((((((..(((....)))..))))))))))))))))))))))))..)))...((((((((.......))))))))....((.((((((((.((.(.......).)))))))))).))..))))))
+AGAUCGGCGCGGACGGAGUCCUCGCCAACCUGGUCAGGGCCGAGAGGCAGCAGCCACAACGAGAUCACCUCUGGGUCGUCUGCCGGUCUCCAC -32.900001525878906
+......(.((((.(((((..((((......((((....(((....)))....))))...)))).....)))))..)))).)............
+((((((..((((((((.(((((.((((...)))).)))))(.(((((....................))))).).))))))))))))))....
+CUAGUGAUGAGUAUGGCAAAGAGGUCAACCCGUUCCAUACCGAACACGGAAGUUAAGCUCUUUAGCGCCGAUGGUAGUUGGGGGCUUCCCCCUGUGAGAGUAGGACGUCGCUAGG -33.20000076293945
+.(..((.(((.....((((((((....((((((............))))..))....)))))).)).((.((....((.(((((...))))).))....)).))...))).)).)
+(((((((((.((((((...((.((.....)).))))))))....(((((.....((((((((.((((((...))).)))))))))))....))))).........))))))))).
+GAAUUCAACGUAUAAACGAGACACAUGCAUAUAUUUUGUUAUGUGUAGACAGAUGGUUACCACCAACGAUCCAGUGUAACUAGUGCACGUGAUGAGUACAAUGGAACAGAACCCGGCUUA -16.899999618530273
+....................(((((((((.(...).)).)))))))................(((..(..(..(((((.....))))).......)..)..)))................
+...(((..(((....))).......((((((((......))))))))......((((....))))....((((.((((.((.((.......)).)))))).))))...))).........
+GGGCAAAGCGUGAGGCUGGUUUCACAGAGCAGCGACAACCUCCCUCUCCUUGCAGUGGAAGGAUAAC -16.5
 ((......(((....(((......)))....)))....))...........................
-(((...((..((..((((.((.....)).))))..))..)))))..(((((.......)))))....
-GAACCUCCCCAGGGCCGGAAGGCAGCAAGGAUAAGCGGGCUCUGGCGGGUGCACGGGGGGCCUU -21.100000381469727
+(((...((..((..((((.(((...))).))))..))..)))))..(((((.(...).)))))....
+AGUUAGGGGAUCGAAGACGAUUGACCAGGGGUAUUUGUCGUCCACAGGUGCUGCAACCGACCUAGCCGGGAGCCAUCCGUCGCGCACAUCACCACUGCUGGCUCCUUCGGGUACCACAGCCAAGCUCCUCGCCGAGGCCGUCUACAAGACUCAACGUUAGAUGGCGCGCGACGUUUCUAAUAGAGUCGAGUCCCGCUCGUCACGGGUACCGUCGUAGU -61.79999923706055
+...............((((((.((.........)).))))))...((((..........)))).((((((.....))))..))....((((.(..((.(((...(((..............)))....))).))(((...)))....(((((...).).)))((((.....)))).......)))))..((..........))...............
+.((((((.(((((....))))).....(.(((((((((.....))))))))).)......)))))).((((((((........(((.........)))))))))))...((((((..(((...)))..((((....((((((((...(......)..))))))))..)))).............(.(((((...))))).)...))))))........
+GAACCUCCCCAGGGCCGGAAGGCAGCAAGGAUAAGCGGGCUCUGGCGGGUGCACGGGGGGCCUU -22.600000381469727
 .....(((.....(((....))).....))).................................
-...(((((((((((((.(....(......).....).))))))))((......)))))))....
-AAACAAUGCACAUCACUACCGGGUCUUGGGCAGUGCGAUAGCGAUGGGAUUCACCUUCGCAGGAUGUGCAUGGAAGUAUAAACACAACGGUCGUU -21.5
+...((((((((..((((((..((.((........))..))))))))...))...))))))....
+GAGCUUGUAACCCGAGCGGGGGCUUUAGGGUGGUGUGGAUGUUGCCGUAGCGCUGUGGGCCUGGUCCGGUCGUGCUCCUGCUGGCCCGCCCGUUCCAAGUUGGUAGUGGACCGCUGGGGCCCUGUGCGAAAGCUGGGCCUCACGGGCCGUAAUGUUGGCAGGCACAGCGUUAGGCUGGCUUCACAGAGCAGCGAGAACUGCCCGCUUCCAACGGUGGAAGGAUAACGGGCCGCUGCACAACUGGGCCACUUGGGCCUCUCAGCCUACUCCAG -111.30000305175781
+..........((((..))))......................((..(.......(..(((((((((((((.(((.(.....(((((((.((.(((((.(((((.(((.(.(((...(((.((((.((....)))))).))).))).)((...))..(((((......(((....(((......)))....)))....))))).))).)))))..)))))))....)))))))..)))).)))))))))....)))).)......)....)).
+..(((((.....)))))((((((((..((((((((((((.((((((.((((((((((((((((((((((((((((.......(((((...((.((((.........)))).))...)))))..)))))...))))))))....)))))..............))))))))))))).))))))))...((((((......(((((((((((....)))))).....)))))))))))........))))))))))))))).............
+GUUGGGGGCCUUUUAAGAGAAGGAACCUGCGAAUCGGGUCAGGACUGGAAGGUAGCAGCCCUAAGGAGAGUUUUCUUUUGCUAAAAGAAUGUUCUCCAACUUAC -28.200000762939453
+..((((((.(((((..(((.(((...((.(.....((((....(((....)))....))))...).))...))).)))....)))))....)).))))......
+.((((((((((((((.......(.(((((.....)))))).....)))))))).....))))))(((((((.(((((((...))))))).))))))).......
+GCCUUCAUAGCUCAGUCGGUAGAGCAUCAGACUUUUAAUCUGAGGGUCUGGGGUUCGAGUCCCCAUGCGGGCUCCA -25.799999237060547
+((((.((..((((........)))).((((.........)))).....(((((.......))))))).))))....
+(((..(........)..))).((((.(((((((((((...))))))))))).))))((((((......))))))..
+AAACAAUGCACAUCACUACCGGGUCUUGGGCAGUGCGAUAGCGAUGGGAUUCACCUUCGCAGGAUGUGCAUGGAAGUAUAAACACAACGGUCGUU -24.799999237060547
 ...............................................................................................
-.....(((((((((.((...((((......((.(((....))).))......))))....)))))))))))........................
-ACCCUGACGAAGGCCACAAAGUAAGCACAAGUACCCACGUAAAGACGUUAGGUCAAGGUGUAGCCCAUGAGGU -9.100000381469727
-.((((.....))).......)..........(((....)))................................
-..(((((((...........(((........)))...........)))))))..........(((.....)))
-GAACCGGGUCAGGUCCGGAAGGAAGCAGCCCUAAG -7.400000095367432
-.....((((....(((....)))....))))....
-...(((((.....))))).(((.......)))...
-CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCUGCCAGUGCCG -21.399999618530273
+.....((((((((((((.((........)).)))......((((.((......)).))))..)))))))))........................
+GUCGACGACCAUACCUCGUUGAAAGCACGACAUCUCGUCCGAUCUGUCAAGUUAAGCAACGUUGGGCCUGGUUAGUACUUGGAUCGGAGACGGCCUGGGAAUCCCAGGUGUUGUAGACAUG -33.70000076293945
+(((.(((((....((.(((((.....((((((............))))..))....)))))..)).(((((......((.((.(((....))))).)).....))))).))))).)))...
+.(((((((.......)))))))....(((((.....(((((((.(((........)))..)))))))((((((........)))))).....(((((((...)))))))))))).......
+GAUAGCGUCCAUACCACACUGAAAACACCGGUUCUCGUCCGAUCACCGCAGUUAAGCAGUGUCGGGCCCAGUUAGUACUUGGAUGGGUGACCGCCUGGGAAUACUGGGUGUCGCUACCUU -37.099998474121094
+(.(((((.(....((((((((.....((((((............))))..))....)))))).)).((((((.....((.((.(((....))))).))....)))))).).))))).)..
+.....(((((((((...((((..(((....)))...(((((((.((.((......)).))))))))).))))..)))..))))))(((((.(((((((.....)))))))))))).....
+CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCUGCCAGUGCCG -25.299999237060547
 ..........(((.((((((((((((.....((((....(((....)))....))))..))))))..)))))))...))
-...(((((.((....)).)))))((....))(((((.(((.((((((((...........)))))))).))).).))))
-GCGGGUCUCCCCGCAUGGCAAAUCGGAACACCGGGUCAGGGGCGGAAGCCAGCAGCCCACUCCGAUGCGCCAGUGCCGGGGGUUUGGUCCGC -28.100000381469727
-((((((((((((((.((((..((((((.....((((....(((....)))....))))..))))))..)))))...))))))...)))))))
-(((((....))))).................((((((((((((...........))))(((((...((......))..))))))))))))).
-GCCGCGAACCCCGCCAGGCCCGGAAGGGAGCAACGGUAGUGGUGGAU -14.0
-(((((.....(((.....(((....))).....)))..)))))....
-..........((((((...(((...........)))...))))))..
-UGGGCCCCACGCAACGGAAGGUUACGAACUCCGUCAGGUCCGGAAGGAAGCAGCGG -11.800000190734863
+.(((((.((((((...)))))).)))...))(((((.(((.((((((((...........)))))))).))).).))))
+GAACCCCGCCAGGCCCGGAAGGGAGCAACGGUAGUAGUAUAAUUGUGUGCCGGGGUGUGGCUGG -21.399999618530273
+.....(((.....(((....))).....))).................................
+....((.((((.((((((......((((..(((....)))..))))...))))).).)))).))
+CCCUGCGGCUACACCCCCCUGAAAGAGCCUGAUCUUGUCUGAUCUCAGAAGCCAUGCGGGGCCGACCCUGGUUAGUACCUGGAUGGGAGACCACCUGGGAAUACAAGGUGUUGUAGUCUU -33.29999923706055
+..(((((((.....(.(((((.....((((((............))))..))....)))))..)..(((.((.....((.((.(((....))))).))....)).))).)))))))....
+......(((((((((((.(...........((((......))))...........).))))((.(.((.(((....))).)).).))....(((((.(.....).))))).)))))))..
+UGGGCCCCACGCAACGGAAGGUUACGAACUCCGUCAGGUCCGGAAGGAAGCAGCGG -10.899999618530273
 ..............................((((....(((....)))....))))
-((((((.......(((((.(........))))))..))))))..............
+((((((..(((...((........)).....)))..))))))..............
 UGGACCAGCGAGGGUGUUCUGCUGCGUUGACGUGGUGCUCUGCUUGGCUGUGUGUCGG -16.200000762939453
 ..........................................................
 ..(((((((.(((......(((((((....))))))).....))).))))...)))..
 UGAACUCCCCCAGGGCCGGAAGGCAGCAAGGGUCAAUGGGCUCUGGCGGGUGCGCGGGG -23.899999618530273
 (.....(((.....(((....))).....)))...).......................
 ((..(.(((((((((((....(((.......)))....)))))))).))).)..))...
+CGAGCUAAGUUUUUGCAAACGCCGUGUGGCUCAUUCUGAAAAGAAUAUGACCAUACAAAGUUUUCAUACGGUAUUCUCCGACGAACGAAGCUCUCAGAGCAUUGUACACUUCACACUGAGGAACUCGAUCUUAGUCAAAAUGA -28.899999618530273
+...............................................................................................................................................
+...((((((....((.((((...(((((((..(((((....)))))..).))))))...)))).))..(((......))).....(((...((((((.....(((.......)))))))))...)))..))))))........
 CCGUCGGUCCCUCGCGACGCUAGAUCGAAAAUCCCGCCAGGGCCGGAAGGCAGCAACGGUAUCGAUUGAUGCGGGCGCCGAGGUCAACCGGCGGGGGC -38.0
 ((((((((.((((((..(((..((((((.....(((.....(((....))).....)))..))))))...))).)...)))))...))))))))....
 .(((((........)))))............(((((((..((((....(((.((....(((((....)))))..)))))..))))....)))))))..
-UCAGGCCCCUCGUGCGGCGUCAUCCUACGAACCUCCCCAGGGCCGGAAGGCAGCAAGGAUAAGUAGGCUCUGACGGGUGCGCGGGGGGUCCUUCGCGU -37.79999923706055
-.....(((.(..(.((.((....(((.......(((.....(((....))).....))).....)))...)).)))....).))).............
-...(((((((((((((.(((......))).....((((((((((.....................)))))))..))))))))))))))))........
 GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCAGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -37.0
 ((((.(...(.(...(.(.....(.(....).).....).).).)...)))))...................................
 ..(((((((((((...((((.......)))).((((.((((.....))))...)))).........((.......)))))))))))))
-GCGGGGGUGGCUGAGCCAGGCCAAAAGCGGCGGACUUAAGAUCCGCUCCCGUAGGGGUUCGCGAGUUCGAAUCUCGUCCCCCGCACCA -34.0
-(((((((..(((.............)))((((((.......)))))).............(((((.......))))))))))))....
-((((((((((.((((((..(((......))))).))))....)))))))))).((((((((......)))))))).............
-GCCUCCAUAGCUCAGUCGGUAGAGCAUCAGACUUUUAAUCUGAGGGUCUGGGGUUCGAGUCCCCAUGUGGGCUCCA -24.200000762939453
+GCCUCCAUAGCUCAGUCGGUAGAGCAUCAGACUUUUAAUCUGAGGGUCUGGGGUUCGAGUCCCCAUGUGGGCUCCA -24.700000762939453
 ((((.((..((((........)))).((((.........)))).....(((((.......))))))).))))....
-(((..(........)..))).((((.((((((((((.....)))))))))).))))((((((......))))))..
+(((..(........)..))).((((.(((((((((((...))))))))))).))))((((((......))))))..
 CUGAACCCCCCCAGGGCCGGAAGGCAGCAAGGGUAGGUGGGCCCUGGCGGGUG -25.399999618530273
 ((.....(((.....(((....))).....)))..))................
 .......(((((((((((.(...((.......))...).)))))))).)))..
-CCGUGAACCUGGUCAGGCCCGGAAGGGAGCAGCCACAGCGGUGGAUCUGUGUGCCGGGGUGUGGCUGGUAGGGC -24.299999237060547
+CCGUGAACCUGGUCAGGCCCGGAAGGGAGCAGCCACAGCGGUGGAUCUGUGUGCCGGGGUGUGGCUGGUAGGGC -26.899999618530273
 ((((.....((((....(((....)))....))))..)))).................................
-(((......)))....((((.........((((((((.(((((........)))))...))))))))...))))
+........(((((((.((((((......((((((((....))))..))))...))))).).)))))))......
 GGUGAGCGUAACGUCUCGCUGUCACCUGAGUGGGGGUCGUCCGUUGGUGGCAGGAGAAUCGCGCUU -28.0
 (((.((((..(..)..))))....((((..)))).)))............................
 ...((((((....((((.((((((((......(((....)))...))))))))))))...))))))
-UAUUUGGACCUAUGCAAUAGGACUUUAGGGUAACGCUUCAGGGUAGGAAUACAGCAGAGUCCCCUAAUUUCUUGUGUGCCUUAGCCAUCUGAAUAGGAG -12.0
-((((((((.(((.((.((((((..((((((....((((....(((....)))....)))).))))))..)))))))...).)))...))))))))....
-...................(((((((...(((...((.......))...)))...)))))))......(((((((.................)))))))
-GGGCAAGUGGCGGAAUUGGUAGACGCAGCAGACUCAAAAUCUGCCGCUAGCGAUAGUGUGUGGGUUCGAGUCCCACCUUGCCCACCA -26.5
-(((((((..(((...........))).(((((.......)))))...............(((((.......))))))))))))....
-..((.(((((((((.((((..............))))..))))))))).)).....((.((((((..(((......)))))))))))
 AACCUGGUCAGAGCCGGAAGGCAGCAGCCAUA -9.5
 ....((((....(((....)))....))))..
 ...(((((....)))))..(((....)))...
-GUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGA -7.300000190734863
+UUAAGGCGGCCACAGCGGCGGGGCGACUCCCGUACCCAUCCCGAACACGGCAGAUAAGCCCGCCAGCGUUCCAGCGAGUACUGGAGUGUGCGAACCUCUGGGAAAACUGCCUCGCAAGAGGGGCC -42.900001525878906
+((......((....(((((((......((((((.............))))..)).....))))).))....(((......((((((.((....)))))))).....)))....)).....))...
+.......((((......((((((((..(((((................(((......)))(((..(((((((((......))))))))))))......)))))....))))))))......))))
+GUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGA -9.399999618530273
 .(((......((((....(((....)))....))))...)))
-.........((((......))))..((......)).......
-GGUCCCCUCGCAACGAUCAGCCGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGCAGCGGUGACAUUGUGUGCCGGGGUGUGGCUGGUAG -29.799999237060547
+((..((...((((......))))..))..))...........
+GGUCCCCUCGCAACGAUCAGCCGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGCAGCGGUGACAUUGUGUGCCGGGGUGUGGCUGGUAG -29.899999618530273
 ((((.((((((.(((((..(((((.....((((....(((....)))....))))..)))))...))))))...)))))...)))).....
-....((((....(((......)))....((((......)))).))))(.((((((((.(((((........)))))...)))))))).)..
-ACGCCUAAAUCUGGUCAGGACCGGAAGGUAGCAGCCACAAGGGAUGCUUGA -12.699999809265137
+....((((....(((......)))....((((......)))).))))(.((((((((.(((((.((...)))))))...)))))))).)..
+CUACGGCGACUUUUUCCCAGGUGAUCACCUCUUCCCAUUCCGAACAGAGUCGUUAAGCCCUGGAGAGCCGAUGGUACUGCUUCACUGCGGGAGAGUAGGUCGUCGCCGAU -31.600000381469727
+.(.((((((.....(((((((.....((((((.............))))..))....)).))).)).((.((....((((......))))....)).))...))))))).
+...(((((((((((((((.(((((..........(((((.....(((.((......)).))).......))))).......)))))..)))))))..)))))))).....
+ACGCCUAAAUCUGGUCAGGACCGGAAGGUAGCAGCCACAAGGGAUGCUUGA -15.399999618530273
 .(((((.....((((....(((....)))....))))...))).)).....
-..((((...((((((....))))))))))........((((.....)))).
-GCGGGUCUCCCCGCAUGGCAAAUCGGAACACCGGGUCAGGGGCGGAAGCCAGCAGCCCACUCCGAUGCGCCAGUGCCGGGGGUUUGGCCCGC -24.799999237060547
-((((((((((((((.((((..((((((.....((((....(((....)))....))))..))))))..)))))...))))))...)))))))
-(((((....))))).................(((((((((((((.......................))))...........))))))))).
-UUCACAGUCGCUCAGUGGUAGAGCUAUCGGCUGUUAACCGAUCGAUCGUAGGUUCGAGUCCUACCUGUGAAUCCA -16.100000381469727
-(((((((..((((.......)))).(((((.......))))).....(((((.......))))))))))))....
-...(((((((...(((......)))..))))))).........((((((((((.........)))))))).))..
-GGAAAGGUAUACCGCCCCAGGCUGGUAAACAGAGCAGGGAAAAGCCCUCGCUCUUGGUAGUGGGAGGAUCUCGUAUCAGAAUUCUGAUGUG -16.799999237060547
+..((((...((((((....))))))))))((((.((.....)).))))...
+CGCUGCUGCAGUUGAAACGCCCGUAGUUGGCCCCCCGCCGCCACGAGGAAACGGGAGCGCUCCAGGCAGGCCCGUUGGACCCGCCGCGUGGGACCGCGCAGCGGGCCGGCGCGCCGCGGCAGCCCCGAGGAGAGCGGGCGGGGGCACCGGUACCGGCCGGGGACGGGUGAAACAGGAUGAUCCCGCCGAGACCGCCGGCCGCGCAGGCGCCUGCCAAGACCGCCUCUGUCAAUCAAGGGCGAAGGCCGGGGGCUAGAAGGCGAUCAGACACCACCGUAUUCCCGGCCGUAAACGGUGCCGCCCCGCGGCCGGCGCGCGCGUCCCGCCGGCCGCCCAGGGAAACCGGGAGGCUCCGGGCUCUGGGGGGAGUAUGGCCGCAAGGCUGAAACUUG -188.10000610351562
+........(((((.....((((...(((............(((((.........................................))))).........((((((....)).)))).............(((((((.(...((((..((...((((.((...(.(......).)......)).))))...)).......((....))...))))..).)))).)))...)))...))))....((((((....(...((.(.........).))...).))))))..........((((((..(((.((((((.........)))))).)))...((..))))....)))....))).))).(((......((((....))))....))).
+........(((((....((.(((((.....(((((((((.......))...(((((.(((........(((((((((..(((((...)))))......))))))))).((((((((.....((((((.......)))((((((((((((....((((((((((..((((.....(..(((((((....((.((.((((((..((((....))))......(((((.((.....)).)))))..)))))).))))....)).)))))..)..))))...))))))))))....)))))))..))))))))))))))))))))))))......((((.(((...((....))))).))))..)))))))..))))).))...))))).......
+GCACGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGACAGGAGGAUCGCUUGAGUCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCGCACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCAGGUUGCCUAAGGAGGGGUGAACCGGCCCAGGUCGGAAACGGAGCAGGUCAAAACUCCCGUGCUGAUCAGUAGUGGGAUCGCGCCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACAUAGCGAGACCCCGUCUCU -117.4000015258789
+............((((........))))....(((((.((....(((((...(((((((....(((((.(((((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....((((....(((....)))....))))...))))).))))))).)..)))))))...))))))).).)))))))))))).)))))))))))).....)))))...)).))))).
+(((.(((((..(((((.(((.((((((((((((...)))..((..((((..((((((((...))))))))..))))..))(((((((...((((....))))....)))))))...........))))))))))))..)))))...))))))))...(((.(((((......((((((((.(((.((((((..........)))).))........(((((((..((((....))))....)))))))..))).))))))))...........))))).)))..
+GGAAAGGUAUACCGCCCCAGGCUGGUAAACAGAGCAGGGAAAAGCCCUCGCUCUUGGUAGUGGGAGGAUCUCGUAUCAGAAUUCUGAUGUG -26.700000762939453
 ...(.(((......(((....(((.....)))....)))....))).)...........................................
-((...(((.....))))).((((...................))))((((((......)))))).......((((((((....))))))))
-CCGUGCUAGAUGGGGAGGUAGCGGUGCCCUGUAACCCGCAAACCGCUAUAGCGGGGUUGAAGUCCCA -18.899999618530273
+...........((..((((..(((.((...(((((((((.....)))).))))))).))))))).))....((((((((....))))))))
+CCGUGCUAGAUGGGGAGGUAGCGGUGCCCUGUAACCCGCAAACCGCUAUAGCGGGGUUGAAGUCCCA -18.0
 ........(((((((.(.(...).).))))....(((((...........)))))))).........
-((((.....))))....((((((((((..........))..))))))))...((((......)))).
+((((.....))))....((((((((................))))))))....(((.......))).
 UGAACCCCCCCAGGGCCGGAAGGCAGCAAGGGUAAGCGGGCUCUGACGGGUG -19.5
 (.....(((.....(((....))).....)))..).................
 ...((((...(((((((.(...((.......))...).)))))))..)))).
-GCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCG -7.300000190734863
-.......((((....(((....)))....))))
-......((((......))))..((......)).
-GGUGCAAUGGCCGAGUGGUUAAGGCGACGGAUUUGAACUCCGUUGGGAUUCUCCCUCGCAGGUUCGAAUCCUGUUUGCAUCGCCA -28.799999237060547
-(((((((..(((..........)))((((((.......)))))).............(((((.......))))))))))))....
-.......(((((....))))).(((((.(((((((((((.((..(((.....))).))..)))))))))))........))))).
-GGAAGAUUACCCAAGUCCGGCUGAAGGGAUCGGUCUUGAAAACCGAGAGUCGGGGAAACCGAGCGGGGGUUCGAAUCCCUCAUCUUCCGCCA -22.899999618530273
-(((((((..(((.............))).(((((.......)))))..................(((((.......))))))))))))....
-((........))...(((((((...((..(((....)))...))...)))))))........(((((((...((.....))..)))))))..
-GUCGGGCGGACGGUGCCGUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGCAACGAUUUCGUAUCGGGUCGUUCCGGC -27.5
+GAUACGAUGGCCGAGUGGUUAAGGCGAAGGAUGCAGGUUCCUUUGGGCAUUGCCCGCGCAGGUUCGAACCCUGCUCGUGUCGCCA -29.100000381469727
+(((((((..(((..........))).(((((.......)))))..............(((((.......))))))))))))....
+.......(((((....))))).(((((.....(((((....(((((((.((((....))))))))))).))))).....))))).
+GUCGGGCGGACGGUGCCGUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGCAACGAUUUCGUAUCGGGUCGUUCCGGC -28.799999237060547
 ...((((((.((((((.((((......((((....(((....)))....))))...))))...))))))..))))))....
-....(((((......))))).((...((((......))))..)).....((((.((((((((......)))))))).))))
-GCGGGUCUCCCCGCAUGGCAAAUCGGAACACCGGGUCAGGGGCGGAAGCCAGCAGCCCACUCCAAUGCGCCAGUGCCGGGGGUUUGGCCCGC -24.799999237060547
-((((((((((((((.((((..((.(((.....((((....(((....)))....))))..))).))..)))))...))))))...)))))))
-(((((....))))).................(((((((((((((.......................))))...........))))))))).
-CUGUUGGUUCUCCCGCAACGUCACUCUGUUUACCAGGUCAGGUCCGGAAGCCAAGGCAGCAGAUGACGCGUGUGCCGGGAUGUAGCUGGCAAGGCC -21.0
-.((((((((.((((((.((((...((((((......((......(....).....))))))))....)))))...)))))...)))))))).....
-((((((.((...............((((.....))))...(((......))).)).)))))).....((.(.((((((.......))))))).)).
+....(((((.((....)))))))...((((......)))).........((((.((((((((......)))))))).))))
+UCCCGGGGCCUAUGCAAAAAAGGUUUUUCGAACCCCGUCAGAUCCGGAAGGAAGCAGCGGUAGAUUAAUUCUUUUUGUGCCGUAGUGUUCCCGGGUUUUU -26.200000762939453
+.....(...(.....((((.((.((..((.....((((....(((....)))....))))..))..)))).))))......)...)..............
+...((((((((.........))).........)))))..((((((((..(((.((.((((((...............)))))).)).)))))))))))..
+UGGUCCUCUCGCAACAAUAGCUCGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCGUGUGACUUGUGUGCCGGGAUGUGGCUGGGGUCCCACCCUUUA -27.399999618530273
+(((((.((((((.((((..((.(((.....((((....(((....)))....))))..))).))...)))))...)))))...)))))...............
+...((((.((((...........))))..((((......)))).))))...(((((((.(.((..((....))..)).).)))))))(((((...)))))...
+CACUCGAUGCGAGUAAUCCACGAUCUGCUGUGGCGCGCUAAGCCCUGGCCCGGACCCUCGAGGGAAGCGAUUCUGCAGAGAACAGGCCCCCCGGAGAUGGCGGCGCCAGACUACACCCUCGCUGCACA -38.70000076293945
+((.(((.((.((....)))))))..)).........((...))...((.((.....(((....(((....)))....)))....)).)).......................................
+.(((((...)))))..............(((((((.(.......((((((((....(((..(((..((..((((....))))...))..))).)))....))).)))))........).)))))))..
 UGAACCCCCCCAGGGCCGGAAGGCAGCAAGGGUAAGCGGGCUCUGGCGGGUG -23.100000381469727
 (.....(((.....(((....))).....)))..).................
 ......(((((((((((.(...((.......))...).)))))))).)))..
 UGAACCUGGUCAGGGCCGGAAGGCAGCAGCCA -9.5
 ......((((....(((....)))....))))
 .....(((((....)))))..(((....))).
-AAUGCGUUAGGCUGGUUUCACAGAGCUGCGAGAACCUCACGCUCUACACAGUGUAAGGAUUACA -15.199999809265137
+AAUGCGUUAGGCUGGUUUCACAGAGCUGCGAGAACCUCACGCUCUACACAGUGUAAGGAUUACA -17.100000381469727
 ..(.(((....(((......)))....))).)................................
-....(.(((.((((((.....(((((.(.((.....)).)))))))).)))).))).)......
-CUGCCGGUCCCUCGCAACGCUAGAUCGAAAACCCCGCCAGGGCCGGAAGGCAGCAACGGUAUUGAUUGAUGCGGGUGCCGAGAUCAACCGGUGGGGCC -29.0
-((((((((..(((((..(((..((((((.....(((.....(((....))).....)))..))))))...))).)...))))....))))))))....
-....(((((.............)))))....(((((((.((.......((((.(....(((((....))))).).))))........)))))))))..
-GUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGAAGCGGUGGAUGUGUGUGCCG -11.300000190734863
-((.....((((....(((....)))....))))..)).................
-......((((......))))..((......))....(((((........)))))
+....(.(((.((((((.....(((((.(.(((...))).)))))))).)))).))).)......
+GCUGGAGGCGGUGGCACGUGCCUGUAGUCCCAGCUACUUAGGAGGCUGAGGCGGGAGGAUUGCUUGAGCCCAGGAGUUCUGGUCUGUAGUGCACCAUGCCCGUUGGGUGCCUGCACAAAGUUCAGCAUCAAUAUGGUGACCUUCCGGGAGCAGGGGACCAGCAGGUUUCCUAAGAAGGGGUGAACCGGCGCAGGUUGGAAAAGGAGCAGGUCAAAACUUCCAUGCUGAUCAGUGGUGGGAUCACAUCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACUUAUUGAGACCCCGUCUCUAAA -105.5
+(((((..(((......)))..))....(((..........)))))).((((((((....(((.(...(((((((....((((..(((((((..(.((.(....((((((.((.(((.(.(.(((((((.(((.((.((..((((.(....).))))..)).)).)))..(...)..(((((.....(((.....((......)).....)))...))))).))))))).)..).)))))....)))))).).)).).)))))))..))))))))))).....).)))...))))))))....
+..(((((((((.(((....))).((...(((..((.(((((((((((..(((((((((.....(((((((((((...)))))..(((((.(((((..........))))))))))....))))))(((((...))))).)))))))...........))....))))))))))).)))))...))..((.(((((((((.....((((((.........)).))))...(((((((....((((....))))...)))))))...))))))))).))..............)))))))))..
+GGCGCACGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGACAGGAGGAUCGCUUGAGUCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCGCACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCAGGUUGCCUAAGGAGGGGUGAACCGGCGCAGGUCGGAAACGGAGCAGGUCAAAACUCCCGUGCUGAUCAGUAGUGGGAUCGCGCCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACAUAGCGAGACCCCGUCUCUUUU -111.9000015258789
+...............((((........))))....(((((.((....(((((...(((((((....(((((.(((((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....(((.....(((....))).....)))...))))).))))))).)..)))))))...))))))).).)))))))))))).)))))))))))).....)))))...)).)))))....
+(((....))).((.(((((.(((.((((((((((((...)))..((..((((..((((((((...))))))))..))))..))(((((((...((((....))))....)))))))...........))))))))))))..))))).))...((((((((.(..((((((....(((((.((((....((((.(.((.......)))))))((((.....))))..))))))))).(((......)))..))))))..).)))))))).....(((((...)))))....
 UGAACUCCCCCAGGGCCGGAAGGCAGCAAGGGUAAGCGGGCUCUGGCGGGUGC -23.299999237060547
 (.....(((.....(((....))).....)))..)..................
 ....(.(((((((((((.(...((.......))...).)))))))).))).).
-CGCCAACCUGGUCAGGUCCGGAAGGAAGCAGCCACAACG -5.199999809265137
-((......((((....(((....)))....))))...))
-.......((((......))))..((......))......
-GGGCAAUGCGUUAGGCUGGUUUCACAGAGCUGCGAAAACUUCACGCUCUGAACAGUGGAAGGAU -11.600000381469727
-((....(.(((....(((......)))....))).)..))........................
-..............((((......((((((.(.((.....)).)))))))..))))........
-CUCGGCCUUUCGCGGUUUUAACACCCAAACCUGGUCAGGAUCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -17.399999618530273
+CUCGGCCUUUCGCGGUUUUAACACCCAAACCUGGUCAGGAUCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -22.0
 ........(((((.((((((((((((.....((((....(((....)))....))))...))).)).)))))))..)))))
-((((((((((((.(((((........)))))..........))))))))((((.((.....)).)))))))).........
+....((((((((.(((((........)))))..........)))))))).((.(((.((((.....)))).)))..))...
 AAUCAGUCUGUUACAUUCUAGCAAUGAGUAGCACCAUCACUGGAGGGAAGCAAUUCAGCACAGUAUGUUACCCGUGGUGGAGGCGAAACGGACGGCAC -24.399999618530273
 .....................(...).((((((.....((((....(((....)))....)))).))))))...........................
 .....(((((((..((((.......)))).((.(((((((....(((.(((((((......))).)))).))))))))))..))..))))))).....
-AAGGCAAUGAUGGCUUUCCGAAUCGUGUCAGGUCCGGAAGGAAGCAGCACUAAGGUAGGUUCGUCAUGUGCCUUUUGUU -19.899999618530273
+AAGGCAAUGAUGGCUUUCCGAAUCGUGUCAGGUCCGGAAGGAAGCAGCACUAAGGUAGGUUCGUCAUGUGCCUUUUGUU -23.100000381469727
 .(.(.......(.(((.((.....((((....(((....)))....))))...)).))))......).)..........
-.............(((((((.(((......))).)))))))....((((..((((((.((.....)).)))))).))))
-GCAAGGGUGGGCUUACGAAUCGUGUCAGGUCCGGAAGGAAGCAGCACUAAGUUUG -8.600000381469727
-...........(..((.....((((....(((....)))....))))...))..)
-((.....((((((((((.....))).))))))).......)).............
-GGGGACCCCGCGCACCCGACAGAGCCCAUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -34.5
+((((((((((((((((((((.(((......))).))))))).......(((......)))))))))).)))))).....
+GUCGAGCUUGGUAACGCGGGCUUGUGAUCCGAGUGGAGACAACAGGAUGUUGGAACUAUGGGCCGAUCUCAUUAGGCCGGGUUCGGGUUGGCUAUUCACUGGCCUGCCCAUUCCAAGUCGGGAGUUGAGGGUUCGGGCUCGAGCGAAGGCUUGUGGUUCGGGCAUUCUUAGAGCGGAGGAGACUGCGUGAGGCUGGUUUCACAGAGCAGCGUCCACCUCCCGCUUUCGACGGUGGAAGGAUCACGGGCCGGUGCCUUCUGAGCCCACUAUGACCUAAUAAGCUGGUUUCAACUGGACCAACAUCUUUU -109.69999694824219
+((((((((((......)))))))....((((..)))))))...((((((((((..(..(((.(.(...(..(..((.(((((((((...((.......((((((((.((.(((((.(((((((((...(.((((((((((((((....))))).))))))))).)((...))..(((((.....((((....(((......)))....))))...))))).)))))))))..)))))))....))))))))...)).)))))))).....).)).)..)..).).)..))...)..))))))))))..
+((.(.((((((...(((.((((((((((((..((....))...((((((((.((((((((((((..(((((.((((((((.....((....)).....))))))))...(((((......))))))))))(((((....)))))...)))))))))))).))))))))....((((......)))).....((((.(((...))).)))).((((((((........)).)))))).)))))))))))).)))....)))))).)))...............((((((.....)))))).........
+CGGUCCCCUCGCAUUGAUCAGCCGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGCAGCGGUGACAUCGAGUGCCGGGGUGUGGCUGGUGGGGUCCACCUCCA -39.099998474121094
+(((((.((((((.(((((..(((((.....((((....(((....)))....))))..)))))...))))))...)))))...)))))................
+.((.((((((((...........))))..(((((((.((((((....((...((((...))))....)).....))))).).))))))).)))).)).......
+GGGGACCCCGCGCACCCGACAGAGCCCAUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -36.29999923706055
 ((((.(...(.(...(.(.....(.(....).).....).).).)..).))))...................................
-..(((((((((((................(..((((....(((....)))...))))..).................)))))))))))
-GGAGCAAUAAGUUUCUUACGAAGCGUGUCAGGACCUGACGGUAGCAGCACUAAGUAUGGAGCUUAUGUGCUCUUUUU -13.5
-((((((.((((((.(.(((.....((((....(((....)))....))))...))).).))))))))..))))....
-..........(((((....))))).(((((.....))))).................(((((......)))))....
-GUCGGGCGGACGCAGCCUUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGCAACGAAUU -16.0
+..(((((((((((........((((((.....(((..((((.....))))...))))).))))...((.......)))))))))))))
+UGCUAGAUGGGGAGUUAGCGGUGCCCUGUAACCUGCAAUCCGCUAUAGCAGGAUUGAAUUCCUCGCUUAGGUAUUAGCGAUUUAUAGUCUGACUUUUGUAAGUGGUGUUGAUGACUGGGUCCCACGCAAUGGAAGCCCAUGAACCUCGUCAGAUCUGGAAGGAAGCAGCGAUAAGUGGUUCCUUCCAUGUGCCGUGGAUCAAUCUGGUCUGAGCUAACUGCAUUAGUAACGU -68.5
+.....(((((((.(((...))).))))....(((((...........))))))))..............................(...(((((..(((.((((((......((((((((.(((((((.((((((.((((.....((((....(((....)))....))))...))))...))))))))...)))))....))))))))...))).))))))..)))..)))
+((((((....(.((((((((((........)))..((((((((....)).))))))......(((((........)))))......(((((((........(.(((.........(((((.(((.....)))..)))))...))).)))))))).(((((((((.((........)).))))))))).......(((((((...))))))).))))))).).))))))....
+CUCCUAAAGUGGAGGGCACAGCGUGAGGCUGGUUUCACAGAGCAGCGACAACCUCCCGCUCUUGUCAGUGGAUGGAUA -21.399999618530273
+...((..)).(((((......(((....(((......)))....)))....)))))......................
+((((......)))).........((..((((.(((...))).))))..)).((..(((((......)))))..))...
+CCCGGGGCCUAUGCAAAAAAGGUUUUUCGAACCCCGUCAGAUCCGGAAGGAAGCAGCGGUAGAUUAAUUCUUUUUGUGCCGUAGUGUUCCCGGGUUUU -26.200000762939453
+((.((((((((((((((((.((.(..((.....((((....(((....)))....))))..))..).)).))))))))...))).))))).)).....
+..((((((((.........))).........)))))..((((((((..(((.((.((((((...............)))))).)).))))))))))).
+GACUUGGUUUCCACGCAAUGAUAGAUUGUCAACCCCGCCAGGUCUGGAAGGAAGCAACGGUAACUUUUGAUUCAUGUGCCGUGUCAAGGCUAAGUCAGCA -24.0
+...((((((..(((((.((((..((..((.....(((.....(((....))).....)))..))..))...)))))...))))........)).))))..
+((((((((((..(((((((.....)))))....((..(((....)))..)).....((((((..............))))))))..))))))))))....
+GGCUUGAUGGUGAAAUUGGUAGACACGCGAGACUCAAAAUCUCGUGCUAAAGAGCGUGGAGGUUCGAGUCCUCUUCAAGUCACCA -23.299999237060547
+(((((((..(((...........)))((((((.......))))))............(((((.......))))))))))))....
+.......((((((..((((.(((.....(.(((((..(((((((((((....))))).)))))).))))))))))))).))))))
+GAGAUCGGCGCGGACGGAGUCCUCGCCAACCUGGUCAGGGCCGAGAGGCAGCAGCCACAACGAGAUCACCUCUGGGUCGUCUGCCGGUCUCCACCUCAUUUU -36.5
+(......(.((((.(((((..((((......((((....(((....)))....))))...)))).....)))))..)))).).....)..............
+(((((((..((((((((.(((((.((((...)))).)))))(.(((((....................))))).).)))))))))))))))...........
+GUCGGGCGGACGCAGCCUUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGCAACGAAUU -23.299999237060547
 .................((((......((((....(((....)))....))))...))))..
-.(((((((((.......))))))...((((......))))......((....))..)))...
+.(((.((((..((..(((((.(..(((......)))..))))))..))..))))..)))...
 GACACCGUGGCCCAGUGGUUACGGCGUUGGACGCAGAAUCCAUUGAGCUUGCUCGCGCGGGUUCGAAUCCCGUCGGUGUCUCCA -34.599998474121094
 (((((((..(((..........)))(.((((.......)))).).............((((.......)))).)))))))....
 (((.((((((((....)))))))).)))((((((.((.....((((((((((....))))))))))......)).))))))...
 GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCAGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCCACC -39.79999923706055
 ((((.(...(.(...(.(.....(.(....).).....).).).)...)))))......................................
 (((((((((((((...((((.......)))).((((.((((.....))))...)))).........((.......))))))))))))).))
-CUUUUAGACCUGUGCAAUGGGCCCUUGGAGCAAUGCUUCAGGGUGGGAACACAGCAGAGCCCUCCAGAGGUUCAUGUGCCGCAGGUAUCUGAAGGGGGG -25.5
-(((((.(.(((((((.(((((((.((((((....((((....(((....)))....)))).)))))).))))))))...))))))....)..)))))..
-.........(((((.......(((((((((.....)))))))).)....))))).....((((((..((((...((.....))...))))...))))))
-GUGAACCGGGUCAGGUCCGGAAGGAAGCAGCCCUAAGC -7.400000095367432
-((.....((((....(((....)))....))))...))
-.....(((((.....))))).(((.......)))....
-UGGACCAGCGAGGGUGAUUUGCUGCGUUGACGUGGUGCUCUGCUUGGCUGUGUGUCGG -11.399999618530273
+UGUCUGGCGGCAGUAGCGCGGUGGUCCCACCUGACCCCAUGCCGAACUCAGAAGUGAAACGCCGUAGCGCCGAUGGUAGUGUGGGGUCUCCUCAUGCGAGAGUAGGGAACUGCCAUGCAU -39.20000076293945
+(((.((((((.....((((((((.....((((((.............))))..))....)))))).)).((.((....((((((((...))))))))....)).))...)))))).))).
+......((((((((.....((((....)))).((((((((((.....(((....)))...(((((.......))))).))))))))))((((..(((....)))))))))))))..))..
+ACAUACGGCCAUAACUAUCAGAUAACUCGGGAUCCCGUCCGCUCUCCGUUCGAUAAACUGAUAAGUGCUGAAUUAGUAGUUAGGUCAGUAACGACCAGCGAAUCCUCAGUGUUAUAUGU -18.0
+(((((.(((....((((((((.....((.(((............)))....))....)))))).)).((((.......(((.(.((......))).)))......)))).))).)))))
+......((((.(((((((...........((((...)))).......(((((....(((....)))..)))))..))))))))))).((((((...((......))...))))))....
+CGGUGGCGAUGGCAAGAAGGAUACACCUGUUCCCAUGCCGAACACAGAAGUUAAGCUUCUUAACGCCGAGAGUAGUUGGUGGGAAACUGCCUGCGAGGGUAGGCAGUCGCCGUGCU -41.20000076293945
+((((((.....(.((((((.....((((((.............))))..))....))))))..).((.(.....((.(((((....))))).)).....).))...))))))....
+....(((.(((((....(((.....)))((((.......))))..((((((...))))))...((((((......))))))....(((((((((....))))))))).))))))))
+UGGACCAGCGAGGGUGAUUUGCUGCGUUGACGUGGUGCUCUGCUUGGCUGUGUGUCGG -17.100000381469727
 ..........................................................
-..((((((((((.....))))))).))).(((((((..........))))))).....
-UGCGGGUCCCCUCGCAACGCUAACUGGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGUAGUCAGGGAUGUGUGUGCCGAGGUGUGGCUGGUAGAGU -26.799999237060547
+..(((((((.(((..((..(((((((....))))))).))..))).))))...)))..
+UGCGGGUCCCCUCGCAACGCUAACUGGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGUAGUCAGGGAUGUGUGUGCCGAGGUGUGGCUGGUAGAGU -36.099998474121094
 (((.((((.((((((.((((...(((((.....((((....(((....)))....))))..)))))....)))))...)))))...)))).)))....
-(.((((((..............(((((.....)))))..)))))).)....(.((((((((.(..((.((....)).))..).)))))))).).....
-UCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGA -7.300000190734863
-(((......((((....(((....)))....))))...)))
-........((((......))))..((......)).......
-GGAAGAUUACCCAAGUCCGGCUGAAGGGAUCGGUCUUGAAAACCGAGAGUCGGGGAAACCCGAGCGGGGGUUCGAAUCCCUCAUCUUCCGCCA -22.899999618530273
-(((((((..(((.............))).(((((.......)))))...................(((((.......))))))))))))....
-((........))...(((((((...((..(((....)))...))...))))))).........(((((((...((.....))..)))))))..
-CAACACCUAAACCUUGUCAGGACCGGAAGGUAGCAGCAACACGGGAUGCUUGUAGUAGGCGUUGACUCCGGGUC -12.300000190734863
+((((((....)))))).((((....))))...(((((((.((((((......(((.((........)).))).....))).))).)))))))......
+CCACAAGCUGCAUGCCACAUGUCAUCCCACCCCCAUGUCCCUUGGGAAGGUCUGAGUCAAGGGCCAGAGCACCCUAACAGGACUUUCCCUGAGUUUUGGGGAGGUGAAUUCCCAGAGAACUCAGCUCCCUGCGAGGUCAGACUGGGCUGGACAUGCCACGGACCCACCCUUCUGGGAAGGGCCAGGUGGAUGCCUCCUCAGCCAGAACUUGGAACAGACUCAUGGCCAACCAAGUGAGUUCAAUGAGGUGAGGCACCCCACCCAAGGGGCCUCAUAACCCAAUUCA -89.5
+(........(.(((........))).).........)...............((((.....((((.......((.....))...(((((((.....)))))))((((.((..........................................................................................................)).))))))))....................(((((((..((.......)).))))))).......))))
+.........(((((...)))))..............(((((((((((((((((..((..((((........)))).)).)))))))))((((((((((((((((((..(((((((((...(((((((.(((......)))...))))))).........((......)))))))))))...((....)).)))))))....)))))))))))....(((((((((....))..)))))))......((((.((...))))))))))))))................
+CAACACCUAAACCUUGUCAGGACCGGAAGGUAGCAGCAACACGGGAUGCUUGUAGUAGGCGUUGACUCCGGGUC -14.699999809265137
 ((((((((.....((((....(((....)))....))))...))).)).)))......................
-...........(((....))).(((((.(...............(((((((.....)))))))..))))))...
-CUCUGGUCCUCUCGCAACAAUAGUUCGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCGAAUGACUUGUGUGCCGGGAUGUGGCUGGGGUCCC -25.399999618530273
+..........((((.(((((..((.......((((...........)))).......))..)))))...)))).
+CUCUGGUCCUCUCGCAACAAUAGUUCGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCGAAUGACUUGUGUGCCGGGAUGUGGCUGGGGUCCC -27.700000762939453
 ((((((((.((((((.((((..((((((.....((((....(((....)))....))))..))))))...)))))...)))))...))))))))....
-...........(((((((....))).))))..((((......))))..(((..((((((((.......((....)).......))))))))...))).
-GCCUUUAGAACAAUAACCUCAUAACCCGGUCAGGACAGAAAUGGAGCAUCCGCAUUGAGAAGUGUUGUGUCUUUAGGUCUUUU -8.600000381469727
-((((..(.(.(((((..((((.....(((......((....))......)))...))))...))))))...)..)))).....
-.........................((....((((((.(...((.....))(((((....)))))).))))))..))......
-CUCGGCCUUUCGCGGUUUUAACGCCCAAACCUGGUCAGGAUCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -17.399999618530273
+.(((((.(((.(((((((....))).))))........))).))))).(((..((((((((((((.....)))).........))))))))...))).
+CGGUGGCGCGUGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGGCUGGAGGAUCGCUUGAGUCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCGCACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCAGGUUGCCUAAGGAGGGGUGAACCGGCCCAGGUCGGAAACGGAGCAGGUCAAAACUCCCGUGCUGAUCAGUAGUGGGAUCGCGCCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACAUAGCGAGACCCCGUC -117.0
+((......)).........((((........))))......(((.((....(((((...(((((((....(((((.(((((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....((((....(((....)))....))))...))))).))))))).)..)))))))...))))))).).)))))))))))).)))))))))))).....)))))...)).)))
+....((((...(((((..(((((.(((.(((((((((.(((.((((((..........((((((((...)))))))).(((((((..(((((.....))))).)))))))..)))))).))).........))))))))))))..)))))...)))))))))...((.(((((......((((((((.(((.((((((..........)))).))........(((((((..((((....))))....)))))))..))).))))))))...........))))).))
+GAUCCUAUCAUAUUUAUCAACGUUUGAGACUACCUCAUACCAUAUCUUCGUACUUCAUUACUAGAUAUACGUAGGUAGAUUUAGUGCGGAAGUAACGAACAGGGUACUGCGUGAGGCCGGUUACGGAGCAACGAAAACCUGUCUACGAUGAUAGACCUGGGUUGAUAUGGAUGUCAAGUUAAUACCUAUGCUAGUAUUGGAACUAAUUUU -40.5
+(((.(((.((((..(((.((..(((..(((.....(((.(((((((.(((((((((..((((((((.(((....))).))))))))..))))......(((((....(.(((....(((....)))....))).)..))))).))))).))))....)))....))..)...)))))))).)))..)))).))).)))............
+.....................((.((((.....)))).)).............((((.((((((.....((((((((.......(((....))).....((((...((.(((((......))))).))..........(((((......))))).))))..((((((....)))))).....)))))))))))))).)))).........
+CGUUUGGGUUCUGCGCAACGGAAACCCAUGAACCCUGUCAGGUCCGGAAGGAAGCAGCAGUAAGUGGACCCUUCCGUGUGCCGCAGAGGUGCCUGGAUCGAGC -31.600000381469727
+.((((((((((((((((.((((..((.((.....((((....(((....)))....))))...)))).....))))))...))))))...)))))))).....
+....(((((((((.....))).))))))...(((((((..(((((((((((..((........))....))))))).).))))))).))).............
+CUCGGCCUUUCGCGGUUUUAACGCCCAAACCUGGUCAGGAUCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -22.399999618530273
 ........(((((.((((((((((((.....((((....(((....)))....))))...))).)).)))))))..)))))
-((((((((((((.(((((........)))))..........))))))))((((.((.....)).)))))))).........
+....((((((((.(((......)))....(((....)))..)))))))).((.(((.((((.....)))).)))..))...
 AGGCAAGGUUGGACUUACGAAUUGUGUCAGGUCCGGAAGGAAGCAGCACUAAGUAUGCU -11.0
 .............(.(((.....((((....(((....)))....))))...))).)..
 ........(((((((((((.....))).)))))))).....((((((.....)).))))
-UGUCGGUCCCCCCGCAACGAUUACCCGUCAACCUGGUCAGGUCCGGAAGGAAGCAGCCACAGCGGGAACAUCGUGUGCCGGGGUGUGGCUGGCGGGGC -35.099998474121094
-((((((((.((((((.(((((..(((((.....((((....(((....)))....))))..)))))...))))))...)))))...))))))))....
-.........((((((.(((......)))....((((......)))).......((((((((.(((.(........).)))...)))))))))))))).
 GGACGUUAAAUAGAUAAGCUAUGCCUAGUUACGGGCUGGGAAGAGAGUCGUCUUCCA -13.100000381469727
 (((((.(..((((.....)))).(((((.......)))))......).)))))....
 ......................((((......))))..((((((......)))))).
-CGCAACACUACCUUGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCAAGCGACGUGUGUGCCGGGAUGUCGCUGGCGGGGCCUCCACC -28.100000381469727
+AUGCUACGGUCAUACCACCACGAAAGCACCCGAUCCCAUCAGAACUCGGAAGUUAGACGUGGUUGGGCCAGAUUAGUACUGGGUUGAGGGAUCACUUGGGAACCCCUGGUGCUGUAGUGU -35.099998474121094
+..((((((((....((((((((.....((((((............))))..))....)))))).)).((((.......(((((.(((....))))))))......)))).))))))))..
+.......(((...)))..(((...((((((.((((((.((..(((((((......((..((((...))))..))....)))))))))))))))....(((...))).))))))...))).
+CGCAACACUACCUUGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCAAGCGACGUGUGUGCCGGGAUGUCGCUGGCGGGGCCUCCACC -30.700000762939453
 (((.((((...(((((.....((((....(((....)))....))))..)))))....)))))...)).........................
-(((((.......))))).....(((.((((((........((....)).((.((((((((.(......).)))))))).)).))))))..)))
-CAGAUAGAAGCCAAAAGGUCAGGCGCUUUCUUUGGGAGAAAGACCUAGUUAGUUCGAGUCUAUCCUAUCUGACCA -15.800000190734863
-(((((((..(((.........))).(((((.......))))).....(.(((.......))).))))))))....
-................(((((((.........(((((...((((...(......)..)))).)))))))))))).
-CCGUGCUAGAUGGGGAGGUAGCGGUGCCCUGUAACCUGCAACCCGCUAUAGCAGGGUCGAAUUCC -18.399999618530273
+(((((.......)))))...((((......))))..(((.((..((((....((((((((.(......).)))))))).)))).)).)))...
+CCGUGCUAGAUGGGGAGGUAGCGGUGCCCUGUAACCUGCAACCCGCUAUAGCAGGGUCGAAUUCC -19.399999618530273
 ........(((((((.(.(...).).))))....(((((...........)))))))).......
-((((.....))))((((....((..(((((((.....((.....))....)))))))))..))))
-GGCACUAUGGCCGAGUGGUUAAGGCGACAGACUUGAAAUCUGUUGGGCUCUGCCCGCGCUGGUUCAAAUCCUGCUGGUGUCGCCA -23.200000762939453
+((.(((((..((((...((((..((........))))))..))))...))))).)).........
+GCCAGACGCGGUGGCACGUGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGGCGGGAGGAUCGCUUGAGCCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCACACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCGGAUUGCCUAAGGAGGGGUGAACCGGCCCAGGUCAGAAAAAGAGCAGGUCAAAACUCCCAUGCUGAUCAGUAGUGGGAUUGCGCCUGUGAAUAGCCACAGCACUCCAGCCUGGGCAACAUAGCAGGCUCUCUCUUUAAAA -118.5
+(((((.((((......)))).))....((((........)))))))(((((.(((((..(.(((...(((((((....(((((.(((.(((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....((((....(........)....))))...))))).))))))).)..)))))))...))))))).).)))))))).))).)))))))))))).....))).).))))).)))))...
+((((.......))))..(.((((((.(((((.(((.(((((((((...((((((.....)))))).((((((((...))))))))......(((((((((((...((((....))))....)))))))......)))).))))))))))))..)))))((((......(((....))))))).....((((((((..((......(((((((((...(((((((((....))).))))))))).)))))).....((....))..))..))))))))......)))))).)...........
+UUCUUAGACCUGUGCAAUGCCGUUUAUGAGCACCGCUUCAGGGUGGGAACACAGCAGAGCACUUGUUUAUGGUGUGUGCCGCAGUUAUCUG -25.700000762939453
+....(.(..((((((.(((((((..(((((....((((....(((....)))....)))).)))))..))))))))...))))).....))
+........((((.((..(((((....)).)))..))..))))((((..(((((.((((((....)))).)).))))).)))).........
+GGCACUAUGGCCGAGUGGUUAAGGCGACAGACUUGAAAUCUGUUGGGCUCUGCCCGCGCUGGUUCAAAUCCUGCUGGUGUCGCCA -27.299999237060547
 (((((((..(((..........)))((((((.......)))))).............((.((.......)).)))))))))....
-(((......)))..........(((((((.............(((((((..((....)).)))))))..........))))))).
-GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -37.099998474121094
+(((......)))..........(((((((((.(((.((((.(((((((...))))).)).))))))).)).......))))))).
+GGGCGGAGGGAAGCUCAUCAGUGGGGUCACAUGUAGGGUGCUUGUCACUCAACCAAUCACCUUGGGGAAGGUCUGAGACAAGAGCCAAUCACUUCCCUAGCAGGGUAUCACCUGAUCUGGGUGAGUGAGUGCACAGAGAAUAUGAGCCAUUGUGAGUUGUCUUUACGGAAGAAACCAGCCAGUACAGCUCUCCAGCACUACUGGUGGAUGUGACCUCACUGGCUUGGAAACACUCAUGGCUGGCAUAUGAGUUUAAUGUGUGAGUUGGAGUACACCUCCAGAACCCAAUUCAGACCACUCUCC -96.4000015258789
+.......(((...((((.....((((.........(((((.....))))).........))))......(..(((((.....((((......(.(((.....))).)(((((((...)))))))(((((((..............(((........................................................................))).......)))))))))))...................))))((((((.....)))))).......))))).).....)))
+(((.(((((...((((.(((((((((((((((.....((((...(((((((.(((......(((((((((...(((............))))))))))))((((......))))...))).)))))))..))))...............(((((((.....)))))))......((.(((((((..(((....)))..)))))))))))))))))))))))).........(((((((.......))))))).((((......))))))))...)))))....))).................
+GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -37.20000076293945
 ..((.((..(.(...(.(.....(.(....).).....).)..).).))..))...................................
-..(((((((((((...((((.......)))).((((....(((....)))...)))).........((.......)))))))))))))
-AAGAAACUAGUUAAACUAAUAACACUGGAUUGUCAGACCGGAGUAACUGGUAAACAAUCAGUGUUUCUUGCCA -17.399999618530273
+..(((((((((((...((((.......)))).((((((..(((....)))..))))))........((.......)))))))))))))
+GGGGGCAUAGCUCAGCUGGGAGAGCGCCUGCUUUGCACGCAGGAGGUCUGCGGUUCGAUCCCGCGCGCUCCCACCA -29.799999237060547
+((((((...((((........)))).(((((.......))))).....(((((.......))))).))))))....
+..((((...)))).(.((((((.((((.......((.((((((...))))))))........)))).)))))).).
+AGCCGGAGCGCAUUGCUCUGUAACCUUCGGGGGCUGAUCCCGCUUAGCGGGGACGUCUUGGACAAGCGGGGGUUCUGUUGCGUUGACUUGGUGUUCUGCUUGGUUGCGUGUCGGUGUUGAGGUCGCCACUGUAGAGAGGCGUUCUCGCGCCGUUAAAGUGGGGGGAACGGGUCAGGCCGGUGACGGAGCAGCCCACCUUGCGCACGUUCCCGUUGCAGAAGCACACCGAGGAGCAUCUCAGGACUUUGCGCCCCAAGUGUCGUCGCGAGGCGGUUU -92.69999694824219
+((((((((((...))))))....(((..))))))).(..((((((.((((.((((.(((((....(((.((((((((.(((.((..(((((((((((((..((..((((((((((((.((((.((((.((....)).)))).))))))))))(...)(((.(((....((((....(((....)))....)))).))))))))))))..))...)))))...)))))))))))))...)))))).)).))).))))))))).)))).))))))..)
+(((((..((((((((((((((.(((...((.((((..((((((((.(((((((((((((...(((((((((.....((((...))))......))))))))).(((((.((.((((.......))))))))))).))))))))))))).......))))))))......))))...))))).))))))))).......)))))..(((((((.(((....)))...)).))))).........(((((((.(.........).)))))))))))).
+AAGAAACUAGUUAAACUAAUAACACUGGAUUGUCAGACCGGAGUAACUGGUAAACAAUCAGUGUUUCUUGCCA -17.600000381469727
 (((((((..((((......)))).((((.........))))....(((((.......))))))))))))....
-....................(((((((.(((((...(((((.....)))))..))))))))))))........
-UCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGAGUUUUGCUCGGGUCGUU -12.5
-(((......((((....(((....)))....))))...))).................
-...((...((((......))))..)).......((...((((.....))))...))..
-GCGGGUCUCCCCGCAUGGCAAAUCGGAACACCGGGUCAGGGGCGGAAGCCAGCAGCCCACUCCGGUGCGCCAGUGCCGGGGGUUUGGCCCGC -42.5
-((((((((((((((.((((..((((((.....((((....(((....)))....))))..))))))..)))))...))))))...)))))))
-(((((....))))).................((((((((((((...........)))).(((((((((....)))))))))..)))))))).
-UAUACUUUAGUUUAGGAAGAAUAUUUAUUUUUGGUGUAAAAGGGUUGUAGUAUAGCCA -5.099999904632568
+.......((((...))))..((((((.((((((...(((((.....)))))..))))))))))))........
+CUGGCGGCAGUUGCGCGGUGGUCCCACCUGACCCCAUGCCGAACUCAGAAGUGAAACGCCGUAGCGCCGAUGGUAGUGUGGGGUCUCCCCAUGCGAGAGUAGGGAACUGCCAG -41.70000076293945
+(((((((.....((((((((.....((((((.............))))..))....)))))).)).((.((....((((((((...))))))))....)).))...)))))))
+.....(((((((....((((....)))).((((((((((.....(((....)))...(((((.......))))).))))))))))..(((.(((....)))))))))))))..
+UCGAGCUUGGUAACGCGGGCUUGUGAUCCGAGUGGAGACAACAAGAUUUUGGAACUAUGGGCCGAUCUCAUUAGGCCGGGUUCGGGUUGGCUAUUCACUGGCCUGCCCAUUCCAAGUCGGGAGUUGAGGGUUCGGGCUCGAGCGAAGGCUUGUGGUUCGGGCAUUCUUAGAGCGGAGGAGACUGCGUGAGGCUGGUUUCACAGAGCAGCGUCCACCUCCCGCUUUCGACGGUGGAAGGAUCACGGGCCGGUGCCUUCUGAGCCCACUAUGACCUAAUAAGCUGGUUUCAACUGGACCAACAUCUUUUU -102.69999694824219
+(((((((((......)))))))....((((..))))))....(((((.((((..(..(((.(.(...(..(..((.(((((((((...((.......((((((((.((.(((((.(((((((((...(.((((((((((((((....))))).))))))))).)((...))..(((((.....((((....(((......)))....))))...))))).)))))))))..)))))))....))))))))...)).)))))))).....).)).)..)..).).)..))...)..)))).)))))...
+..(.((((((...(((.((((((((((((..((....))...((((..((.((((((((((((..((....((((((((.....((....)).....))))))))((((((((......))))).).))(((((....))))))).)))))))))))).))...))))...((((......)))).....((((.(((...))).)))).((((((((........)).)))))).)))))))))))).)))....)))))).).................((((((.....))))))..........
+UAUACUUUAGUUUAGGAAGAAUAUUUAUUUUUGGUGUAAAAGGGUUGUAGUAUAGCCA -6.199999809265137
 ((((((...((((.....)))).(((((.......)))))........))))))....
-((((((..........((((((....))))))))))))....(((((.....))))).
-GCCGCCGUAGCUCAGCGGUAGAGCGCCGGCCUCGUAAGCCGGUGGUCGCGGGUUCGAAUCCCGCCGGCGGCUCCA -27.700000762939453
-(((((((..((((.......)))).(((((.......))))).....(((((.......))))))))))))....
-(((((.(.....).)))))........((((......((((((((...((....))....))))))))))))...
-GGUCCCCCCGCGACGAGUCGCUGUGAACCCCGUCAGGCCCGGAAGGGAGCAGCGGCAGCAGCGAUCCUCGGGCGCCGGGGUGUGGCU -29.100000381469727
-((((.((((((..((((.((((((.....((((....(((....)))....))))..))))))...)))).)...)))))...))))
-........(((..(..((((((((...(((((.......)))..))..)))))))).)..)))..(((((.....))))).......
-GGGGACCCCGCGCACCCGCCAGAGCCCGUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUGGACGCCGCGCGGGGUCC -40.29999923706055
+((((((..........((((((....))))))))))))....((((((...)))))).
+GUUGAGCUUAGUAACGUGGGCUUGUAAUCCAAGUGGAGACAUCAAAGUGGUUGAAUAUUGGGCUGUACCAGAUGGUUGGGCUUGGUGGGCUAAUUUCUGACUUGCCCUAUCCAAGCUUAGAGUUGGAUCAUGUGGCCCAAUUGAAGAAAUGGACUACUUGAUUCGUAAAGUGGGGCGGAAUGCGUGAGGCUGGUUUCACAGAGCAGUGAACAGCUCCCGCUCUGUGCAGUGGAAGGAUAAUGGGUCGGUGUCUUAUCAAGUUCAGUAACGCCUAAUGGGUUGCUCCAAUAAACAACCACCUUUU -82.0999984741211
+((((((((((......)))))))....((((..)))))))...((((..(.(...((((((((.((.(((...(((.((((((((((((.((....((((((((.((..((((.((.((((((.((((((.((((.(((.((....)).))).)))).)))))).(..)..(((((....(.(((....(((......)))....))).)..))))).)))))).))..)))).))....)))))))))).))))))))))))......)))...))))).))).)))).)...).)..)))).
+..........((.((.((((((((...........((((((((.((((((((....(((((((((((((((....((((((((((.((((.............))))...))))))))))..))))....)))))))))))..........))))))))(((((((...(((((((((.........(((((..(((((......)))))))))).)))))))))..............)))))))))))))))..)))))))))).))........(((((..........))))).......
+GUGCUAGACGGGGAGGUAGCGGUGCCCUGUUACCUGCAAUCCGCUAUAGCAGGGUCGAAUUCCUAUAAUAGGCAUGCUUCUGUAAGGUCUGCCCUUUGCAAGUGGCGAUGAAAAUUGGGUCCUACGCAACGGAAGCCUAUGAACCCCGUCAGGUUCGGAAGAAAGCAGCGGUAAG -51.099998474121094
+......(((((((.(.(...).).))))....(((((...........))))))))...................................................................................(.....((((....(((....)))....))))...)
+(.(((.((((((((((((((((....)))))))))......((((((.((((((................((((.((((.....)))).))))))))))..))))))........(((((((........))..)))))....))))))).))).)...................
+GGCAACGACCAUACCACGUUGAAUACACCAGUUCUCGUCCGAUCACUGAAGUUAAGCAACGUCGGGCGUAGUUAGUACUUGGAUGGGUGACCGCUUGGGAACACUACGUGCCGUUGGCAU -27.799999237060547
+(.(((((.(....((((((((.....((((((............))))..))....)))))).)).((((((.....((.((.(((....))))).))....)))))).).))))).)..
+..(((((.........)))))......(((((((((((((((..(((((......((........))....)))))..))))))))).)))....))).........(((((...)))))
+GAAUCGCGAGUAAUCGUAGAUCAUUAGCGCUACGGUGAAGGUAACCUCUAUUGUGCACACAUUGCCCGUCACCUCCGAUAAUAGUAUUGUACAGGAAGAACUAUGGCUACACUUA -17.700000762939453
+............(((((((..........)))))))...............................................................................
+(.(((((((....)))).))))..((((.....(((((.(((((.......(((....))))))))..)))))(((((((((...))))).).))).........))))......
+GGGCAAUGUCCGACCUCCAAAUUGUGUCAGGACCGGAAGGUAGCAGCACUAAGGUUGCUUGGGCAUGUGCCUUUUU -24.100000381469727
+(((((.((((((((..((.....((((....(((....)))....))))...))..).)))))))))..)))....
+.......((((((((........).))).)))).((((((((.((((.(((((....))))))).)))))))))).
+GGGGACCCCGCGCACCCGCCAGAGCCCGUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUGGACGCCGCGCGGGGUCC -42.099998474121094
 ((((.(...(.(...(.((....(.(....).)....)).).).)..).))))...................................
-..(((((((((((...(((((........(..((((....(((....)))...))))..).........))).))..)))))))))))
+..(((((((((((.(((.((((.(((.....................))).))))))).(((((.....)))))...)))))))))))
+CGUGCUAGAUGGGGAGUUAGCGGUGCCCUGUAACCUGCAAUCCGCUAUAGCAGGGUUGAAUUCCUGGCUUAGACUUUAAAAUGUGAGGCCUGCCCCAUAAAAGUGGCGUUGAGAGCUUGGUCCCACGCAACAAGAACUCAUGAACCCCGUCAGGUCCGGAAGGAAGCAGCGGUAAGUGAAUAUUUUUGUGUGCCGUGGAUAAACCUGGUUUGAGUUAACUAUAUGGGUAACGCU -54.29999923706055
+.......(((((((.(((...))).))))....(((((...........)))))))).............................((..((.((((((..((((((.....(((((.(((.(((((((.((((((.((((.....((((....(((....)))....))))...))))...))))))))...)))))....))).)))))..))).))).))))))...))))
+...(((.(((((((..........(((((((.....((.....))....))))))).........(((((..((........)).)))))((((.(......).)))).((((..((((...........))))..))))....))))))).)))((((.........((((((.(((((....))))).))))))........))))..........................
 #+end_example
 #+begin_example
 * alignment
