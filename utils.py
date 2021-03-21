@@ -83,6 +83,7 @@ def auto_cor(seq, cseq, pad=1.0):
     cor = seq_conv(seq, cseq)
     norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_seq-1))[::-1]]
     cor_l = [(i, c) for i, c in enumerate(cor/norm)]
+    # cor_l = [(i, c) for i, c in enumerate(cor)]
     return cor_l
 
 
@@ -153,10 +154,6 @@ def eval_dynamic(seq_comp, pair_list, moves, len_seq, SEQ):
 def eval_one_struct(seq_comp, pair_list, len_seq, SEQ):
     "eval individual loop moves"
     dot_struct = dot_bracket(pair_list, len_seq)
-    # print("EVAL")
-    # print(SEQ)
-    # print(dot_struct)
-    # print("EVAL")
     return seq_comp.eval_structure(dot_struct)
 
 

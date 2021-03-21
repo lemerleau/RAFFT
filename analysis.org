@@ -16,6 +16,7 @@ plt.rcParams["font.weight"] = "bold"
 plt.rcParams["font.size"] = 6.7
 plt.rcParams["figure.figsize"] = 8, 4
 
+
 def read_true_struct(infile="./test_data/benchmark_data_full.csv"):
     results = {}
     for l in open(infile):
@@ -36,14 +37,16 @@ def read_csv(infile):
             first = False
     return results
 
-fft_pred = read_csv("./test_data/results_fft_7_scores.csv")
-# cont_pred = read_csv("./test_data/results_mxfold_scores.csv")
-cont_pred = read_csv("./test_data/results_linear_scores.csv")
-# cont_pred = read_csv("./test_data/results_context_scores.csv")
-vrna_pred = read_csv("./test_data/results_mfe_scores.csv")
+
+fft_pred = read_csv("./test_data/results_fft_langdon_scores.csv")
+line_pred = read_csv("./test_data/results_linear_scores.csv")
+cont_pred = read_csv("./test_data/results_context_scores.csv")
+mx_pred = read_csv("./test_data/results_mxfold_scores.csv")
+vrna_pred = read_csv("./test_data/results_mfe_langdon_scores.csv")
+# vrna_pred = read_csv("./test_data/results_mfe_scores.csv")
 true_str = read_true_struct()
-fft_all_v, mfe_all_v, cont_all_v = [], [], []
-fft_to_plot, mfe_to_plot, cont_to_plot = {}, {}, {}
+fft_all_v, mfe_all_v, cont_all_v, line_all_v, mx_all_v = [], [], [], [], []
+fft_to_plot, mfe_to_plot, cont_to_plot, line_to_plot, mx_to_plot = {}, {}, {}, {}, {}
 
 nb = 0
 with open("analysis.log", "w") as out:
@@ -52,41 +55,33 @@ with open("analysis.log", "w") as out:
 
         true_nb_bp = struct.count("(")
         true_nrj = seq_comp.eval_structure(struct)
-        if seq in fft_pred and seq in vrna_pred and seq in cont_pred and len(seq) > 0:
+        if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
             len_seq, cont_st, cont_nrj, cont_nbp, cont_pvv, cont_sens = cont_pred[seq]
-            # save_fft, save_mfe, save_cont = fft_nrj - cont_nrj, mfe_nrj, cont_nrj - mfe_nrj
-            save_fft, save_mfe, save_cont = fft_pvv, mfe_pvv, cont_pvv
+            len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
+            len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
+            save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
             fft_all_v += [save_fft]
             mfe_all_v += [save_mfe]
             cont_all_v += [save_cont]
-            # print(fft_nrj, cont_nrj)
-
-            # out.write(f"{name} {fft_nrj} {cont_nrj} {len_seq}\n")
-            if fft_nrj > cont_nrj:
-                seq_comp = fold_compound(seq)
-
-                true_nb_bp = struct.count("(")
-                true_nrj = seq_comp.eval_structure(struct)
-                out.write(f"{seq} {fft_pvv} {cont_pvv}\n")
-                out.write(f"FFT {fft_nrj}, CON {cont_nrj}, MFE {mfe_nrj}, TRUE {true_nrj}\n")
-                out.write(f"fft {fft_st} {fft_nbp}\n")
-                out.write(f"con {cont_st} {cont_nbp}\n")
-                out.write(f"mfe {mfe_st} {mfe_nbp}\n")
-                out.write(f"tru {struct} {true_nb_bp}\n")
-
-                nb += 1
+            line_all_v += [save_line]
+            mx_all_v += [save_mx]
 
             if len_seq in fft_to_plot:
                 fft_to_plot[len_seq] += [save_fft]
                 mfe_to_plot[len_seq] += [save_mfe]
                 cont_to_plot[len_seq] += [save_cont]
+                line_to_plot[len_seq] += [save_line]
+                mx_to_plot[len_seq] += [save_mx]
             else:
                 fft_to_plot[len_seq] = [save_fft]
                 mfe_to_plot[len_seq] = [save_mfe]
                 cont_to_plot[len_seq] = [save_cont]
+                line_to_plot[len_seq] = [save_line]
+                mx_to_plot[len_seq] = [save_mx]
 
+                
 list_len = list(fft_to_plot.keys())
 list_len.sort()
 nb_el = len(list_len)
@@ -94,18 +89,14 @@ nb_el = len(list_len)
 fft_mean = mean([mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0])
 mfe_mean = mean([mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0])
 cont_mean = mean([mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0])
+line_mean = mean([mean(line_to_plot[len_]) for len_ in list_len if len_ > 0])
+mx_mean = mean([mean(mx_to_plot[len_]) for len_ in list_len if len_ > 0])
 
-slide_mean_fft = [mean([mean(fft_to_plot[l]) for l in list_len[max(0, i-10):min(nb_el, i+10)]]) for i, len_ in enumerate(list_len)]
-slide_mean_mfe = [mean([mean(mfe_to_plot[l]) for l in list_len[max(0, i-10):min(nb_el, i+10)]]) for i, len_ in enumerate(list_len)]
-slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-10):min(nb_el, i+10)]]) for i, len_ in enumerate(list_len)]
-
-# fft_mean = mean(fft_all_v)
-# mfe_mean = mean(mfe_all_v)
-# cont_mean = mean(cont_all_v)
-
-# fft_all_v = [mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0]
-# mfe_all_v = [mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0]
-# cont_all_v = [mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0]
+slide_mean_fft = [mean([mean(fft_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+slide_mean_mfe = [mean([mean(mfe_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+slide_mean_line = [mean([mean(line_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+slide_mean_mx = [mean([mean(mx_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
 
 bpros = dict(color="orange", linewidth=0.2)
 fig = plt.figure(1)
@@ -125,9 +116,13 @@ xs_scr = linspace(min(fft_all_v), max(fft_all_v), 50)
 dens_fft_scr = kde.gaussian_kde(fft_all_v)
 dens_mfe_scr = kde.gaussian_kde(mfe_all_v)
 dens_cont_scr = kde.gaussian_kde(cont_all_v)
+dens_line_scr = kde.gaussian_kde(line_all_v)
+dens_mx_scr = kde.gaussian_kde(mx_all_v)
 ax_histy.plot(dens_fft_scr(xs_scr), xs_scr, c="deepskyblue", linewidth=0.8)
 ax_histy.plot(dens_mfe_scr(xs_scr), xs_scr, c="orangered", linewidth=0.8)
-ax_histy.plot(dens_cont_scr(xs_scr), xs_scr, c="green", linewidth=0.8)
+ax_histy.plot(dens_cont_scr(xs_scr), xs_scr, c="blueviolet", linewidth=0.8)
+ax_histy.plot(dens_line_scr(xs_scr), xs_scr, c="green", linewidth=0.8)
+ax_histy.plot(dens_mx_scr(xs_scr), xs_scr, c="darkslategrey", linewidth=0.8)
 ax_histy.tick_params(axis="y", labelleft=False, size=0)
 ax_histy.tick_params(axis="x", labelbottom=False, size=0)
 ax_histy.grid(True, color="grey",linestyle="--", linewidth=0.2)
@@ -136,36 +131,52 @@ fft_f.set_xlim([0, nb_el]); fft_f.set_ylim([0, 100.0])
 fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len],
-               yerr=[std(fft_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".",
+               yerr=[std(fft_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
                linewidth=0.2, ms=3, c="skyblue", ecolor="deepskyblue", alpha=0.2)
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len],
-               yerr=[std(mfe_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".",
+               yerr=[std(mfe_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
                linewidth=0.2, ms=3, c="coral", ecolor="orangered", alpha=0.2)
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len],
-               yerr=[std(cont_to_plot[len_])/2 for len_ in list_len], elinewidth=0.8, fmt=".",
-               linewidth=0.2, ms=3, c="palegreen", ecolor="green", alpha=0.2)
+               yerr=[std(cont_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
+               linewidth=0.2, ms=3, c="blueviolet", ecolor="blueviolet", alpha=0.2)
+fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(line_to_plot[len_]) for len_ in list_len],
+               yerr=[std(line_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
+               linewidth=0.2, ms=3, c="palegreen", ecolor="palegreen", alpha=0.2)
+fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mx_to_plot[len_]) for len_ in list_len],
+               yerr=[std(mx_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
+               linewidth=0.2, ms=3, c="darkslategrey", ecolor="darkslategrey", alpha=0.2)
 
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len], c="deepskyblue", s=0.5)
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len], c="orangered", s=0.5)
-fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len], c="green", s=0.5)
+fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len], c="blueviolet", s=0.5)
+fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(line_to_plot[len_]) for len_ in list_len], c="green", s=0.5)
+fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(mx_to_plot[len_]) for len_ in list_len], c="darkslategrey", s=0.5)
 
 fft_f.plot(range(nb_el), slide_mean_fft, linestyle="--", c="deepskyblue", alpha = 0.8)
 fft_f.plot(range(nb_el), slide_mean_mfe, linestyle="--", c="orangered", alpha = 0.8)
-fft_f.plot(range(nb_el), slide_mean_cont, linestyle="--", c="green", alpha = 0.8)
+fft_f.plot(range(nb_el), slide_mean_cont, linestyle="--", c="blueviolet", alpha = 0.8)
+fft_f.plot(range(nb_el), slide_mean_line, linestyle="--", c="green", alpha = 0.8)
+fft_f.plot(range(nb_el), slide_mean_mx, linestyle="--", c="darkslategrey", alpha = 0.8)
 
 fft_l = Patch(color="skyblue", label="FFT")
 mfe_l = Patch(color="tomato", label="VRNA")
-cont_l = Patch(color="green", label="Cont")
+cont_l = Patch(color="blueviolet", label="Cont")
+line_l = Patch(color="green", label="Line")
+mx_l = Patch(color="darkslategrey", label="Mxfold")
 
 fft_f.xaxis.set_ticklabels(list_len[::20], rotation=45)
 fft_f.xaxis.set_ticks([i for i in range(nb_el)][::20])
 
 name_fft = "FFT"
 name_mfe = "VRNA"
-name_cont = "Linear"
-fft_f.set_title(f"Sens")
-fft_f.legend((fft_l,mfe_l,cont_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})"), loc="upper center", ncol=3)
-plt.savefig("img/comp_small_pvv.png", dpi=300)
+name_cont = "ContextFold"
+name_line = "Linear"
+name_mx = "Mxfold"
+fft_f.set_title(f"PVV")
+fft_f.legend((fft_l,mfe_l,line_l,cont_l, mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
+                                    f"{name_line}({line_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})",
+                                    f"{name_mx}({mx_mean:4.1f})"), loc="bottom center", ncol=3)
+plt.savefig("img/comp_stack_ml_pvv.png", dpi=300)
 plt.show()
 #+end_src
 
@@ -173,13 +184,189 @@ plt.show()
 
 #+begin_src R :results output :session *compt*
 dat = read.table("./analysis.log")
-boxplot(dat$V2 -dat$V3 ~ dat$V4)
+boxplot(dat$V3 -dat$V4 ~ dat$V5)
+mean(dat$V2 - dat$V4)
+mean(dat$V3 - dat$V4)
 #+end_src
 
 #+RESULTS:
+: [1] 10.10849
+: [1] 0.1228902
 
 * compare loop contents
 
+#+begin_src python :results output
+from RNA import b2Shapiro, db_from_plist, PS_rna_plot
+from re import findall
+from utils import MCC_bench
+from numpy import array
+import numpy as np
+import matplotlib.pyplot as plt
+from utils_analysis import read_ct, get_bp_list, dotb_from_ct
+from math import isnan
+
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.size"] = 10
+plt.rcParams["figure.figsize"] = 8, 8
+
+def read_true_struct(infile="./test_data/benchmark_data_full.csv"):
+    results = {}
+    for l in open(infile):
+        seq, struct, name = l.strip().split(",")
+        results[seq] = struct
+    return results
+
+def read_csv(infile):
+    # results = []
+    results = {}
+    first = True
+    for l in open(infile):
+        if not first:
+            seq, len_seq, struct, nrj, nb_bp, pvv, sens, name = l.strip().split(",")
+            if struct != "Na":
+                results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp), float(pvv), float(sens))
+        else:
+            first = False
+    return results
+
+def get_loop_content(struct):
+    shap = b2Shapiro(struct)
+    interior = findall(r"I\d+", shap)
+    stack = findall(r"S\d+", shap)
+    multi = findall(r"M\d+", shap)
+    hairpin = findall(r"H\d+", shap)
+    all_loop = findall(r"A\d+", shap)
+    interior_nb = sum(int(el[1:]) for el in interior)
+    stack_nb    = sum(int(el[1:]) for el in stack)
+    multi_nb    = sum(int(el[1:]) for el in multi)
+    hairpin_nb  = sum(int(el[1:]) for el in hairpin)
+    all_loop_nb = sum(int(el[1:]) for el in all_loop)
+    tot_ = interior_nb +stack_nb +multi_nb +hairpin_nb +all_loop_nb
+    try:
+        return float(interior_nb)/tot_, float(stack_nb)/tot_, float(multi_nb)/tot_, float(hairpin_nb)/tot_, float(all_loop_nb)/tot_
+    except:
+        return 0.0, 0.0, 0.0, 0.0, 0.0
+
+
+fft_pred = read_csv("./test_data/results_fft_langdon_scores.csv")
+line_pred = read_csv("./test_data/results_linear_scores.csv")
+cont_pred = read_csv("./test_data/results_context_scores.csv")
+mx_pred = read_csv("./test_data/results_mxfold_scores.csv")
+vrna_pred = read_csv("./test_data/results_mfe_langdon_scores.csv")
+targets = read_true_struct()
+
+results = []
+fft_all_v, mfe_all_v, cont_all_v, line_all_v, mx_all_v = [], [], [], [], []
+with open("./scratch/fft_loop_content.csv", "w") as out:
+    out.write(f"pcc_fft,int_l,sta_l,mul_l,hai_l\n")
+    for seq in fft_pred:
+        if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
+            len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
+            len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
+            len_seq, cont_st, cont_nrj, cont_nbp, cont_pvv, cont_sens = cont_pred[seq]
+            len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
+            len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
+            save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
+            
+            true_struct = targets[seq]
+            int_l, sta_l, mul_l, hai_l, all_l = get_loop_content(true_struct)
+            results += [[int_l, sta_l, mul_l, hai_l]]
+            
+            fft_all_v += [save_fft]
+            mfe_all_v += [save_mfe]
+            cont_all_v += [save_cont]
+            line_all_v += [save_line]
+            mx_all_v += [save_mx]
+
+
+results = array(results)
+results -= results.mean(axis=0)
+cov = np.cov(results.T)/results.shape[0]
+V, W = np.linalg.eig(cov)
+idx = V.argsort()[::-1]
+W = W[:, idx]
+fig = plt.figure(1)
+fig.subplots_adjust(left=0.05, bottom=0.05, right=0.99, top=0.95, wspace=0, hspace=0.1)
+fig.tight_layout()
+
+fft_f = fig.add_subplot(221)
+mfe_f = fig.add_subplot(222)
+cont_f = fig.add_subplot(223)
+mx_f = fig.add_subplot(224)
+fft_f.set_aspect("equal", adjustable="box")
+fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+mfe_f.set_aspect("equal", adjustable="box")
+mfe_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+cont_f.set_aspect("equal", adjustable="box")
+cont_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+mx_f.set_aspect("equal", adjustable="box")
+mx_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+
+wrong_fft = [i for i, el in enumerate(fft_all_v) if el <= 10]
+wrong_mfe = [i for i, el in enumerate(mfe_all_v) if el <= 10]
+wrong_cont = [i for i, el in enumerate(cont_all_v) if el <= 10]
+# wrong_line = [i for i, el in enumerate(line_all_v) if el <= 10]
+wrong_mx = [i for i, el in enumerate(mx_all_v) if el <= 10]
+
+fft_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=10)
+fft_f.scatter(results[wrong_fft, :].dot(W[:,0]) , results[wrong_fft, :].dot(W[:,1]) , edgecolor="", color="deepskyblue", alpha=0.5, s=14)
+fft_f.arrow(0, 0, W[0,0]*0.3, W[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("I", xy=(W[0,0]*0.3-0.02, W[0,1]*0.3+0.02), size=12)
+fft_f.arrow(0, 0, W[1,0]*0.3, W[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("S", xy=(W[1,0]*0.3-0.04, W[1,1]*0.3+0.00), size=12)
+fft_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
+fft_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+fft_f.tick_params(axis="x", labelbottom=False, size=0)
+fft_f.set_title(f"FFT")
+
+mfe_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=10)
+mfe_f.scatter(results[wrong_mfe, :].dot(W[:,0]) , results[wrong_mfe, :].dot(W[:,1]) , edgecolor="", color="orangered", alpha=0.5, s=14)
+mfe_f.arrow(0, 0, W[0,0]*0.3, W[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("I", xy=(W[0,0]*0.3-0.02, W[0,1]*0.3+0.02), size=12)
+mfe_f.arrow(0, 0, W[1,0]*0.3, W[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("S", xy=(W[1,0]*0.3-0.04, W[1,1]*0.3+0.00), size=12)
+mfe_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
+mfe_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+mfe_f.tick_params(axis="y", labelleft=False, size=0)
+mfe_f.tick_params(axis="x", labelbottom=False, size=0)
+mfe_f.set_title(f"VRNA")
+
+cont_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=10)
+cont_f.scatter(results[wrong_cont, :].dot(W[:,0]) , results[wrong_cont, :].dot(W[:,1]) , edgecolor="", color="blueviolet", alpha=0.5, s=14)
+cont_f.arrow(0, 0, W[0,0]*0.3, W[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+cont_f.annotate("I", xy=(W[0,0]*0.3-0.02, W[0,1]*0.3+0.02), size=12)
+cont_f.arrow(0, 0, W[1,0]*0.3, W[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+cont_f.annotate("S", xy=(W[1,0]*0.3-0.04, W[1,1]*0.3+0.00), size=12)
+cont_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+cont_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
+cont_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+cont_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+cont_f.set_title(f"ContextFold")
+
+mx_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=10)
+mx_f.scatter(results[wrong_mx, :].dot(W[:,0]) , results[wrong_mx, :].dot(W[:,1]) , edgecolor="", color="gold", s=14)
+mx_f.arrow(0, 0, W[0,0]*0.3, W[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mx_f.annotate("I", xy=(W[0,0]*0.3-0.02, W[0,1]*0.3+0.02), size=12)
+mx_f.arrow(0, 0, W[1,0]*0.3, W[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mx_f.annotate("S", xy=(W[1,0]*0.3-0.04, W[1,1]*0.3+0.00), size=12)
+mx_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mx_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
+mx_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mx_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+mx_f.tick_params(axis="y", labelleft=False, size=0)
+mx_f.set_title(f"Mxfold")
+
+plt.savefig("img/content_fail_all.png", dpi=300)
+plt.show()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+* compare loop distribution
 #+begin_src python :results output
 from RNA import b2Shapiro, db_from_plist, PS_rna_plot
 from re import findall
@@ -207,9 +394,9 @@ def read_csv(infile):
     first = True
     for l in open(infile):
         if not first:
-            seq, len_seq, struct, nrj, nb_bp, pvv, sens, name = l.strip().split(",")
+            seq, len_seq, struct, nrj, nb_bp = l.strip().split(",")
             if struct != "Na":
-                results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp), float(pvv), float(sens), name)
+                results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp))
         else:
             first = False
     return results
@@ -233,39 +420,37 @@ def get_loop_content(struct):
         return 0.0, 0.0, 0.0, 0.0, 0.0
 
 
-fft_pred = read_csv("./test_data/results_fft_7_scores.csv")
-vrna_mfe = read_csv("./test_data/results_linear_scores.csv")
+fft_pred = read_csv("./test_data/results_fft_100n_30_stack.csv")
+vrna_mfe = read_csv("./test_data/results_mfe_langdon.csv")
 targets = read_true_struct()
 
-results = []
-pvv_res_fft, pvv_res_mfe = [], []
+results_fft, results_mfe = [], []
 with open("./scratch/fft_loop_content.csv", "w") as out:
     out.write(f"pcc_fft,int_l,sta_l,mul_l,hai_l\n")
     for fft_seq in fft_pred:
-        len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens, name = fft_pred[fft_seq]
-        len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens, name = vrna_mfe[fft_seq]
+        len_seq, fft_st, fft_nrj, fft_nbp = fft_pred[fft_seq]
+        len_seq, mfe_st, mfe_nrj, mfe_nbp = vrna_mfe[fft_seq]
         true_struct = targets[fft_seq]
-        # save_fft, save_mfe = pcc_fft, pcc_mfe
-        # fft_all_v += [save_fft]
-        # mfe_all_v += [save_mfe]
+        int_l, sta_l, mul_l, hai_l, all_l = get_loop_content(mfe_st)
+        results_mfe += [[int_l, sta_l, mul_l, hai_l]]
         int_l, sta_l, mul_l, hai_l, all_l = get_loop_content(true_struct)
-        results += [[int_l, sta_l, mul_l, hai_l]]
-        pvv_res_fft += [fft_pvv]
-        pvv_res_mfe += [mfe_pvv]
-        if fft_pvv == 0.0:
-            print(fft_seq, fft_nrj)
-            print(true_struct)
-            print(fft_st)
-            PS_rna_plot(fft_seq, true_struct, f"scratch/img_fail/{name}_true.ps")
-            PS_rna_plot(fft_seq, fft_st, f"scratch/img_fail/{name}_fft.ps")
+        results_fft += [[int_l, sta_l, mul_l, hai_l]]
 
 
-results = array(results)        
-results -= results.mean(axis=0)
-cov = np.cov(results.T)/results.shape[0]
-V, W = np.linalg.eig(cov)
-idx = V.argsort()[::-1]
-W = W[:, idx]
+results_fft = array(results_fft)
+results_fft -= results_fft.mean(axis=0)
+cov_fft = np.cov(results_fft.T)/results_fft.shape[0]
+V_fft, W_fft = np.linalg.eig(cov_fft)
+idx_fft = V_fft.argsort()[::-1]
+W_fft = W_fft[:, idx_fft]
+
+results_mfe = array(results_mfe)
+results_mfe -= results_mfe.mean(axis=0)
+cov_mfe = np.cov(results_mfe.T)/results_mfe.shape[0]
+V_mfe, W_mfe = np.linalg.eig(cov_mfe)
+idx_mfe = V_mfe.argsort()[::-1]
+W_mfe = W_mfe[:, idx_mfe]
+
 fig = plt.figure(1)
 fig.subplots_adjust(left=0.05, bottom=0.0, right=0.99, top=0.99, wspace=0, hspace=0)
 fig.tight_layout()
@@ -277,371 +462,34 @@ fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 mfe_f.set_aspect("equal", adjustable="box")
 mfe_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 
-wrong_fft = [i for i, el in enumerate(pvv_res_fft) if el <= 10]
-wrong_mfe = [i for i, el in enumerate(pvv_res_mfe) if el <= 10]
+fft_f.scatter(results_fft.dot(W_fft[:,0]) , results_fft.dot(W_fft[:,1]) , edgecolor="", color="grey", alpha=0.5, s=8)
+fft_f.arrow(0, 0, W_fft[0,0]*0.3, W_fft[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("I", xy=(W_fft[0,0]*0.3-0.02, W_fft[0,1]*0.3+0.02), size=12)
+fft_f.arrow(0, 0, W_fft[1,0]*0.3, W_fft[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("S", xy=(W_fft[1,0]*0.3-0.04, W_fft[1,1]*0.3+0.00), size=12)
+fft_f.arrow(0, 0, W_fft[2,0]*0.3, W_fft[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("M", xy=(W_fft[2,0]*0.3-0.01, W_fft[2,1]*0.3+0.02), size=12)
+fft_f.arrow(0, 0, W_fft[3,0]*0.3, W_fft[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("H", xy=(W_fft[3,0]*0.3-0.02, W_fft[3,1]*0.3+0.03), size=12)
+fft_f.set_title(f"Dataset")
 
-fft_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=8)
-fft_f.scatter(results[wrong_fft, :].dot(W[:,0]) , results[wrong_fft, :].dot(W[:,1]) , edgecolor="", color="deepskyblue", alpha=0.5, s=8)
-fft_f.arrow(0, 0, W[0,0]*0.3, W[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-fft_f.annotate("I", xy=(W[0,0]*0.3-0.02, W[0,1]*0.3+0.02), size=12)
-fft_f.arrow(0, 0, W[1,0]*0.3, W[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-fft_f.annotate("S", xy=(W[1,0]*0.3-0.04, W[1,1]*0.3+0.00), size=12)
-fft_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-fft_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
-fft_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-fft_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
-fft_f.set_title(f"FFT")
-
-mfe_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=8)
-mfe_f.scatter(results[wrong_mfe, :].dot(W[:,0]) , results[wrong_mfe, :].dot(W[:,1]) , edgecolor="", color="orangered", alpha=0.5, s=8)
-mfe_f.arrow(0, 0, W[0,0]*0.3, W[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-mfe_f.annotate("I", xy=(W[0,0]*0.3-0.02, W[0,1]*0.3+0.02), size=12)
-mfe_f.arrow(0, 0, W[1,0]*0.3, W[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-mfe_f.annotate("S", xy=(W[1,0]*0.3-0.04, W[1,1]*0.3+0.00), size=12)
-mfe_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-mfe_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
-mfe_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
-mfe_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+mfe_f.scatter(results_mfe.dot(W_mfe[:,0]) , results_mfe.dot(W_mfe[:,1]) , edgecolor="", color="grey", alpha=0.5, s=8)
+mfe_f.arrow(0, 0, W_mfe[0,0]*0.3, W_mfe[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("I", xy=(W_mfe[0,0]*0.3-0.02, W_mfe[0,1]*0.3+0.02), size=12)
+mfe_f.arrow(0, 0, W_mfe[1,0]*0.3, W_mfe[1,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("S", xy=(W_mfe[1,0]*0.3-0.04, W_mfe[1,1]*0.3+0.00), size=12)
+mfe_f.arrow(0, 0, W_mfe[2,0]*0.3, W_mfe[2,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("M", xy=(W_mfe[2,0]*0.3-0.01, W_mfe[2,1]*0.3+0.02), size=12)
+mfe_f.arrow(0, 0, W_mfe[3,0]*0.3, W_mfe[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("H", xy=(W_mfe[3,0]*0.3-0.02, W_mfe[3,1]*0.3+0.03), size=12)
 mfe_f.tick_params(axis="y", labelleft=False, size=0)
 mfe_f.set_title(f"VRNA")
-plt.savefig("img/content_fail_all.png", dpi=300)
+plt.savefig("img/content_mfe_true.png", dpi=300)
 plt.show()
 #+end_src
 
 #+RESULTS:
-#+begin_example
-CCGUCGGUCCCUCGCGACGCUAGAUCGAAAAUCCCGCCAGGGCCGGAAGGCAGCAACGGUAUCGAUUGAUGCGGGCGCCGAGGUCAACCGGCGGGGAC -37.70000076293945
-((((((((.((((((..(((..((((((.....(((.....(((....))).....)))..))))))...))).)...)))))...))))))))....
-.(((((........)))))............(((((((..((((....(((.((....(((((....)))))..)))))..))))....)))))))..
-CUCGGCCUUUCGCGGUUUUAACGCCUAAACCUGGUCAGGACCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -27.0
-........(((((.((((((((((((.....((((....(((....)))....))))...))).)).)))))))..)))))
-....((((((..(((((((...(((.......))).))))))))))))).((.(((.((((.....)))).)))..))...
-AUGGUACGGUCAUACCACGGCUAAUGCGCCCGAUCCCAUCCGAACUCGGAAGCCAAGCGCCGUUGGGCCGGAAUAGUACUGGGAUGGGUGACCUCCUGGGAAGUCCCGGUGCUGUACCUAU -42.900001525878906
-(.(..(((((....(((((((......((((((............))))..)).....))))).)).((((.(.....(((((..((....)).)))))....).)))).))))).).)..
-.(((((......)))))((((((((((((.........((((....))))......)))).))).)))))..(((((((((((((......((....))...)))))))))))))......
-GUCGGGCGGACGGUGCUGUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGAAUUUUUAUCGGGUCGUUCCGGC -23.600000381469727
-(((((((((.(((((...(((......((((....(((....)))....))))...))).....)))))..)))))).)))
-(((.....))).(.(((((..((...((((......))))..))..))))))..............(((((....))))).
-ACGGUGGCGAAAGCAAGAAGGAUACACCUGUUCCCAUGCCGAACACAGAAGUUAAGCUUCUUAACGCCGAAAGUAGUUGGUGGGCAACUGCCUGCGAGGAUAGGAAGCUGCCGUGCU -30.700000762939453
-(((((((.....(.((((((.....((((((.............))))..))....))))))..).((.(.....((.(((((....))))).)).....).))...)))))))...
-..((((..................))))(((((.......)))))....(((..(((((((((.(..((...(((((((.....)))))))...))..).))))))))).....)))
-CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCCGCCAGUGCCG -24.799999237060547
-..........(((.((((((((((((.....((((....(((....)))....))))..))))))..)))))))...))
-.(((((.((((((...)))))).)))...))(((((.(((.((((((((...........)))))))).))).).))))
-CGAAGCGUGUCAGGACCUGACGGUAGCAGCACUAAG -6.699999809265137
-(.....((((....(((....)))....))))...)
-....((.((((((...))))))...)).........
-UAGCGUUGCGAUGCAUGUGGAGUGUAUACACCCGAUCCCAUCGCGAACUCGGCCGUGAAACACUCCAGCGCCUAUGGUACUGCGGCUUAAGCGGCGGGAGAGUCGGUCAGCGCCGAGCU -43.29999923706055
-.(((.(((...(.......(.(.......((((((.............))))..)).......).)....((.((....((((.((....)).))))....)).))...)...))))))
-.....((((((((....(((.(((....))))))....)))))))).((((((..(((...((((...((((...(((......))).....))))...))))...)))..))))))..
-AGCCGGAGCGCAUUGCUCUGUAACCUUCGGGGGCUGAUCCCGCUUAGCGGGGACGUCUUGGACAAGCGGGGGUUCUGUUGCGUUGACUUGGUGUUCUGCUUGGUUGCGUGUCGGUGUUGAGGUCGCCACUGUAGAGAGGCGUUCUCGCGCCGUUAAAGUGGGGGGAACGGGUCAGGCCGGUGACGGAGCAGCCCACCUUGCGCACGUUCCCGUUGCAGAAGCACACCGAGGAGCAUCUCAGGACUUUGCGCCCCAAGUGUCGUCGCGAGGCGG -90.19999694824219
-((((((((((...))))))....(((..)))))))....((((((.((((.((((.(((((....(((.((((((((.(((.((..(((((((((((((..((..((((((((((((.((((.((((.((....)).)))).))))))))))(...)(((.(((....((((....(((....)))....)))).))))))))))))..))...)))))...)))))))))))))...)))))).)).))).))))))))).)))).))))))
-..(((..((((((((((((((.(((...((.((((..((((((((.(((((((((((((...(((((((((.....((((...))))......))))))))).(((((.((.((((.......))))))))))).))))))))))))).......))))))))......))))...))))).))))))))).......)))))..(((((((.(((....)))...)).))))).........(((((((.(.........).))))))))))
-GCUGGGCGUGGUGGCGUGCGCCUGUAAUCUAGCUACUUGGAGGCCAGGGUGCGGGAUUUCGUGGGACCGGGAGUUCUGGCAUAUGGGUGCUCAUGUUGAUCGGGCGUCCACGCUAAGCACGGCGCCGAUAUGGAUGAGCUGUCGGAGGACGGGUUGUCCAGGUCGUCUAAGGAGGGGCGGACCGGCCCAGGGGGGAAACCCAGCAGGCAAAAGUCCCCGCGUGGUGCGGUAGCGGGAUAGCGCCUGUGAAUGGUGUCCAUGUGACAGCCCGGUUGGCGCGUGAAGACCGCCUCCUUUU -107.80000305175781
-((((((((((......)))))))....(((........)))))).((((.((((..(((.....(((((((....(((.((((.((((..((((.(....(((((((((.(((((.((((.((((((((.(((((((.(((((....))))).))))))).))))((...)).(((((......(((....(((....)))....)))....))))).)))).))))..)))))))...))))))).).)))).)))).)))).)))))))))).......)))..)))).))))...
-.........((.((((.(((((((((..((((((.(((((...(((.((.........)).)))..)))))))..))))..)))))))))...((((((((((((((((.((((......))))((((((.(......))))))).((((((.((....)).))))))......((((......)))).(((......))).((((((....(((((((((...))))).....))))...))))))..((((...))))).))).)))))))))))).((....)))))).))....
-GUCGCAAUGGUGUAGUUGGGAGCAUGACAGACUGAAGAUCUGUUGGUCAUCGGUUCGAUCCCGGUUUGUGACACCA -21.299999237060547
-(((((((..((((........))))((((((.......))))))....(((((.......))))))))))))....
-.......((((((((((((((........((((((.((((....)))).))))))...))))))))....))))))
-UUGCUGGUGCAGCGCAGCGCGGACGCCCGAACCUGGUCAGAGCCGGAAGGCAGCAGCCAUAAGGGAUGCUUUGCGGGUGCCGUUGCCUUCCGGCAAUGCU -41.29999923706055
-........(((((((.(((.(....(((.....((((....(((....)))....))))...)))....).))).)....))))))..............
-.(((((...))))).....(((....))).....((.((..(((((((((((((.(((.(((((....)))))..)))...)))))))))))))..))))
-GGGCGGAGGGAAGCUCAUCAGUGGGGUCACAUGCAGGGUGCUUGUCACUCAACCAAUCACCUUGGGGAAGGUCUGAGACAAGAGCCAAUCACUUCCCUAGCAGGGUAUCACCUGAUGUGAGUGAGUGCACAGAGAAUAUGAGCCAUUGUGAGCUGUCUUUACAGGAGAAACCAGCCAGUGCAGCUCUCCAGCACUACUGGUGGAUGUGACCUCACUGGCUUGGAAACACUCAUGGCUGGCAUAUGAGUGCAAUGUGUGAGUUGGAGUACACCUCCAGAACCCAAUUCAGACCACUCUCC -100.19999694824219
-.......(((...((((.....((((.........(((((.....))))).........))))......(..(((((.....((((......(.(((.....))).)((((.....))))(((((((..............(((........................................................................))).......)))))))))))...................))))((((((.....)))))).......))))).).....)))
-....((((((....((((((((((((((((((.....((((...(((((((..........(((((((((.....................)))))))))((((......))))...)))))))..))))..........(((((...)).))).(((((...)))))..((.(((((((..(((....)))..))))))))))))))))))))))))..)))...((((((((.......))))))))....((.((((((((.((.(.......).)))))))))).))..))))))
-AGAUCGGCGCGGACGGAGUCCUCGCCAACCUGGUCAGGGCCGAGAGGCAGCAGCCACAACGAGAUCACCUCUGGGUCGUCUGCCGGUCUCCAC -32.900001525878906
-......(.((((.(((((..((((......((((....(((....)))....))))...)))).....)))))..)))).)............
-((((((..((((((((.(((((.((((...)))).)))))(.(((((....................))))).).))))))))))))))....
-CUAGUGAUGAGUAUGGCAAAGAGGUCAACCCGUUCCAUACCGAACACGGAAGUUAAGCUCUUUAGCGCCGAUGGUAGUUGGGGGCUUCCCCCUGUGAGAGUAGGACGUCGCUAGG -33.20000076293945
-.(..((.(((.....((((((((....((((((............))))..))....)))))).)).((.((....((.(((((...))))).))....)).))...))).)).)
-(((((((((.((((((...((.((.....)).))))))))....(((((.....((((((((.((((((...))).)))))))))))....))))).........))))))))).
-GAAUUCAACGUAUAAACGAGACACAUGCAUAUAUUUUGUUAUGUGUAGACAGAUGGUUACCACCAACGAUCCAGUGUAACUAGUGCACGUGAUGAGUACAAUGGAACAGAACCCGGCUUA -16.899999618530273
-....................(((((((((.(...).)).)))))))................(((..(..(..(((((.....))))).......)..)..)))................
-...(((..(((....))).......((((((((......))))))))......((((....))))....((((.((((.((.((.......)).)))))).))))...))).........
-GGGCAAAGCGUGAGGCUGGUUUCACAGAGCAGCGACAACCUCCCUCUCCUUGCAGUGGAAGGAUAAC -16.5
-((......(((....(((......)))....)))....))...........................
-(((...((..((..((((.(((...))).))))..))..)))))..(((((.(...).)))))....
-AGUUAGGGGAUCGAAGACGAUUGACCAGGGGUAUUUGUCGUCCACAGGUGCUGCAACCGACCUAGCCGGGAGCCAUCCGUCGCGCACAUCACCACUGCUGGCUCCUUCGGGUACCACAGCCAAGCUCCUCGCCGAGGCCGUCUACAAGACUCAACGUUAGAUGGCGCGCGACGUUUCUAAUAGAGUCGAGUCCCGCUCGUCACGGGUACCGUCGUAGU -61.79999923706055
-...............((((((.((.........)).))))))...((((..........)))).((((((.....))))..))....((((.(..((.(((...(((..............)))....))).))(((...)))....(((((...).).)))((((.....)))).......)))))..((..........))...............
-.((((((.(((((....))))).....(.(((((((((.....))))))))).)......)))))).((((((((........(((.........)))))))))))...((((((..(((...)))..((((....((((((((...(......)..))))))))..)))).............(.(((((...))))).)...))))))........
-GAACCUCCCCAGGGCCGGAAGGCAGCAAGGAUAAGCGGGCUCUGGCGGGUGCACGGGGGGCCUU -22.600000381469727
-.....(((.....(((....))).....))).................................
-...((((((((..((((((..((.((........))..))))))))...))...))))))....
-GAGCUUGUAACCCGAGCGGGGGCUUUAGGGUGGUGUGGAUGUUGCCGUAGCGCUGUGGGCCUGGUCCGGUCGUGCUCCUGCUGGCCCGCCCGUUCCAAGUUGGUAGUGGACCGCUGGGGCCCUGUGCGAAAGCUGGGCCUCACGGGCCGUAAUGUUGGCAGGCACAGCGUUAGGCUGGCUUCACAGAGCAGCGAGAACUGCCCGCUUCCAACGGUGGAAGGAUAACGGGCCGCUGCACAACUGGGCCACUUGGGCCUCUCAGCCUACUCCAG -111.30000305175781
-..........((((..))))......................((..(.......(..(((((((((((((.(((.(.....(((((((.((.(((((.(((((.(((.(.(((...(((.((((.((....)))))).))).))).)((...))..(((((......(((....(((......)))....)))....))))).))).)))))..)))))))....)))))))..)))).)))))))))....)))).)......)....)).
-..(((((.....)))))((((((((..((((((((((((.((((((.((((((((((((((((((((((((((((.......(((((...((.((((.........)))).))...)))))..)))))...))))))))....)))))..............))))))))))))).))))))))...((((((......(((((((((((....)))))).....)))))))))))........))))))))))))))).............
-GUUGGGGGCCUUUUAAGAGAAGGAACCUGCGAAUCGGGUCAGGACUGGAAGGUAGCAGCCCUAAGGAGAGUUUUCUUUUGCUAAAAGAAUGUUCUCCAACUUAC -28.200000762939453
-..((((((.(((((..(((.(((...((.(.....((((....(((....)))....))))...).))...))).)))....)))))....)).))))......
-.((((((((((((((.......(.(((((.....)))))).....)))))))).....))))))(((((((.(((((((...))))))).))))))).......
-GCCUUCAUAGCUCAGUCGGUAGAGCAUCAGACUUUUAAUCUGAGGGUCUGGGGUUCGAGUCCCCAUGCGGGCUCCA -25.799999237060547
-((((.((..((((........)))).((((.........)))).....(((((.......))))))).))))....
-(((..(........)..))).((((.(((((((((((...))))))))))).))))((((((......))))))..
-AAACAAUGCACAUCACUACCGGGUCUUGGGCAGUGCGAUAGCGAUGGGAUUCACCUUCGCAGGAUGUGCAUGGAAGUAUAAACACAACGGUCGUU -24.799999237060547
-...............................................................................................
-.....((((((((((((.((........)).)))......((((.((......)).))))..)))))))))........................
-GUCGACGACCAUACCUCGUUGAAAGCACGACAUCUCGUCCGAUCUGUCAAGUUAAGCAACGUUGGGCCUGGUUAGUACUUGGAUCGGAGACGGCCUGGGAAUCCCAGGUGUUGUAGACAUG -33.70000076293945
-(((.(((((....((.(((((.....((((((............))))..))....)))))..)).(((((......((.((.(((....))))).)).....))))).))))).)))...
-.(((((((.......)))))))....(((((.....(((((((.(((........)))..)))))))((((((........)))))).....(((((((...)))))))))))).......
-GAUAGCGUCCAUACCACACUGAAAACACCGGUUCUCGUCCGAUCACCGCAGUUAAGCAGUGUCGGGCCCAGUUAGUACUUGGAUGGGUGACCGCCUGGGAAUACUGGGUGUCGCUACCUU -37.099998474121094
-(.(((((.(....((((((((.....((((((............))))..))....)))))).)).((((((.....((.((.(((....))))).))....)))))).).))))).)..
-.....(((((((((...((((..(((....)))...(((((((.((.((......)).))))))))).))))..)))..))))))(((((.(((((((.....)))))))))))).....
-CGGGCCUCCUCGCAUGGUGGGGCGGUGAACCUGGUCAGGUCGGGAACGAAGCAGCCACAAUCGUUUUCUGCCAGUGCCG -25.299999237060547
-..........(((.((((((((((((.....((((....(((....)))....))))..))))))..)))))))...))
-.(((((.((((((...)))))).)))...))(((((.(((.((((((((...........)))))))).))).).))))
-GAACCCCGCCAGGCCCGGAAGGGAGCAACGGUAGUAGUAUAAUUGUGUGCCGGGGUGUGGCUGG -21.399999618530273
-.....(((.....(((....))).....))).................................
-....((.((((.((((((......((((..(((....)))..))))...))))).).)))).))
-CCCUGCGGCUACACCCCCCUGAAAGAGCCUGAUCUUGUCUGAUCUCAGAAGCCAUGCGGGGCCGACCCUGGUUAGUACCUGGAUGGGAGACCACCUGGGAAUACAAGGUGUUGUAGUCUU -33.29999923706055
-..(((((((.....(.(((((.....((((((............))))..))....)))))..)..(((.((.....((.((.(((....))))).))....)).))).)))))))....
-......(((((((((((.(...........((((......))))...........).))))((.(.((.(((....))).)).).))....(((((.(.....).))))).)))))))..
-UGGGCCCCACGCAACGGAAGGUUACGAACUCCGUCAGGUCCGGAAGGAAGCAGCGG -10.899999618530273
-..............................((((....(((....)))....))))
-((((((..(((...((........)).....)))..))))))..............
-UGGACCAGCGAGGGUGUUCUGCUGCGUUGACGUGGUGCUCUGCUUGGCUGUGUGUCGG -16.200000762939453
-..........................................................
-..(((((((.(((......(((((((....))))))).....))).))))...)))..
-UGAACUCCCCCAGGGCCGGAAGGCAGCAAGGGUCAAUGGGCUCUGGCGGGUGCGCGGGG -23.899999618530273
-(.....(((.....(((....))).....)))...).......................
-((..(.(((((((((((....(((.......)))....)))))))).))).)..))...
-CGAGCUAAGUUUUUGCAAACGCCGUGUGGCUCAUUCUGAAAAGAAUAUGACCAUACAAAGUUUUCAUACGGUAUUCUCCGACGAACGAAGCUCUCAGAGCAUUGUACACUUCACACUGAGGAACUCGAUCUUAGUCAAAAUGA -28.899999618530273
-...............................................................................................................................................
-...((((((....((.((((...(((((((..(((((....)))))..).))))))...)))).))..(((......))).....(((...((((((.....(((.......)))))))))...)))..))))))........
-CCGUCGGUCCCUCGCGACGCUAGAUCGAAAAUCCCGCCAGGGCCGGAAGGCAGCAACGGUAUCGAUUGAUGCGGGCGCCGAGGUCAACCGGCGGGGGC -38.0
-((((((((.((((((..(((..((((((.....(((.....(((....))).....)))..))))))...))).)...)))))...))))))))....
-.(((((........)))))............(((((((..((((....(((.((....(((((....)))))..)))))..))))....)))))))..
-GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCAGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -37.0
-((((.(...(.(...(.(.....(.(....).).....).).).)...)))))...................................
-..(((((((((((...((((.......)))).((((.((((.....))))...)))).........((.......)))))))))))))
-GCCUCCAUAGCUCAGUCGGUAGAGCAUCAGACUUUUAAUCUGAGGGUCUGGGGUUCGAGUCCCCAUGUGGGCUCCA -24.700000762939453
-((((.((..((((........)))).((((.........)))).....(((((.......))))))).))))....
-(((..(........)..))).((((.(((((((((((...))))))))))).))))((((((......))))))..
-CUGAACCCCCCCAGGGCCGGAAGGCAGCAAGGGUAGGUGGGCCCUGGCGGGUG -25.399999618530273
-((.....(((.....(((....))).....)))..))................
-.......(((((((((((.(...((.......))...).)))))))).)))..
-CCGUGAACCUGGUCAGGCCCGGAAGGGAGCAGCCACAGCGGUGGAUCUGUGUGCCGGGGUGUGGCUGGUAGGGC -26.899999618530273
-((((.....((((....(((....)))....))))..)))).................................
-........(((((((.((((((......((((((((....))))..))))...))))).).)))))))......
-GGUGAGCGUAACGUCUCGCUGUCACCUGAGUGGGGGUCGUCCGUUGGUGGCAGGAGAAUCGCGCUU -28.0
-(((.((((..(..)..))))....((((..)))).)))............................
-...((((((....((((.((((((((......(((....)))...))))))))))))...))))))
-AACCUGGUCAGAGCCGGAAGGCAGCAGCCAUA -9.5
-....((((....(((....)))....))))..
-...(((((....)))))..(((....)))...
-UUAAGGCGGCCACAGCGGCGGGGCGACUCCCGUACCCAUCCCGAACACGGCAGAUAAGCCCGCCAGCGUUCCAGCGAGUACUGGAGUGUGCGAACCUCUGGGAAAACUGCCUCGCAAGAGGGGCC -42.900001525878906
-((......((....(((((((......((((((.............))))..)).....))))).))....(((......((((((.((....)))))))).....)))....)).....))...
-.......((((......((((((((..(((((................(((......)))(((..(((((((((......))))))))))))......)))))....))))))))......))))
-GUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGUAACGA -9.399999618530273
-.(((......((((....(((....)))....))))...)))
-((..((...((((......))))..))..))...........
-GGUCCCCUCGCAACGAUCAGCCGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGCAGCGGUGACAUUGUGUGCCGGGGUGUGGCUGGUAG -29.899999618530273
-((((.((((((.(((((..(((((.....((((....(((....)))....))))..)))))...))))))...)))))...)))).....
-....((((....(((......)))....((((......)))).))))(.((((((((.(((((.((...)))))))...)))))))).)..
-CUACGGCGACUUUUUCCCAGGUGAUCACCUCUUCCCAUUCCGAACAGAGUCGUUAAGCCCUGGAGAGCCGAUGGUACUGCUUCACUGCGGGAGAGUAGGUCGUCGCCGAU -31.600000381469727
-.(.((((((.....(((((((.....((((((.............))))..))....)).))).)).((.((....((((......))))....)).))...))))))).
-...(((((((((((((((.(((((..........(((((.....(((.((......)).))).......))))).......)))))..)))))))..)))))))).....
-ACGCCUAAAUCUGGUCAGGACCGGAAGGUAGCAGCCACAAGGGAUGCUUGA -15.399999618530273
-.(((((.....((((....(((....)))....))))...))).)).....
-..((((...((((((....))))))))))((((.((.....)).))))...
-CGCUGCUGCAGUUGAAACGCCCGUAGUUGGCCCCCCGCCGCCACGAGGAAACGGGAGCGCUCCAGGCAGGCCCGUUGGACCCGCCGCGUGGGACCGCGCAGCGGGCCGGCGCGCCGCGGCAGCCCCGAGGAGAGCGGGCGGGGGCACCGGUACCGGCCGGGGACGGGUGAAACAGGAUGAUCCCGCCGAGACCGCCGGCCGCGCAGGCGCCUGCCAAGACCGCCUCUGUCAAUCAAGGGCGAAGGCCGGGGGCUAGAAGGCGAUCAGACACCACCGUAUUCCCGGCCGUAAACGGUGCCGCCCCGCGGCCGGCGCGCGCGUCCCGCCGGCCGCCCAGGGAAACCGGGAGGCUCCGGGCUCUGGGGGGAGUAUGGCCGCAAGGCUGAAACUUG -188.10000610351562
-........(((((.....((((...(((............(((((.........................................))))).........((((((....)).)))).............(((((((.(...((((..((...((((.((...(.(......).)......)).))))...)).......((....))...))))..).)))).)))...)))...))))....((((((....(...((.(.........).))...).))))))..........((((((..(((.((((((.........)))))).)))...((..))))....)))....))).))).(((......((((....))))....))).
-........(((((....((.(((((.....(((((((((.......))...(((((.(((........(((((((((..(((((...)))))......))))))))).((((((((.....((((((.......)))((((((((((((....((((((((((..((((.....(..(((((((....((.((.((((((..((((....))))......(((((.((.....)).)))))..)))))).))))....)).)))))..)..))))...))))))))))....)))))))..))))))))))))))))))))))))......((((.(((...((....))))).))))..)))))))..))))).))...))))).......
-GCACGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGACAGGAGGAUCGCUUGAGUCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCGCACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCAGGUUGCCUAAGGAGGGGUGAACCGGCCCAGGUCGGAAACGGAGCAGGUCAAAACUCCCGUGCUGAUCAGUAGUGGGAUCGCGCCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACAUAGCGAGACCCCGUCUCU -117.4000015258789
-............((((........))))....(((((.((....(((((...(((((((....(((((.(((((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....((((....(((....)))....))))...))))).))))))).)..)))))))...))))))).).)))))))))))).)))))))))))).....)))))...)).))))).
-(((.(((((..(((((.(((.((((((((((((...)))..((..((((..((((((((...))))))))..))))..))(((((((...((((....))))....)))))))...........))))))))))))..)))))...))))))))...(((.(((((......((((((((.(((.((((((..........)))).))........(((((((..((((....))))....)))))))..))).))))))))...........))))).)))..
-GGAAAGGUAUACCGCCCCAGGCUGGUAAACAGAGCAGGGAAAAGCCCUCGCUCUUGGUAGUGGGAGGAUCUCGUAUCAGAAUUCUGAUGUG -26.700000762939453
-...(.(((......(((....(((.....)))....)))....))).)...........................................
-...........((..((((..(((.((...(((((((((.....)))).))))))).))))))).))....((((((((....))))))))
-CCGUGCUAGAUGGGGAGGUAGCGGUGCCCUGUAACCCGCAAACCGCUAUAGCGGGGUUGAAGUCCCA -18.0
-........(((((((.(.(...).).))))....(((((...........)))))))).........
-((((.....))))....((((((((................))))))))....(((.......))).
-UGAACCCCCCCAGGGCCGGAAGGCAGCAAGGGUAAGCGGGCUCUGACGGGUG -19.5
-(.....(((.....(((....))).....)))..).................
-...((((...(((((((.(...((.......))...).)))))))..)))).
-GAUACGAUGGCCGAGUGGUUAAGGCGAAGGAUGCAGGUUCCUUUGGGCAUUGCCCGCGCAGGUUCGAACCCUGCUCGUGUCGCCA -29.100000381469727
-(((((((..(((..........))).(((((.......)))))..............(((((.......))))))))))))....
-.......(((((....))))).(((((.....(((((....(((((((.((((....))))))))))).))))).....))))).
-GUCGGGCGGACGGUGCCGUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGCAACGAUUUCGUAUCGGGUCGUUCCGGC -28.799999237060547
-...((((((.((((((.((((......((((....(((....)))....))))...))))...))))))..))))))....
-....(((((.((....)))))))...((((......)))).........((((.((((((((......)))))))).))))
-UCCCGGGGCCUAUGCAAAAAAGGUUUUUCGAACCCCGUCAGAUCCGGAAGGAAGCAGCGGUAGAUUAAUUCUUUUUGUGCCGUAGUGUUCCCGGGUUUUU -26.200000762939453
-.....(...(.....((((.((.((..((.....((((....(((....)))....))))..))..)))).))))......)...)..............
-...((((((((.........))).........)))))..((((((((..(((.((.((((((...............)))))).)).)))))))))))..
-UGGUCCUCUCGCAACAAUAGCUCGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCGUGUGACUUGUGUGCCGGGAUGUGGCUGGGGUCCCACCCUUUA -27.399999618530273
-(((((.((((((.((((..((.(((.....((((....(((....)))....))))..))).))...)))))...)))))...)))))...............
-...((((.((((...........))))..((((......)))).))))...(((((((.(.((..((....))..)).).)))))))(((((...)))))...
-CACUCGAUGCGAGUAAUCCACGAUCUGCUGUGGCGCGCUAAGCCCUGGCCCGGACCCUCGAGGGAAGCGAUUCUGCAGAGAACAGGCCCCCCGGAGAUGGCGGCGCCAGACUACACCCUCGCUGCACA -38.70000076293945
-((.(((.((.((....)))))))..)).........((...))...((.((.....(((....(((....)))....)))....)).)).......................................
-.(((((...)))))..............(((((((.(.......((((((((....(((..(((..((..((((....))))...))..))).)))....))).)))))........).)))))))..
-UGAACCCCCCCAGGGCCGGAAGGCAGCAAGGGUAAGCGGGCUCUGGCGGGUG -23.100000381469727
-(.....(((.....(((....))).....)))..).................
-......(((((((((((.(...((.......))...).)))))))).)))..
-UGAACCUGGUCAGGGCCGGAAGGCAGCAGCCA -9.5
-......((((....(((....)))....))))
-.....(((((....)))))..(((....))).
-AAUGCGUUAGGCUGGUUUCACAGAGCUGCGAGAACCUCACGCUCUACACAGUGUAAGGAUUACA -17.100000381469727
-..(.(((....(((......)))....))).)................................
-....(.(((.((((((.....(((((.(.(((...))).)))))))).)))).))).)......
-GCUGGAGGCGGUGGCACGUGCCUGUAGUCCCAGCUACUUAGGAGGCUGAGGCGGGAGGAUUGCUUGAGCCCAGGAGUUCUGGUCUGUAGUGCACCAUGCCCGUUGGGUGCCUGCACAAAGUUCAGCAUCAAUAUGGUGACCUUCCGGGAGCAGGGGACCAGCAGGUUUCCUAAGAAGGGGUGAACCGGCGCAGGUUGGAAAAGGAGCAGGUCAAAACUUCCAUGCUGAUCAGUGGUGGGAUCACAUCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACUUAUUGAGACCCCGUCUCUAAA -105.5
-(((((..(((......)))..))....(((..........)))))).((((((((....(((.(...(((((((....((((..(((((((..(.((.(....((((((.((.(((.(.(.(((((((.(((.((.((..((((.(....).))))..)).)).)))..(...)..(((((.....(((.....((......)).....)))...))))).))))))).)..).)))))....)))))).).)).).)))))))..))))))))))).....).)))...))))))))....
-..(((((((((.(((....))).((...(((..((.(((((((((((..(((((((((.....(((((((((((...)))))..(((((.(((((..........))))))))))....))))))(((((...))))).)))))))...........))....))))))))))).)))))...))..((.(((((((((.....((((((.........)).))))...(((((((....((((....))))...)))))))...))))))))).))..............)))))))))..
-GGCGCACGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGACAGGAGGAUCGCUUGAGUCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCGCACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCAGGUUGCCUAAGGAGGGGUGAACCGGCGCAGGUCGGAAACGGAGCAGGUCAAAACUCCCGUGCUGAUCAGUAGUGGGAUCGCGCCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACAUAGCGAGACCCCGUCUCUUUU -111.9000015258789
-...............((((........))))....(((((.((....(((((...(((((((....(((((.(((((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....(((.....(((....))).....)))...))))).))))))).)..)))))))...))))))).).)))))))))))).)))))))))))).....)))))...)).)))))....
-(((....))).((.(((((.(((.((((((((((((...)))..((..((((..((((((((...))))))))..))))..))(((((((...((((....))))....)))))))...........))))))))))))..))))).))...((((((((.(..((((((....(((((.((((....((((.(.((.......)))))))((((.....))))..))))))))).(((......)))..))))))..).)))))))).....(((((...)))))....
-UGAACUCCCCCAGGGCCGGAAGGCAGCAAGGGUAAGCGGGCUCUGGCGGGUGC -23.299999237060547
-(.....(((.....(((....))).....)))..)..................
-....(.(((((((((((.(...((.......))...).)))))))).))).).
-CUCGGCCUUUCGCGGUUUUAACACCCAAACCUGGUCAGGAUCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -22.0
-........(((((.((((((((((((.....((((....(((....)))....))))...))).)).)))))))..)))))
-....((((((((.(((((........)))))..........)))))))).((.(((.((((.....)))).)))..))...
-AAUCAGUCUGUUACAUUCUAGCAAUGAGUAGCACCAUCACUGGAGGGAAGCAAUUCAGCACAGUAUGUUACCCGUGGUGGAGGCGAAACGGACGGCAC -24.399999618530273
-.....................(...).((((((.....((((....(((....)))....)))).))))))...........................
-.....(((((((..((((.......)))).((.(((((((....(((.(((((((......))).)))).))))))))))..))..))))))).....
-AAGGCAAUGAUGGCUUUCCGAAUCGUGUCAGGUCCGGAAGGAAGCAGCACUAAGGUAGGUUCGUCAUGUGCCUUUUGUU -23.100000381469727
-.(.(.......(.(((.((.....((((....(((....)))....))))...)).))))......).)..........
-((((((((((((((((((((.(((......))).))))))).......(((......)))))))))).)))))).....
-GUCGAGCUUGGUAACGCGGGCUUGUGAUCCGAGUGGAGACAACAGGAUGUUGGAACUAUGGGCCGAUCUCAUUAGGCCGGGUUCGGGUUGGCUAUUCACUGGCCUGCCCAUUCCAAGUCGGGAGUUGAGGGUUCGGGCUCGAGCGAAGGCUUGUGGUUCGGGCAUUCUUAGAGCGGAGGAGACUGCGUGAGGCUGGUUUCACAGAGCAGCGUCCACCUCCCGCUUUCGACGGUGGAAGGAUCACGGGCCGGUGCCUUCUGAGCCCACUAUGACCUAAUAAGCUGGUUUCAACUGGACCAACAUCUUUU -109.69999694824219
-((((((((((......)))))))....((((..)))))))...((((((((((..(..(((.(.(...(..(..((.(((((((((...((.......((((((((.((.(((((.(((((((((...(.((((((((((((((....))))).))))))))).)((...))..(((((.....((((....(((......)))....))))...))))).)))))))))..)))))))....))))))))...)).)))))))).....).)).)..)..).).)..))...)..))))))))))..
-((.(.((((((...(((.((((((((((((..((....))...((((((((.((((((((((((..(((((.((((((((.....((....)).....))))))))...(((((......))))))))))(((((....)))))...)))))))))))).))))))))....((((......)))).....((((.(((...))).)))).((((((((........)).)))))).)))))))))))).)))....)))))).)))...............((((((.....)))))).........
-CGGUCCCCUCGCAUUGAUCAGCCGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGCAGCGGUGACAUCGAGUGCCGGGGUGUGGCUGGUGGGGUCCACCUCCA -39.099998474121094
-(((((.((((((.(((((..(((((.....((((....(((....)))....))))..)))))...))))))...)))))...)))))................
-.((.((((((((...........))))..(((((((.((((((....((...((((...))))....)).....))))).).))))))).)))).)).......
-GGGGACCCCGCGCACCCGACAGAGCCCAUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -36.29999923706055
-((((.(...(.(...(.(.....(.(....).).....).).).)..).))))...................................
-..(((((((((((........((((((.....(((..((((.....))))...))))).))))...((.......)))))))))))))
-UGCUAGAUGGGGAGUUAGCGGUGCCCUGUAACCUGCAAUCCGCUAUAGCAGGAUUGAAUUCCUCGCUUAGGUAUUAGCGAUUUAUAGUCUGACUUUUGUAAGUGGUGUUGAUGACUGGGUCCCACGCAAUGGAAGCCCAUGAACCUCGUCAGAUCUGGAAGGAAGCAGCGAUAAGUGGUUCCUUCCAUGUGCCGUGGAUCAAUCUGGUCUGAGCUAACUGCAUUAGUAACGU -68.5
-.....(((((((.(((...))).))))....(((((...........))))))))..............................(...(((((..(((.((((((......((((((((.(((((((.((((((.((((.....((((....(((....)))....))))...))))...))))))))...)))))....))))))))...))).))))))..)))..)))
-((((((....(.((((((((((........)))..((((((((....)).))))))......(((((........)))))......(((((((........(.(((.........(((((.(((.....)))..)))))...))).)))))))).(((((((((.((........)).))))))))).......(((((((...))))))).))))))).).))))))....
-CUCCUAAAGUGGAGGGCACAGCGUGAGGCUGGUUUCACAGAGCAGCGACAACCUCCCGCUCUUGUCAGUGGAUGGAUA -21.399999618530273
-...((..)).(((((......(((....(((......)))....)))....)))))......................
-((((......)))).........((..((((.(((...))).))))..)).((..(((((......)))))..))...
-CCCGGGGCCUAUGCAAAAAAGGUUUUUCGAACCCCGUCAGAUCCGGAAGGAAGCAGCGGUAGAUUAAUUCUUUUUGUGCCGUAGUGUUCCCGGGUUUU -26.200000762939453
-((.((((((((((((((((.((.(..((.....((((....(((....)))....))))..))..).)).))))))))...))).))))).)).....
-..((((((((.........))).........)))))..((((((((..(((.((.((((((...............)))))).)).))))))))))).
-GACUUGGUUUCCACGCAAUGAUAGAUUGUCAACCCCGCCAGGUCUGGAAGGAAGCAACGGUAACUUUUGAUUCAUGUGCCGUGUCAAGGCUAAGUCAGCA -24.0
-...((((((..(((((.((((..((..((.....(((.....(((....))).....)))..))..))...)))))...))))........)).))))..
-((((((((((..(((((((.....)))))....((..(((....)))..)).....((((((..............))))))))..))))))))))....
-GGCUUGAUGGUGAAAUUGGUAGACACGCGAGACUCAAAAUCUCGUGCUAAAGAGCGUGGAGGUUCGAGUCCUCUUCAAGUCACCA -23.299999237060547
-(((((((..(((...........)))((((((.......))))))............(((((.......))))))))))))....
-.......((((((..((((.(((.....(.(((((..(((((((((((....))))).)))))).))))))))))))).))))))
-GAGAUCGGCGCGGACGGAGUCCUCGCCAACCUGGUCAGGGCCGAGAGGCAGCAGCCACAACGAGAUCACCUCUGGGUCGUCUGCCGGUCUCCACCUCAUUUU -36.5
-(......(.((((.(((((..((((......((((....(((....)))....))))...)))).....)))))..)))).).....)..............
-(((((((..((((((((.(((((.((((...)))).)))))(.(((((....................))))).).)))))))))))))))...........
-GUCGGGCGGACGCAGCCUUCGCCAACCCGGUCAGGUCCGGAAGGAAGCAGCCGCAACGAAUU -23.299999237060547
-.................((((......((((....(((....)))....))))...))))..
-.(((.((((..((..(((((.(..(((......)))..))))))..))..))))..)))...
-GACACCGUGGCCCAGUGGUUACGGCGUUGGACGCAGAAUCCAUUGAGCUUGCUCGCGCGGGUUCGAAUCCCGUCGGUGUCUCCA -34.599998474121094
-(((((((..(((..........)))(.((((.......)))).).............((((.......)))).)))))))....
-(((.((((((((....)))))))).)))((((((.((.....((((((((((....))))))))))......)).))))))...
-GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCAGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCCACC -39.79999923706055
-((((.(...(.(...(.(.....(.(....).).....).).).)...)))))......................................
-(((((((((((((...((((.......)))).((((.((((.....))))...)))).........((.......))))))))))))).))
-UGUCUGGCGGCAGUAGCGCGGUGGUCCCACCUGACCCCAUGCCGAACUCAGAAGUGAAACGCCGUAGCGCCGAUGGUAGUGUGGGGUCUCCUCAUGCGAGAGUAGGGAACUGCCAUGCAU -39.20000076293945
-(((.((((((.....((((((((.....((((((.............))))..))....)))))).)).((.((....((((((((...))))))))....)).))...)))))).))).
-......((((((((.....((((....)))).((((((((((.....(((....)))...(((((.......))))).))))))))))((((..(((....)))))))))))))..))..
-ACAUACGGCCAUAACUAUCAGAUAACUCGGGAUCCCGUCCGCUCUCCGUUCGAUAAACUGAUAAGUGCUGAAUUAGUAGUUAGGUCAGUAACGACCAGCGAAUCCUCAGUGUUAUAUGU -18.0
-(((((.(((....((((((((.....((.(((............)))....))....)))))).)).((((.......(((.(.((......))).)))......)))).))).)))))
-......((((.(((((((...........((((...)))).......(((((....(((....)))..)))))..))))))))))).((((((...((......))...))))))....
-CGGUGGCGAUGGCAAGAAGGAUACACCUGUUCCCAUGCCGAACACAGAAGUUAAGCUUCUUAACGCCGAGAGUAGUUGGUGGGAAACUGCCUGCGAGGGUAGGCAGUCGCCGUGCU -41.20000076293945
-((((((.....(.((((((.....((((((.............))))..))....))))))..).((.(.....((.(((((....))))).)).....).))...))))))....
-....(((.(((((....(((.....)))((((.......))))..((((((...))))))...((((((......))))))....(((((((((....))))))))).))))))))
-UGGACCAGCGAGGGUGAUUUGCUGCGUUGACGUGGUGCUCUGCUUGGCUGUGUGUCGG -17.100000381469727
-..........................................................
-..(((((((.(((..((..(((((((....))))))).))..))).))))...)))..
-UGCGGGUCCCCUCGCAACGCUAACUGGUGAACCCGGUCAGGCCCGGAAGGGAGCAGCCGUAGUCAGGGAUGUGUGUGCCGAGGUGUGGCUGGUAGAGU -36.099998474121094
-(((.((((.((((((.((((...(((((.....((((....(((....)))....))))..)))))....)))))...)))))...)))).)))....
-((((((....)))))).((((....))))...(((((((.((((((......(((.((........)).))).....))).))).)))))))......
-CCACAAGCUGCAUGCCACAUGUCAUCCCACCCCCAUGUCCCUUGGGAAGGUCUGAGUCAAGGGCCAGAGCACCCUAACAGGACUUUCCCUGAGUUUUGGGGAGGUGAAUUCCCAGAGAACUCAGCUCCCUGCGAGGUCAGACUGGGCUGGACAUGCCACGGACCCACCCUUCUGGGAAGGGCCAGGUGGAUGCCUCCUCAGCCAGAACUUGGAACAGACUCAUGGCCAACCAAGUGAGUUCAAUGAGGUGAGGCACCCCACCCAAGGGGCCUCAUAACCCAAUUCA -89.5
-(........(.(((........))).).........)...............((((.....((((.......((.....))...(((((((.....)))))))((((.((..........................................................................................................)).))))))))....................(((((((..((.......)).))))))).......))))
-.........(((((...)))))..............(((((((((((((((((..((..((((........)))).)).)))))))))((((((((((((((((((..(((((((((...(((((((.(((......)))...))))))).........((......)))))))))))...((....)).)))))))....)))))))))))....(((((((((....))..)))))))......((((.((...))))))))))))))................
-CAACACCUAAACCUUGUCAGGACCGGAAGGUAGCAGCAACACGGGAUGCUUGUAGUAGGCGUUGACUCCGGGUC -14.699999809265137
-((((((((.....((((....(((....)))....))))...))).)).)))......................
-..........((((.(((((..((.......((((...........)))).......))..)))))...)))).
-CUCUGGUCCUCUCGCAACAAUAGUUCGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCGAAUGACUUGUGUGCCGGGAUGUGGCUGGGGUCCC -27.700000762939453
-((((((((.((((((.((((..((((((.....((((....(((....)))....))))..))))))...)))))...)))))...))))))))....
-.(((((.(((.(((((((....))).))))........))).))))).(((..((((((((((((.....)))).........))))))))...))).
-CGGUGGCGCGUGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGGCUGGAGGAUCGCUUGAGUCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCGCACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCAGGUUGCCUAAGGAGGGGUGAACCGGCCCAGGUCGGAAACGGAGCAGGUCAAAACUCCCGUGCUGAUCAGUAGUGGGAUCGCGCCUGUGAAUAGCCACUGCACUCCAGCCUGGGCAACAUAGCGAGACCCCGUC -117.0
-((......)).........((((........))))......(((.((....(((((...(((((((....(((((.(((((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....((((....(((....)))....))))...))))).))))))).)..)))))))...))))))).).)))))))))))).)))))))))))).....)))))...)).)))
-....((((...(((((..(((((.(((.(((((((((.(((.((((((..........((((((((...)))))))).(((((((..(((((.....))))).)))))))..)))))).))).........))))))))))))..)))))...)))))))))...((.(((((......((((((((.(((.((((((..........)))).))........(((((((..((((....))))....)))))))..))).))))))))...........))))).))
-GAUCCUAUCAUAUUUAUCAACGUUUGAGACUACCUCAUACCAUAUCUUCGUACUUCAUUACUAGAUAUACGUAGGUAGAUUUAGUGCGGAAGUAACGAACAGGGUACUGCGUGAGGCCGGUUACGGAGCAACGAAAACCUGUCUACGAUGAUAGACCUGGGUUGAUAUGGAUGUCAAGUUAAUACCUAUGCUAGUAUUGGAACUAAUUUU -40.5
-(((.(((.((((..(((.((..(((..(((.....(((.(((((((.(((((((((..((((((((.(((....))).))))))))..))))......(((((....(.(((....(((....)))....))).)..))))).))))).))))....)))....))..)...)))))))).)))..)))).))).)))............
-.....................((.((((.....)))).)).............((((.((((((.....((((((((.......(((....))).....((((...((.(((((......))))).))..........(((((......))))).))))..((((((....)))))).....)))))))))))))).)))).........
-CGUUUGGGUUCUGCGCAACGGAAACCCAUGAACCCUGUCAGGUCCGGAAGGAAGCAGCAGUAAGUGGACCCUUCCGUGUGCCGCAGAGGUGCCUGGAUCGAGC -31.600000381469727
-.((((((((((((((((.((((..((.((.....((((....(((....)))....))))...)))).....))))))...))))))...)))))))).....
-....(((((((((.....))).))))))...(((((((..(((((((((((..((........))....))))))).).))))))).))).............
-CUCGGCCUUUCGCGGUUUUAACGCCCAAACCUGGUCAGGAUCGGAAGGUAGCAGCCACAAGGGAUGCUUGAGGCAGGCGAG -22.399999618530273
-........(((((.((((((((((((.....((((....(((....)))....))))...))).)).)))))))..)))))
-....((((((((.(((......)))....(((....)))..)))))))).((.(((.((((.....)))).)))..))...
-AGGCAAGGUUGGACUUACGAAUUGUGUCAGGUCCGGAAGGAAGCAGCACUAAGUAUGCU -11.0
-.............(.(((.....((((....(((....)))....))))...))).)..
-........(((((((((((.....))).)))))))).....((((((.....)).))))
-GGACGUUAAAUAGAUAAGCUAUGCCUAGUUACGGGCUGGGAAGAGAGUCGUCUUCCA -13.100000381469727
-(((((.(..((((.....)))).(((((.......)))))......).)))))....
-......................((((......))))..((((((......)))))).
-AUGCUACGGUCAUACCACCACGAAAGCACCCGAUCCCAUCAGAACUCGGAAGUUAGACGUGGUUGGGCCAGAUUAGUACUGGGUUGAGGGAUCACUUGGGAACCCCUGGUGCUGUAGUGU -35.099998474121094
-..((((((((....((((((((.....((((((............))))..))....)))))).)).((((.......(((((.(((....))))))))......)))).))))))))..
-.......(((...)))..(((...((((((.((((((.((..(((((((......((..((((...))))..))....)))))))))))))))....(((...))).))))))...))).
-CGCAACACUACCUUGUGAACUCGGUCAGGUCCGGAAGGAAGCAGCCGCAGCAAGCGACGUGUGUGCCGGGAUGUCGCUGGCGGGGCCUCCACC -30.700000762939453
-(((.((((...(((((.....((((....(((....)))....))))..)))))....)))))...)).........................
-(((((.......)))))...((((......))))..(((.((..((((....((((((((.(......).)))))))).)))).)).)))...
-CCGUGCUAGAUGGGGAGGUAGCGGUGCCCUGUAACCUGCAACCCGCUAUAGCAGGGUCGAAUUCC -19.399999618530273
-........(((((((.(.(...).).))))....(((((...........)))))))).......
-((.(((((..((((...((((..((........))))))..))))...))))).)).........
-GCCAGACGCGGUGGCACGUGCCUGUAGUCCCAGCUACUCGGGAGGCUGAGGCGGGAGGAUCGCUUGAGCCCAGGAGUUCUGGGCUGUAGUGCGCUAUGCCGAUCGGGUGUCCACACUAAGUUCGGCAUCAAUAUGGUGACCUCCCGGGAGCGGGGGACCACCGGAUUGCCUAAGGAGGGGUGAACCGGCCCAGGUCAGAAAAAGAGCAGGUCAAAACUCCCAUGCUGAUCAGUAGUGGGAUUGCGCCUGUGAAUAGCCACAGCACUCCAGCCUGGGCAACAUAGCAGGCUCUCUCUUUAAAA -118.5
-(((((.((((......)))).))....((((........)))))))(((((.(((((..(.(((...(((((((....(((((.(((.(((.(((((.(....(((((((((.(((((.(.(((((((((((.(((((..((((((....))))))..))))).))))((...)).(((((.....((((....(........)....))))...))))).))))))).)..)))))))...))))))).).)))))))).))).)))))))))))).....))).).))))).)))))...
-((((.......))))..(.((((((.(((((.(((.(((((((((...((((((.....)))))).((((((((...))))))))......(((((((((((...((((....))))....)))))))......)))).))))))))))))..)))))((((......(((....))))))).....((((((((..((......(((((((((...(((((((((....))).))))))))).)))))).....((....))..))..))))))))......)))))).)...........
-UUCUUAGACCUGUGCAAUGCCGUUUAUGAGCACCGCUUCAGGGUGGGAACACAGCAGAGCACUUGUUUAUGGUGUGUGCCGCAGUUAUCUG -25.700000762939453
-....(.(..((((((.(((((((..(((((....((((....(((....)))....)))).)))))..))))))))...))))).....))
-........((((.((..(((((....)).)))..))..))))((((..(((((.((((((....)))).)).))))).)))).........
-GGCACUAUGGCCGAGUGGUUAAGGCGACAGACUUGAAAUCUGUUGGGCUCUGCCCGCGCUGGUUCAAAUCCUGCUGGUGUCGCCA -27.299999237060547
-(((((((..(((..........)))((((((.......)))))).............((.((.......)).)))))))))....
-(((......)))..........(((((((((.(((.((((.(((((((...))))).)).))))))).)).......))))))).
-GGGCGGAGGGAAGCUCAUCAGUGGGGUCACAUGUAGGGUGCUUGUCACUCAACCAAUCACCUUGGGGAAGGUCUGAGACAAGAGCCAAUCACUUCCCUAGCAGGGUAUCACCUGAUCUGGGUGAGUGAGUGCACAGAGAAUAUGAGCCAUUGUGAGUUGUCUUUACGGAAGAAACCAGCCAGUACAGCUCUCCAGCACUACUGGUGGAUGUGACCUCACUGGCUUGGAAACACUCAUGGCUGGCAUAUGAGUUUAAUGUGUGAGUUGGAGUACACCUCCAGAACCCAAUUCAGACCACUCUCC -96.4000015258789
-.......(((...((((.....((((.........(((((.....))))).........))))......(..(((((.....((((......(.(((.....))).)(((((((...)))))))(((((((..............(((........................................................................))).......)))))))))))...................))))((((((.....)))))).......))))).).....)))
-(((.(((((...((((.(((((((((((((((.....((((...(((((((.(((......(((((((((...(((............))))))))))))((((......))))...))).)))))))..))))...............(((((((.....)))))))......((.(((((((..(((....)))..)))))))))))))))))))))))).........(((((((.......))))))).((((......))))))))...)))))....))).................
-GGGGACCCCGCGCACCCGACAGAGCCCGUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUAGACGCCGCGCGGGGUCC -37.20000076293945
-..((.((..(.(...(.(.....(.(....).).....).)..).).))..))...................................
-..(((((((((((...((((.......)))).((((((..(((....)))..))))))........((.......)))))))))))))
-GGGGGCAUAGCUCAGCUGGGAGAGCGCCUGCUUUGCACGCAGGAGGUCUGCGGUUCGAUCCCGCGCGCUCCCACCA -29.799999237060547
-((((((...((((........)))).(((((.......))))).....(((((.......))))).))))))....
-..((((...)))).(.((((((.((((.......((.((((((...))))))))........)))).)))))).).
-AGCCGGAGCGCAUUGCUCUGUAACCUUCGGGGGCUGAUCCCGCUUAGCGGGGACGUCUUGGACAAGCGGGGGUUCUGUUGCGUUGACUUGGUGUUCUGCUUGGUUGCGUGUCGGUGUUGAGGUCGCCACUGUAGAGAGGCGUUCUCGCGCCGUUAAAGUGGGGGGAACGGGUCAGGCCGGUGACGGAGCAGCCCACCUUGCGCACGUUCCCGUUGCAGAAGCACACCGAGGAGCAUCUCAGGACUUUGCGCCCCAAGUGUCGUCGCGAGGCGGUUU -92.69999694824219
-((((((((((...))))))....(((..))))))).(..((((((.((((.((((.(((((....(((.((((((((.(((.((..(((((((((((((..((..((((((((((((.((((.((((.((....)).)))).))))))))))(...)(((.(((....((((....(((....)))....)))).))))))))))))..))...)))))...)))))))))))))...)))))).)).))).))))))))).)))).))))))..)
-(((((..((((((((((((((.(((...((.((((..((((((((.(((((((((((((...(((((((((.....((((...))))......))))))))).(((((.((.((((.......))))))))))).))))))))))))).......))))))))......))))...))))).))))))))).......)))))..(((((((.(((....)))...)).))))).........(((((((.(.........).)))))))))))).
-AAGAAACUAGUUAAACUAAUAACACUGGAUUGUCAGACCGGAGUAACUGGUAAACAAUCAGUGUUUCUUGCCA -17.600000381469727
-(((((((..((((......)))).((((.........))))....(((((.......))))))))))))....
-.......((((...))))..((((((.((((((...(((((.....)))))..))))))))))))........
-CUGGCGGCAGUUGCGCGGUGGUCCCACCUGACCCCAUGCCGAACUCAGAAGUGAAACGCCGUAGCGCCGAUGGUAGUGUGGGGUCUCCCCAUGCGAGAGUAGGGAACUGCCAG -41.70000076293945
-(((((((.....((((((((.....((((((.............))))..))....)))))).)).((.((....((((((((...))))))))....)).))...)))))))
-.....(((((((....((((....)))).((((((((((.....(((....)))...(((((.......))))).))))))))))..(((.(((....)))))))))))))..
-UCGAGCUUGGUAACGCGGGCUUGUGAUCCGAGUGGAGACAACAAGAUUUUGGAACUAUGGGCCGAUCUCAUUAGGCCGGGUUCGGGUUGGCUAUUCACUGGCCUGCCCAUUCCAAGUCGGGAGUUGAGGGUUCGGGCUCGAGCGAAGGCUUGUGGUUCGGGCAUUCUUAGAGCGGAGGAGACUGCGUGAGGCUGGUUUCACAGAGCAGCGUCCACCUCCCGCUUUCGACGGUGGAAGGAUCACGGGCCGGUGCCUUCUGAGCCCACUAUGACCUAAUAAGCUGGUUUCAACUGGACCAACAUCUUUUU -102.69999694824219
-(((((((((......)))))))....((((..))))))....(((((.((((..(..(((.(.(...(..(..((.(((((((((...((.......((((((((.((.(((((.(((((((((...(.((((((((((((((....))))).))))))))).)((...))..(((((.....((((....(((......)))....))))...))))).)))))))))..)))))))....))))))))...)).)))))))).....).)).)..)..).).)..))...)..)))).)))))...
-..(.((((((...(((.((((((((((((..((....))...((((..((.((((((((((((..((....((((((((.....((....)).....))))))))((((((((......))))).).))(((((....))))))).)))))))))))).))...))))...((((......)))).....((((.(((...))).)))).((((((((........)).)))))).)))))))))))).)))....)))))).).................((((((.....))))))..........
-UAUACUUUAGUUUAGGAAGAAUAUUUAUUUUUGGUGUAAAAGGGUUGUAGUAUAGCCA -6.199999809265137
-((((((...((((.....)))).(((((.......)))))........))))))....
-((((((..........((((((....))))))))))))....((((((...)))))).
-GUUGAGCUUAGUAACGUGGGCUUGUAAUCCAAGUGGAGACAUCAAAGUGGUUGAAUAUUGGGCUGUACCAGAUGGUUGGGCUUGGUGGGCUAAUUUCUGACUUGCCCUAUCCAAGCUUAGAGUUGGAUCAUGUGGCCCAAUUGAAGAAAUGGACUACUUGAUUCGUAAAGUGGGGCGGAAUGCGUGAGGCUGGUUUCACAGAGCAGUGAACAGCUCCCGCUCUGUGCAGUGGAAGGAUAAUGGGUCGGUGUCUUAUCAAGUUCAGUAACGCCUAAUGGGUUGCUCCAAUAAACAACCACCUUUU -82.0999984741211
-((((((((((......)))))))....((((..)))))))...((((..(.(...((((((((.((.(((...(((.((((((((((((.((....((((((((.((..((((.((.((((((.((((((.((((.(((.((....)).))).)))).)))))).(..)..(((((....(.(((....(((......)))....))).)..))))).)))))).))..)))).))....)))))))))).))))))))))))......)))...))))).))).)))).)...).)..)))).
-..........((.((.((((((((...........((((((((.((((((((....(((((((((((((((....((((((((((.((((.............))))...))))))))))..))))....)))))))))))..........))))))))(((((((...(((((((((.........(((((..(((((......)))))))))).)))))))))..............)))))))))))))))..)))))))))).))........(((((..........))))).......
-GUGCUAGACGGGGAGGUAGCGGUGCCCUGUUACCUGCAAUCCGCUAUAGCAGGGUCGAAUUCCUAUAAUAGGCAUGCUUCUGUAAGGUCUGCCCUUUGCAAGUGGCGAUGAAAAUUGGGUCCUACGCAACGGAAGCCUAUGAACCCCGUCAGGUUCGGAAGAAAGCAGCGGUAAG -51.099998474121094
-......(((((((.(.(...).).))))....(((((...........))))))))...................................................................................(.....((((....(((....)))....))))...)
-(.(((.((((((((((((((((....)))))))))......((((((.((((((................((((.((((.....)))).))))))))))..))))))........(((((((........))..)))))....))))))).))).)...................
-GGCAACGACCAUACCACGUUGAAUACACCAGUUCUCGUCCGAUCACUGAAGUUAAGCAACGUCGGGCGUAGUUAGUACUUGGAUGGGUGACCGCUUGGGAACACUACGUGCCGUUGGCAU -27.799999237060547
-(.(((((.(....((((((((.....((((((............))))..))....)))))).)).((((((.....((.((.(((....))))).))....)))))).).))))).)..
-..(((((.........)))))......(((((((((((((((..(((((......((........))....)))))..))))))))).)))....))).........(((((...)))))
-GAAUCGCGAGUAAUCGUAGAUCAUUAGCGCUACGGUGAAGGUAACCUCUAUUGUGCACACAUUGCCCGUCACCUCCGAUAAUAGUAUUGUACAGGAAGAACUAUGGCUACACUUA -17.700000762939453
-............(((((((..........)))))))...............................................................................
-(.(((((((....)))).))))..((((.....(((((.(((((.......(((....))))))))..)))))(((((((((...))))).).))).........))))......
-GGGCAAUGUCCGACCUCCAAAUUGUGUCAGGACCGGAAGGUAGCAGCACUAAGGUUGCUUGGGCAUGUGCCUUUUU -24.100000381469727
-(((((.((((((((..((.....((((....(((....)))....))))...))..).)))))))))..)))....
-.......((((((((........).))).)))).((((((((.((((.(((((....))))))).)))))))))).
-GGGGACCCCGCGCACCCGCCAGAGCCCGUUGACCCUUGCUGCCUUCCGGCCCUGGGGGAGUUCACAGGAUGGACGCCGCGCGGGGUCC -42.099998474121094
-((((.(...(.(...(.((....(.(....).)....)).).).)..).))))...................................
-..(((((((((((.(((.((((.(((.....................))).))))))).(((((.....)))))...)))))))))))
-CGUGCUAGAUGGGGAGUUAGCGGUGCCCUGUAACCUGCAAUCCGCUAUAGCAGGGUUGAAUUCCUGGCUUAGACUUUAAAAUGUGAGGCCUGCCCCAUAAAAGUGGCGUUGAGAGCUUGGUCCCACGCAACAAGAACUCAUGAACCCCGUCAGGUCCGGAAGGAAGCAGCGGUAAGUGAAUAUUUUUGUGUGCCGUGGAUAAACCUGGUUUGAGUUAACUAUAUGGGUAACGCU -54.29999923706055
-.......(((((((.(((...))).))))....(((((...........)))))))).............................((..((.((((((..((((((.....(((((.(((.(((((((.((((((.((((.....((((....(((....)))....))))...))))...))))))))...)))))....))).)))))..))).))).))))))...))))
-...(((.(((((((..........(((((((.....((.....))....))))))).........(((((..((........)).)))))((((.(......).)))).((((..((((...........))))..))))....))))))).)))((((.........((((((.(((((....))))).))))))........))))..........................
-#+end_example
-#+begin_example
+
 * alignment
 
 #+begin_src python :results output
@@ -675,7 +523,7 @@ else:
     cseq_x = cseq_x[:, :2*len_x-pos-1]
     seq_x = seq_x[pos-len_x+1:]
 
-# figure, axis = plt.subplots(3, 1) 
+# figure, axis = plt.subplots(3, 1)
 # axis[0].plot(conv_xx)
 # axis[1].plot(conv_yy)
 # axis[2].plot(conv_xy)
@@ -703,7 +551,7 @@ else:
 #     eseq_y = eseq_y[:, pos-len_y+1:]
 #     cseq_y = cseq_y[:, :2*len_y-pos-1]
 #     seq_y = seq_y[:, pos-len_y+1:]
-    
+
 # print(seq_x)
 # print(seq_y)
 
@@ -757,24 +605,37 @@ print(struct_y)
 * test
 
 #+begin_src python :results output
-,#+begin_src python :results output
 from utils import prep_sequence, auto_cor, seq_conv
 from scipy.signal import convolve
+from scipy.stats import pearsonr
+from numpy.fft import fft, ifft
 import matplotlib.pyplot as plt
-from numpy import array
+from numpy import array, zeros
 
-seq = "AAAACCCCAAAACCCCUUUUCCCUUUUUUCCCCCAAAA"
-ls = len(seq)
+seq_x = "UGCCUGGCGGCGAUAGCGCGGUGGUCCCACCUGACCCCAUGCCGAACUCAGAAGUGAAACGCCGUAGCGCCGAUGGUAGUGUGGGGUCUCCCCAUGUGAGAGUAGGGAACUGCCAGGCAU"
+seq_y = "GGGUUGCGGAGGGUGGGCUCGGGAGGGGUGGCGGUCAUUUUCUGUCUAACCCUAACUGAAACGGGCGUAGGCGCUGCGCUUUUGUUCCCCGCACGCUGUUUUUCUCGCUGACUUUCAGCGGGCGGAAAAGCCUUGGCCUACUGCCACACACCAUCCAGUUUGGAGCAAACAAAAAAUGUCAGCGGCUGGCCUGCUCGCCCCUCCCGGGAGCCUGCGGCGACUCGCCCGCUUAGCCCCCGCAUCCCGCCUGGAGGCCGCGGUCGGCCCGGGGCUUCUCCGGAGGCACCCAUUGCCGUCGCGAAGAGUUGGGCUCUGUCAGCCGCGGGACCCUUGGGGGCCAAGGGCGAGGCUCUGGCCGCAGGGAGAGAAACGGAGCGGGUCCCCUCGCGCGGUGCGCUUCCCUGAGCUGUGGGACUUGCACCCGGGACUAGGCUCACACACAC"
 
-eseq, cseq = prep_sequence(seq)
-ccseq = cseq[:, ::-1]
+eseq_x, cseq_x = prep_sequence(seq_x.replace("T", "U"))
+eseq_y, cseq_y = prep_sequence(seq_y.replace("T", "U"))
 
-cor_l = auto_cor(eseq, cseq, 1)
-cor_r = auto_cor(eseq, ccseq, 1)
-cor_l.sort(key=lambda el: el[1])
+cor_l_x = auto_cor(eseq_x, cseq_x, 1)
+cor_l_y = auto_cor(eseq_y, cseq_y, 1)
 
-plt.plot([c for i, c in cor_l])
-plt.plot([c for i, c in cor_r])
+figure, axis = plt.subplots(2, 1) 
+axis[0].plot([c+1 for i, c in cor_l_x])
+axis[0].plot([c+1 for i, c in cor_l_y])
+ft_x = fft([c for i, c in cor_l_x])[1:-1]
+ft_y = fft([c for i, c in cor_l_y])[1:-1]
+ft_x[ft_x <= 0] = 0
+ft_y[ft_y <= 0] = 0
+ft_x_ = zeros(max(len(seq_x), len(seq_y)))
+ft_y_ = zeros(max(len(seq_x), len(seq_y)))
+for i, el in enumerate(ft_x[:len(seq_x)]):
+    ft_x_[i] = el
+for i, el in enumerate(ft_y[:len(seq_y)]):
+    ft_y_[i] = el
+axis[1].plot(ft_x_)
+axis[1].plot(ft_y_)
 plt.show()
 #+end_src
 

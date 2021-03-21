@@ -64,7 +64,7 @@ def recursive_struct(seq, cseq, pair_list, pos_list, pad=1, nb_mode=3):
                     tmp_nrj = -dp_el.score
                 else:
                     tmp_pair = [(pos_list[pi], pos_list[pj]) for pi, pj in backtracking(dp_el, len_seq, pos)]
-                    tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ)
+                    tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
             else:
                 tmp_nrj = 0
 

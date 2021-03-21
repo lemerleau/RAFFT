@@ -20,7 +20,7 @@ def run_bench(seq):
 pool = Pool(int(argv[1]))
 out_file = argv[2]
 target_file = argv[3]
-sequences = [l.strip().split(",")[0] for l in open(target_file) if len(l.strip().split(",")[0]) > 100 and len(l.strip().split(",")[0]) < 300]
+sequences = [l.strip().split(",")[0] for l in open(target_file)]
 # sequences = [l.strip().split(",")[0] for l in open(target_file)]
 results = pool.map(run_bench, sequences)
 pool.close()

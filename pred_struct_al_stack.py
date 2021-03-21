@@ -16,13 +16,14 @@ The inner and outer loops are treated recursively until no BP can be formed
 
 from numpy import concatenate
 from numpy import sum as npsum
+from os.path import realpath, dirname
 from utils import plot_bp_matrix, auto_cor, dot_bracket
 from utils import prep_sequence, benchmark_vrna, eval_dynamic
 from utils import get_inner_loop, get_outer_loop, eval_one_struct
 from utils import merge_pair_list
 from itertools import product
 import argparse
-from RNA import fold_compound
+from RNA import fold_compound, read_parameter_file
 
 # window size when searching for pairs
 PK_MODE = False
@@ -56,7 +57,7 @@ def window_slide(seq, cseq, pos, pos_list):
 
     # search for consecutive BPs
     max_nb, tmp_max, max_score, max_i, max_j = 0, 0, 0, 0, 0
-    # list_sol = []
+    list_sol = []
     for i in range(len_2):
         if pos < len_seq:
             ip, jp = i, pos-i
@@ -82,12 +83,11 @@ def window_slide(seq, cseq, pos, pos_list):
             max_score = tot[i]
             max_nb = tmp_max
             max_i, max_j = ip, jp
-            # list_sol += [(max_nb, max_i, max_j, max_score)]
+            list_sol += [(max_nb, max_i, max_j, max_score)]
 
-    # list_sol.sort(key=lambda el: el[0])
-    # return list_sol
-    return max_nb, max_i, max_j, max_score
-
+    # return max_nb, max_i, max_j, max_score
+    list_sol.sort(key=lambda el: el[0])
+    return list_sol
 
 def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     # find largest bp region
@@ -95,22 +95,23 @@ def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     seen = set()
     max_bp, max_i, max_j, max_s, tmp_nrj = 0, 0, 0, 0, MIN_NRJ
     best_nrj = MIN_NRJ
+    # print("".join([SEQ[i] for i in pos_list]))
     for pos, c in cor_l[::-1][:NB_MODE]:
-        mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
-        # for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
+        # mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
+        for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
 
-        if mx_i > 0:
-            tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
-            tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
-        else:
-            tmp_nrj = MIN_NRJ
+            if mx_i > 0:
+                tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
+                tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
+            else:
+                tmp_nrj = MIN_NRJ
 
-        # if ms > max_s:
-        if tmp_nrj < MIN_NRJ:
-            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
-            best_tmp = tmp_pair
-            best_nrj = tmp_nrj
-            best_sol += [(max_bp, max_s, max_i, max_j, best_nrj, best_tmp)]
+            # if ms > max_s:
+            if tmp_nrj < MIN_NRJ:
+                max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+                best_tmp = tmp_pair
+                best_nrj = tmp_nrj
+                best_sol += [(max_bp, max_s, max_i, max_j, best_nrj, best_tmp)]
 
     best_sol.sort(key=lambda el: el[4])
     return best_sol
@@ -233,6 +234,8 @@ def bfs_pairs(glob_tree):
                     break
                 nb_branch += 1
 
+    new_glob_tree.sort(key=lambda el: eval_one_struct(SEQ_COMP, el[0][2],LEN_SEQ, SEQ))
+
     # XXX: another workaround to remove
     seen = set()
     unique = []
@@ -244,9 +247,7 @@ def bfs_pairs(glob_tree):
     new_glob_tree = [new_glob_tree[pi] for pi in unique]
  
     # prune forest of tree
-    if len(new_glob_tree) > MAX_STACK:
-        new_glob_tree.sort(key=lambda el: eval_one_struct(SEQ_COMP, el[0][2],LEN_SEQ, SEQ))
-        new_glob_tree = new_glob_tree[:MAX_STACK]
+    new_glob_tree = new_glob_tree[:MAX_STACK]
 
     return bfs_pairs(new_glob_tree)
 
@@ -272,9 +273,9 @@ def parse_arguments():
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
     parser.add_argument('--fasta', action="store_true", help="fasta output")
     parser.add_argument('--one', action="store_true", help="output onlyt one struct")
-    parser.add_argument('--GC', type=float, help="GC weight", default=1.0)
-    parser.add_argument('--AU', type=float, help="GC weight", default=0.75)
-    parser.add_argument('--GU', type=float, help="GU weight", default=0.50)
+    parser.add_argument('--GC', type=float, help="GC weight", default=3.0)
+    parser.add_argument('--AU', type=float, help="GC weight", default=2.00)
+    parser.add_argument('--GU', type=float, help="GU weight", default=1.00)
     return parser.parse_args()
 
 
@@ -294,6 +295,7 @@ def main():
     else:
         sequence = "".join([l.strip() for l in open(args.seq_file) if not l.startswith(">")]).replace("T", "U")
 
+    read_parameter_file("{}/rna_langdon2018.par".format(dirname(realpath(__file__))))
     sequence = sequence.replace("N", "")
     len_seq = len(sequence)
     global MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY, SEQ, MIN_NRJ, OUT_DONE, GLOB_PAIRS, NB_MODE, PAD
@@ -310,7 +312,7 @@ def main():
     PAD = args.pad
     POS_LIST = list(range(len(sequence)))
     MAX_STACK = args.max_stack
-    MAX_BRANCH = args.max_stack
+    MAX_BRANCH = args.max_stack_branch
 
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))

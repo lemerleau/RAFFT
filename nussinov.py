@@ -108,11 +108,6 @@ def main():
         print(len_seq, vrna_mfe, nrj_pred, bp_dist, sequence, second_struct, vrna_struct)
     else:
         print(sequence, len_seq, second_struct, nrj_pred, second_struct.count("("))
-        # print(sequence)
-        # print(second_struct)
-        # print("SCORE:", second_struct.count("("))
-        # print("LEN:", len_seq)
-        # print("VNRA_NRJ:", nrj_pred)
 
 
 if __name__ == '__main__':

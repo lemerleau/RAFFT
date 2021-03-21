@@ -1,26 +1,33 @@
 * FFT-based RNA folding
 ** Overview
+The accuracy and sensitivity of this approach is lower than existing methods.
+The gain in speed is similar to Linearfold however, Linearfold performs better
+in PPV and sensitivity. This has two reasons: first it uses the Contrafold
+scoring function (ML-based). However, it produces structures that are closer to
+the MFE when using Vienna RNA energy function.
+
 ** Content
+- ~pred_struct_al_stack.py~, the stacking variant of the fft correlation based folding
 - ~pred_struct.py~, the fft correlation based folding
 - ~naive_struct.py~, the naive correlation based folding
 - ~vrna_mfe.py~, Zuker MFE exact algorithm using Turner2004 energy model
 - ~nussinov.py~, the Nussinov exact algorithm for the BP optimization
 ** Benchmarks
-*** For large sequences, it forms more BPs than the MFE
-The difference between the exact maximum number of BP (from Nussinov and minimum
-nb of unpaired positions = 3 within loops) and the FFT, MFE, Naive methods:
-[[img/nb_bp_diff.png]]
+Tool considered: RNAfold (VRNA), LinearFold (Linear), ContextFold (ContextFold), Mxfold (Mxfold)
 
-- The naive method and the FFT ones shows the same performances
-- The critical point is not to form a lot of BPs but to chose the ones to form better
-*** Measure the energy distance to the MFE
-We compared the energy of the predicted structure with the FFT, Nussinov, and
-Naive methods:
-[[img/nrj_dist.png]]
-- This confirms that we need to choose carefully the BPs to form.
-*** Measure the BP distance from the MFE (Might not be relevant at this point)
-We compared the BP content of the predicted structure to the MFE one:
-[[img/bp_dist.png]]
-- The Nussinov algorithm can output many structures, and between them the BP
-  distance will also be high (same goes for the FFT and Naive method).
+Metrics: PPV, Sensitivity
 
+[[img/comp_stack_pvv.png]]
+[[img/comp_stack_sens.png]]
+
+NB: The ML based methods crashed on various sequences
+
+[[img/comp_stack_ml_pvv.png]]
+[[img/comp_stack_ml_sens.png]]
+
+We computed the % of loop types in the true structures and plot them on their
+compositions PCA. Then, we colored the structure compositions for which the PVV
+< 10%. The thermodynamics-based methods tends to fail when the structure
+contains many interior loops.
+
+[[img/content_fail_all.png]]
