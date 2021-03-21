@@ -2,25 +2,40 @@
 ** Overview
 The accuracy and sensitivity of this approach is lower than existing methods.
 The gain in speed is similar to Linearfold however, Linearfold performs better
-in PPV and sensitivity. This has two reasons: first it uses the Contrafold
-scoring function (ML-based). However, it produces structures that are closer to
-the MFE when using Vienna RNA energy function.
+in PPV and sensitivity.
 
-** Content
-- ~pred_struct_al_stack.py~, the stacking variant of the fft correlation based folding
-- ~pred_struct.py~, the fft correlation based folding
-- ~naive_struct.py~, the naive correlation based folding
-- ~vrna_mfe.py~, Zuker MFE exact algorithm using Turner2004 energy model
-- ~nussinov.py~, the Nussinov exact algorithm for the BP optimization
+*Note1:* ML-based scores performed better than thermodynamic-based energy
+function in PPV and sensitivity. Even for large sequences which may not be
+prevalent in their respective training dataset.
+
+*Note2:* LinearFold performed better than ViennaRNA since it uses the ML-based
+scoring function from ContraFold. With the same energy function their
+performance is the same.
+
+*Note3:* The dataset used here is biased toward structures containing (in
+percent) more interior loops and multiloops. In the other hand, the
+thermodynamic energy function is not bias toward a specific type of structural
+composition.
+
 ** Benchmarks
-Tool considered: RNAfold (VRNA), LinearFold (Linear), ContextFold (ContextFold), Mxfold (Mxfold)
+Thermodynamic tools considered: RNAfold (VRNA), LinearFold (Linear)
+ML-based tools considered: LinearFold (Linear), ContextFold (ContextFold), Mxfold (Mxfold)
 
 Metrics: PPV, Sensitivity
+
+** Comparisons of thermodynamic methods alone (sequence length-wise)
+Vienna (using rna_langdon2018 parameters) and LinearFold (using ContraFold
+score) have similar performances. The FFT-based method performed poorly in PVV
+and sensitivity.
 
 [[img/comp_stack_pvv.png]]
 [[img/comp_stack_sens.png]]
 
+** Comparisons of thermodynamic with ML methods
 NB: The ML based methods crashed on various sequences
+
+The ML based method performed better in both metrics. ContextFold performed
+better than all considered methods. 
 
 [[img/comp_stack_ml_pvv.png]]
 [[img/comp_stack_ml_sens.png]]
@@ -31,3 +46,10 @@ compositions PCA. Then, we colored the structure compositions for which the PVV
 contains many interior loops.
 
 [[img/content_fail_all.png]]
+
+** Distribution of the structures produced by thermodynamic model and the dataset
+
+The structure dataset seems to be biased toward interior and multi loops. The
+thermodynamic model isn't.
+
+[[img/content_mfe_data.png]]

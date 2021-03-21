@@ -398,9 +398,9 @@ def read_csv(infile):
     first = True
     for l in open(infile):
         if not first:
-            seq, len_seq, struct, nrj, nb_bp = l.strip().split(",")
+            seq, len_seq, struct, nrj, nb_bp, pvv, sens, name = l.strip().split(",")
             if struct != "Na":
-                results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp))
+                results[seq] = (int(len_seq), struct, float(nrj), int(nb_bp), float(pvv), float(sens))
         else:
             first = False
     return results
@@ -424,16 +424,16 @@ def get_loop_content(struct):
         return 0.0, 0.0, 0.0, 0.0, 0.0
 
 
-fft_pred = read_csv("./test_data/results_fft_100n_30_stack.csv")
-vrna_mfe = read_csv("./test_data/results_mfe_langdon.csv")
+fft_pred = read_csv("./test_data/results_linear_scores.csv")
+vrna_mfe = read_csv("./test_data/results_mfe_scores.csv")
 targets = read_true_struct()
 
 results_fft, results_mfe = [], []
 with open("./scratch/fft_loop_content.csv", "w") as out:
     out.write(f"pcc_fft,int_l,sta_l,mul_l,hai_l\n")
     for fft_seq in fft_pred:
-        len_seq, fft_st, fft_nrj, fft_nbp = fft_pred[fft_seq]
-        len_seq, mfe_st, mfe_nrj, mfe_nbp = vrna_mfe[fft_seq]
+        len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[fft_seq]
+        len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_mfe[fft_seq]
         true_struct = targets[fft_seq]
         int_l, sta_l, mul_l, hai_l, all_l = get_loop_content(mfe_st)
         results_mfe += [[int_l, sta_l, mul_l, hai_l]]
@@ -456,15 +456,17 @@ idx_mfe = V_mfe.argsort()[::-1]
 W_mfe = W_mfe[:, idx_mfe]
 
 fig = plt.figure(1)
-fig.subplots_adjust(left=0.05, bottom=0.0, right=0.99, top=0.99, wspace=0, hspace=0)
+fig.subplots_adjust(left=0.05, bottom=0.1, right=0.99, top=0.90, wspace=0, hspace=0)
 fig.tight_layout()
 
 fft_f = fig.add_subplot(121)
 mfe_f = fig.add_subplot(122)
 fft_f.set_aspect("equal", adjustable="box")
 fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+fft_f.set_xlim([-0.5, 0.5]); fft_f.set_ylim([-0.5, 0.5])
 mfe_f.set_aspect("equal", adjustable="box")
 mfe_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+mfe_f.set_xlim([-0.5, 0.5]); mfe_f.set_ylim([-0.5, 0.5])
 
 fft_f.scatter(results_fft.dot(W_fft[:,0]) , results_fft.dot(W_fft[:,1]) , edgecolor="", color="grey", alpha=0.5, s=8)
 fft_f.arrow(0, 0, W_fft[0,0]*0.3, W_fft[0,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
@@ -488,7 +490,7 @@ mfe_f.arrow(0, 0, W_mfe[3,0]*0.3, W_mfe[3,1]*0.3, width = 0.002, facecolor="blac
 mfe_f.annotate("H", xy=(W_mfe[3,0]*0.3-0.02, W_mfe[3,1]*0.3+0.03), size=12)
 mfe_f.tick_params(axis="y", labelleft=False, size=0)
 mfe_f.set_title(f"VRNA")
-plt.savefig("img/content_mfe_true.png", dpi=300)
+plt.savefig("img/content_mfe_data.png", dpi=300)
 plt.show()
 #+end_src
 
