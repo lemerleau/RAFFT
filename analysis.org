@@ -55,31 +55,33 @@ with open("analysis.log", "w") as out:
 
         true_nb_bp = struct.count("(")
         true_nrj = seq_comp.eval_structure(struct)
-        if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
+        # if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
+        if seq in fft_pred and seq in vrna_pred and seq in line_pred:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
-            len_seq, cont_st, cont_nrj, cont_nbp, cont_pvv, cont_sens = cont_pred[seq]
             len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
-            len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
-            save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
+            # len_seq, cont_st, cont_nrj, cont_nbp, cont_pvv, cont_sens = cont_pred[seq]
+            # len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
+            # save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
+            save_fft, save_mfe, save_line = fft_pvv, mfe_pvv, line_pvv
             fft_all_v += [save_fft]
             mfe_all_v += [save_mfe]
-            cont_all_v += [save_cont]
             line_all_v += [save_line]
-            mx_all_v += [save_mx]
+            # cont_all_v += [save_cont]
+            # mx_all_v += [save_mx]
 
             if len_seq in fft_to_plot:
                 fft_to_plot[len_seq] += [save_fft]
                 mfe_to_plot[len_seq] += [save_mfe]
-                cont_to_plot[len_seq] += [save_cont]
                 line_to_plot[len_seq] += [save_line]
-                mx_to_plot[len_seq] += [save_mx]
+                # cont_to_plot[len_seq] += [save_cont]
+                # mx_to_plot[len_seq] += [save_mx]
             else:
                 fft_to_plot[len_seq] = [save_fft]
                 mfe_to_plot[len_seq] = [save_mfe]
-                cont_to_plot[len_seq] = [save_cont]
                 line_to_plot[len_seq] = [save_line]
-                mx_to_plot[len_seq] = [save_mx]
+                # cont_to_plot[len_seq] = [save_cont]
+                # mx_to_plot[len_seq] = [save_mx]
 
                 
 list_len = list(fft_to_plot.keys())
@@ -88,15 +90,15 @@ nb_el = len(list_len)
 
 fft_mean = mean([mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0])
 mfe_mean = mean([mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0])
-cont_mean = mean([mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0])
 line_mean = mean([mean(line_to_plot[len_]) for len_ in list_len if len_ > 0])
-mx_mean = mean([mean(mx_to_plot[len_]) for len_ in list_len if len_ > 0])
+# cont_mean = mean([mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0])
+# mx_mean = mean([mean(mx_to_plot[len_]) for len_ in list_len if len_ > 0])
 
 slide_mean_fft = [mean([mean(fft_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
 slide_mean_mfe = [mean([mean(mfe_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
-slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
 slide_mean_line = [mean([mean(line_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
-slide_mean_mx = [mean([mean(mx_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+# slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+# slide_mean_mx = [mean([mean(mx_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
 
 bpros = dict(color="orange", linewidth=0.2)
 fig = plt.figure(1)
@@ -115,14 +117,14 @@ ax_histy.set_ylim([0, 100.0])
 xs_scr = linspace(min(fft_all_v), max(fft_all_v), 50)
 dens_fft_scr = kde.gaussian_kde(fft_all_v)
 dens_mfe_scr = kde.gaussian_kde(mfe_all_v)
-dens_cont_scr = kde.gaussian_kde(cont_all_v)
 dens_line_scr = kde.gaussian_kde(line_all_v)
-dens_mx_scr = kde.gaussian_kde(mx_all_v)
+# dens_cont_scr = kde.gaussian_kde(cont_all_v)
+# dens_mx_scr = kde.gaussian_kde(mx_all_v)
 ax_histy.plot(dens_fft_scr(xs_scr), xs_scr, c="deepskyblue", linewidth=0.8)
 ax_histy.plot(dens_mfe_scr(xs_scr), xs_scr, c="orangered", linewidth=0.8)
-ax_histy.plot(dens_cont_scr(xs_scr), xs_scr, c="blueviolet", linewidth=0.8)
 ax_histy.plot(dens_line_scr(xs_scr), xs_scr, c="green", linewidth=0.8)
-ax_histy.plot(dens_mx_scr(xs_scr), xs_scr, c="darkslategrey", linewidth=0.8)
+# ax_histy.plot(dens_cont_scr(xs_scr), xs_scr, c="blueviolet", linewidth=0.8)
+# ax_histy.plot(dens_mx_scr(xs_scr), xs_scr, c="darkslategrey", linewidth=0.8)
 ax_histy.tick_params(axis="y", labelleft=False, size=0)
 ax_histy.tick_params(axis="x", labelbottom=False, size=0)
 ax_histy.grid(True, color="grey",linestyle="--", linewidth=0.2)
@@ -136,32 +138,32 @@ fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ 
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len],
                yerr=[std(mfe_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
                linewidth=0.2, ms=3, c="coral", ecolor="orangered", alpha=0.2)
-fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len],
-               yerr=[std(cont_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
-               linewidth=0.2, ms=3, c="blueviolet", ecolor="blueviolet", alpha=0.2)
+# fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len],
+#                yerr=[std(cont_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
+#                linewidth=0.2, ms=3, c="blueviolet", ecolor="blueviolet", alpha=0.2)
 fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(line_to_plot[len_]) for len_ in list_len],
                yerr=[std(line_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
                linewidth=0.2, ms=3, c="palegreen", ecolor="palegreen", alpha=0.2)
-fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mx_to_plot[len_]) for len_ in list_len],
-               yerr=[std(mx_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
-               linewidth=0.2, ms=3, c="darkslategrey", ecolor="darkslategrey", alpha=0.2)
+# fft_f.errorbar([i+0.0 for i in range(nb_el)], [mean(mx_to_plot[len_]) for len_ in list_len],
+#                yerr=[std(mx_to_plot[len_])/4 for len_ in list_len], elinewidth=0.8, fmt=".",
+#                linewidth=0.2, ms=3, c="darkslategrey", ecolor="darkslategrey", alpha=0.2)
 
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(fft_to_plot[len_]) for len_ in list_len], c="deepskyblue", s=0.5)
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(mfe_to_plot[len_]) for len_ in list_len], c="orangered", s=0.5)
-fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len], c="blueviolet", s=0.5)
 fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(line_to_plot[len_]) for len_ in list_len], c="green", s=0.5)
-fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(mx_to_plot[len_]) for len_ in list_len], c="darkslategrey", s=0.5)
+# fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(cont_to_plot[len_]) for len_ in list_len], c="blueviolet", s=0.5)
+# fft_f.scatter([i+0.0 for i in range(nb_el)], [mean(mx_to_plot[len_]) for len_ in list_len], c="darkslategrey", s=0.5)
 
 fft_f.plot(range(nb_el), slide_mean_fft, linestyle="--", c="deepskyblue", alpha = 0.8)
 fft_f.plot(range(nb_el), slide_mean_mfe, linestyle="--", c="orangered", alpha = 0.8)
-fft_f.plot(range(nb_el), slide_mean_cont, linestyle="--", c="blueviolet", alpha = 0.8)
 fft_f.plot(range(nb_el), slide_mean_line, linestyle="--", c="green", alpha = 0.8)
-fft_f.plot(range(nb_el), slide_mean_mx, linestyle="--", c="darkslategrey", alpha = 0.8)
+# fft_f.plot(range(nb_el), slide_mean_cont, linestyle="--", c="blueviolet", alpha = 0.8)
+# fft_f.plot(range(nb_el), slide_mean_mx, linestyle="--", c="darkslategrey", alpha = 0.8)
 
 fft_l = Patch(color="skyblue", label="FFT")
 mfe_l = Patch(color="tomato", label="VRNA")
-cont_l = Patch(color="blueviolet", label="Cont")
 line_l = Patch(color="green", label="Line")
+cont_l = Patch(color="blueviolet", label="Cont")
 mx_l = Patch(color="darkslategrey", label="Mxfold")
 
 fft_f.xaxis.set_ticklabels(list_len[::20], rotation=45)
@@ -173,10 +175,12 @@ name_cont = "ContextFold"
 name_line = "Linear"
 name_mx = "Mxfold"
 fft_f.set_title(f"PVV")
-fft_f.legend((fft_l,mfe_l,line_l,cont_l, mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
-                                    f"{name_line}({line_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})",
-                                    f"{name_mx}({mx_mean:4.1f})"), loc="bottom center", ncol=3)
-plt.savefig("img/comp_stack_ml_pvv.png", dpi=300)
+# fft_f.legend((fft_l,mfe_l,line_l,cont_l, mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
+#                                     f"{name_line}({line_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})",
+#                                     f"{name_mx}({mx_mean:4.1f})"), loc="bottom center", ncol=3)
+fft_f.legend((fft_l,mfe_l,line_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
+                                    f"{name_line}({line_mean:4.1f})"), loc="upper center", ncol=3)
+plt.savefig("img/comp_stack_pvv.png", dpi=300)
 plt.show()
 #+end_src
 
