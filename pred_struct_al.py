@@ -75,16 +75,16 @@ def window_slide(seq, cseq, pos, pos_list):
 
         # search for the highest number of consecutive BPs
         # and test if at least MIN_HP unpaired positions in between
-        # if tot[i] >= max_score and pos_list[jp] - pos_list[ip] > MIN_HP:
-        if pos_list[jp] - pos_list[ip] > MIN_HP:
+        # if pos_list[jp] - pos_list[ip] > MIN_HP:
+        if tot[i] >= max_score and pos_list[jp] - pos_list[ip] > MIN_HP:
             max_score = tot[i]
             max_nb = tmp_max
             max_i, max_j = ip, jp
             list_sol += [(max_nb, max_i, max_j, max_score)]
 
-    list_sol.sort(key=lambda el: el[0])
-    # return max_nb, max_i, max_j, max_score
-    return list_sol[::-1]
+    # list_sol.sort(key=lambda el: el[0])
+    # return list_sol[::-1]
+    return max_nb, max_i, max_j, max_score
 
 
 def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
@@ -93,21 +93,21 @@ def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     best_nrj = MIN_NRJ
     best_tmp = []
     for pos, c in cor_l[::-1][:NB_MODE]:
-        # mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
-        for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
+        mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
+        # for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
 
-            if mx_i > 0:
-                tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
-                tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
-            else:
-                tmp_pair = []
-                tmp_nrj = 0
+        if mx_i > 0:
+            tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
+            tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
+        else:
+            tmp_pair = []
+            tmp_nrj = 0
 
-            # if ms > max_s:
-            if best_nrj > tmp_nrj:
-                max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
-                best_nrj = tmp_nrj
-                best_tmp = tmp_pair
+        # if ms > max_s:
+        if best_nrj > tmp_nrj:
+            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+            best_nrj = tmp_nrj
+            best_tmp = tmp_pair
     return max_bp, max_s, max_i, max_j, best_nrj, best_tmp
         
 
@@ -129,12 +129,14 @@ def create_childs(seq, cseq, pair_list, pos_list, glob_list):
     # save the largest number of consecutive BPs
     for i in range(max_bp):
         pair_list += [(pos_list[max_i-i], pos_list[max_j+i])]
+
     # for el in pair_list:
     #     tmp_pair += [el]
-    print(" ", dot_bracket(pair_list, LEN_SEQ), eval_one_struct(SEQ_COMP, pair_list, LEN_SEQ, SEQ))
-    global FOLD_S
-    PS_rna_plot(SEQ, dot_bracket(pair_list, LEN_SEQ), f"scratch/img_fold/fold_{FOLD_S}.ps")
-    FOLD_S += 1
+
+    # print(" ", dot_bracket(pair_list, LEN_SEQ), eval_one_struct(SEQ_COMP, pair_list, LEN_SEQ, SEQ))
+    # global FOLD_S
+    # PS_rna_plot(SEQ, dot_bracket(pair_list, LEN_SEQ), f"scratch/img_fold/fold_{FOLD_S}.ps")
+    # FOLD_S += 1
 
 
     # print("".join(SEQ[i] if i in pos_list else "-" for i in POS_LIST))
@@ -170,11 +172,11 @@ def bfs_pairs(glob_list):
         if out_side is not None:
             oseq, ocseq, opos_list = out_side
             create_childs(oseq, ocseq, pair_list, opos_list, tmp_list)
+        # print(dot_bracket(pair_list, LEN_SEQ))
 
     if len(tmp_list) == 0:
         return dot_bracket(pair_list, LEN_SEQ)
 
-    print(len(tmp_list))
     return bfs_pairs(tmp_list)
 
 

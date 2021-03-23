@@ -160,14 +160,15 @@ def bfs_pairs(glob_tree):
     tmp_tree = []
     new_glob_tree = []
 
-    # print("-"*10)
-    # # print(glob_tree)
+    # # # print("-"*10)
+    # # # print(glob_tree)
     # for tree in glob_tree:
     #     if len(tree) > 0:
     #         tmp_pair_l = tree[0][2]
     #         tmp_str = dot_bracket(tmp_pair_l, LEN_SEQ)
-    #         print(tmp_str, eval_one_struct(SEQ_COMP, tmp_pair_l, LEN_SEQ, SEQ))
-    # input()
+    #         GLOB_PAIR_LIST.append(tmp_str)
+    #         # print(tmp_str, "{:.2f}".format(eval_one_struct(SEQ_COMP, tmp_pair_l, LEN_SEQ, SEQ)))
+    # # input()
 
     new_sol = False
     # split current nodes
@@ -252,7 +253,6 @@ def bfs_pairs(glob_tree):
     return bfs_pairs(new_glob_tree)
 
 
-
 def parse_arguments():
     """Parsing command line
     """
@@ -272,6 +272,7 @@ def parse_arguments():
     parser.add_argument('--plot', action="store_true", help="plot bp matrix")
     parser.add_argument('--vrna', action="store_true", help="compare VRNA")
     parser.add_argument('--fasta', action="store_true", help="fasta output")
+    parser.add_argument('--barrier', action="store_true", help="barrier type output")
     parser.add_argument('--one', action="store_true", help="output onlyt one struct")
     parser.add_argument('--GC', type=float, help="GC weight", default=3.0)
     parser.add_argument('--AU', type=float, help="GC weight", default=2.00)
@@ -295,11 +296,11 @@ def main():
     else:
         sequence = "".join([l.strip() for l in open(args.seq_file) if not l.startswith(">")]).replace("T", "U")
 
-    read_parameter_file("{}/rna_langdon2018.par".format(dirname(realpath(__file__))))
+    # read_parameter_file("{}/rna_langdon2018.par".format(dirname(realpath(__file__))))
     sequence = sequence.replace("N", "")
     len_seq = len(sequence)
     global MIN_BP, MIN_HP, LEN_SEQ, SEQ_FOLD, SEQ_COMP, BP_ONLY, SEQ, MIN_NRJ, OUT_DONE, GLOB_PAIRS, NB_MODE, PAD
-    global POS_LIST, MAX_STACK, MAX_BRANCH
+    global POS_LIST, MAX_STACK, MAX_BRANCH, GLOB_PAIR_LIST
     BP_ONLY = args.bp_only
     MIN_BP = args.min_bp
     MIN_HP = args.min_hp
@@ -313,6 +314,7 @@ def main():
     POS_LIST = list(range(len(sequence)))
     MAX_STACK = args.max_stack
     MAX_BRANCH = args.max_stack_branch
+    GLOB_PAIR_LIST = []
 
     # FOLDING -----------------------------------------------------------------
     pos_list = list(range(len_seq))
@@ -322,8 +324,22 @@ def main():
     all_struct.sort(key=lambda el: eval_one_struct(SEQ_COMP, el, LEN_SEQ, SEQ))
     if args.one:
         all_struct = [all_struct[0]]
-    
-    for pair_list in all_struct:
+
+    if args.barrier:
+        str_struct = dot_bracket(all_struct[0], len_seq)
+        nrj_pred = SEQ_COMP.eval_structure(str_struct)
+        print(f"{sequence} {nrj_pred:.2f}")
+
+    # seen = set()
+    # GLOB_PAIR_LIST.sort(key=lambda el: SEQ_COMP.eval_structure(el))
+
+    # for str_struct in GLOB_PAIR_LIST:
+    #     if str_struct not in seen:
+    #         nrj_pred = SEQ_COMP.eval_structure(str_struct)
+    #         seen.add(str_struct)
+    #         print(f"{str_struct} {nrj_pred:.2f}")
+
+    for pair_list in all_struct[::-1]:
         # pair_list = recursive_struct(eseq, cseq, [], pos_list, args.pad, args.n_mode)
         str_struct = dot_bracket(pair_list, len_seq)
         nrj_pred = SEQ_COMP.eval_structure(str_struct)
@@ -335,9 +351,10 @@ def main():
             print(len_seq, vrna_mfe, nrj_pred, bp_dist, sequence, str_struct, vrna_struct)
         elif args.fasta:
             nb_bp = str_struct.count("(")
-            print(f">fft")
-            print(f"{sequence}")
-            print(f"{str_struct} {nrj_pred:10.2f} {nb_bp:10d}")
+            # print(f"{str_struct} {nrj_pred:10.2f}")
+            print(f"{str_struct} {nrj_pred:10.2f}")
+        elif args.barrier:
+            print(f"{str_struct} {nrj_pred:10.2f}")
         else:
             print(sequence, len_seq, str_struct, f"{nrj_pred:4.2f}", str_struct.count("("))
 

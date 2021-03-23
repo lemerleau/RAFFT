@@ -3,6 +3,7 @@
 
 from numpy import array, zeros, flip, concatenate
 from numpy import sum as npsum
+from numpy.fft import fft, ifft
 from scipy.signal import convolve
 import matplotlib.pyplot as plt
 from RNA import fold, fold_compound, bp_distance
@@ -84,6 +85,16 @@ def auto_cor(seq, cseq, pad=1.0):
     norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_seq-1))[::-1]]
     cor_l = [(i, c) for i, c in enumerate(cor/norm)]
     # cor_l = [(i, c) for i, c in enumerate(cor)]
+    return cor_l
+
+
+def auto_cor_test(seq, cseq, pad=1.0):
+    """Compute the auto correlation between the two strands
+    """
+    len_seq = seq.shape[1]
+    cor = seq_conv(seq, cseq)
+    norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_seq-1))[::-1]]
+    cor_l = [(i, c) for i, c in enumerate(cor/norm)]
     return cor_l
 
 
@@ -177,3 +188,13 @@ def merge_pair_list(pair_1, pair_2):
         if el not in pair_1:
             pair_1 += [el]
     
+
+def read_fasta(infile):
+    results = {}
+    for l in open(infile):
+        if l.startswith(">"):
+            name = l.strip()[1:]
+            results[name] = ""
+        else:
+            results[name] += l.strip()
+    return results
