@@ -6,7 +6,35 @@ sequences = [l.strip().split(",") for l in open("./benchmark_data_full.csv")]
 with open("./benchmark_cleaned.csv", "w") as out:
     for seq, struct, name in sequences:
         nrj = energy_of_struct(seq, struct)
-        if len(seq) <= 150 and nrj < 0 and "<" not in struct:
+        if len(seq) <= 200 and nrj < 0 and "<" not in struct:
+            out.write(f"{seq},{struct},{name}\n")
+#+end_src
+
+#+RESULTS:
+
+no size constraints:
+
+#+begin_src python :results output
+from RNA import energy_of_struct
+sequences = [l.strip().split(",") for l in open("./benchmark_data_full.csv")]
+with open("./benchmark_cleaned_all_length.csv", "w") as out:
+    for seq, struct, name in sequences:
+        nrj = energy_of_struct(seq, struct)
+        if nrj < 0 and "<" not in struct:
+            out.write(f"{seq},{struct},{name}\n")
+#+end_src
+
+#+RESULTS:
+
+midle size constraints:
+
+#+begin_src python :results output
+from RNA import energy_of_struct
+sequences = [l.strip().split(",") for l in open("./benchmark_data_full.csv")]
+with open("./benchmark_cleaned_midle_length.csv", "w") as out:
+    for seq, struct, name in sequences:
+        nrj = energy_of_struct(seq, struct)
+        if len(seq) > 200 and len(seq) < 400 and nrj < 0 and "<" not in struct:
             out.write(f"{seq},{struct},{name}\n")
 #+end_src
 

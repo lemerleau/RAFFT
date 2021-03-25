@@ -1,0 +1,8 @@
+* ideas [0/4]
+- [ ] kinetic aspect, we follow the folding path in some sens.
+- [ ] 15% away from RNAfold implemented in viennaRNA package
+- [ ] N^3 to NlogN type of complexity
+- [ ] pseudoknot model in the algorithm consist of grouping both extremities
+* Perspectives [0/2]
+- [ ] Better way to extract information from the convolution
+- [ ] An optimized scoring function of the sliding window

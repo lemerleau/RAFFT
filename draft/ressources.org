@@ -1,0 +1,2 @@
+* How RNA folds TinocoJr, Bustamante
+Because of the entropy loss, a lot of consecutive BPs must be formed at once.

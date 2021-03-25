@@ -41,8 +41,9 @@ def read_csv(infile):
     return results
 
 
-fft_pred = read_csv("./test_data/results_fft_turner_2_scores.csv")
-line_pred = read_csv("./test_data/results_kinfold_scores.csv")
+# fft_pred = read_csv("./kinetic_bench/results_fft_200_small_scores.csv")
+fft_pred = read_csv("./test_data/results_fft_100n_30_stack_scores.csv")
+line_pred = read_csv("./test_data/results_mxfold_scores.csv")
 cont_pred = read_csv("./test_data/results_context_scores.csv")
 mx_pred = read_csv("./test_data/results_mxfold_scores.csv")
 vrna_pred = read_csv("./test_data/results_mfe_scores.csv")
@@ -62,7 +63,7 @@ with open("analysis.log", "w") as out:
         # if seq in fft_pred and seq in vrna_pred and seq in line_pred:
         if true_nrj > 0:
             print(struct, true_nrj)
-        else:
+        elif seq in fft_pred and seq in line_pred:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
             len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
@@ -71,14 +72,14 @@ with open("analysis.log", "w") as out:
             # len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
             # save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
             
-            if fft_pvv == 100:
-                out.write("-"*10+"\n")
-                out.write(f"{fft_pvv}\n")
-                out.write(f"FFT = {fft_nrj} TRUE = {true_nrj} MFE = {mfe_nrj}\n")
-                out.write(f"{seq}\n")
-                out.write(f"{fft_st} {fft_nbp}\n")
-                out.write(f"{struct} {true_nb_bp}\n")
-            
+            out.write("-"*10+"\n")
+            out.write(f"{fft_pvv} {mfe_pvv}\n")
+            out.write(f"FFT = {fft_nrj} TRUE = {true_nrj} MFE = {mfe_nrj}\n")
+            out.write(f"{seq}\n")
+            out.write(f"{fft_st}\n")
+            out.write(f"{mfe_st}\n")
+            out.write(f"{struct}\n")
+
             save_fft, save_mfe, save_line = fft_pvv, mfe_pvv, line_pvv
             fft_all_v += [save_fft]
             mfe_all_v += [save_mfe]
@@ -103,6 +104,7 @@ with open("analysis.log", "w") as out:
 list_len = list(fft_to_plot.keys())
 list_len.sort()
 nb_el = len(list_len)
+print(len(fft_all_v))
 
 fft_mean = mean([mean(fft_to_plot[len_]) for len_ in list_len if len_ > 0])
 mfe_mean = mean([mean(mfe_to_plot[len_]) for len_ in list_len if len_ > 0])
@@ -110,11 +112,11 @@ line_mean = mean([mean(line_to_plot[len_]) for len_ in list_len if len_ > 0])
 # cont_mean = mean([mean(cont_to_plot[len_]) for len_ in list_len if len_ > 0])
 # mx_mean = mean([mean(mx_to_plot[len_]) for len_ in list_len if len_ > 0])
 
-slide_mean_fft = [mean([mean(fft_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
-slide_mean_mfe = [mean([mean(mfe_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
-slide_mean_line = [mean([mean(line_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
-# slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
-# slide_mean_mx = [mean([mean(mx_to_plot[l]) for l in list_len[max(0, i-20):min(nb_el, i+20)]]) for i, len_ in enumerate(list_len)]
+slide_mean_fft = [mean([mean(fft_to_plot[l]) for l in list_len[max(0, i-5):min(nb_el, i+5)]]) for i, len_ in enumerate(list_len)]
+slide_mean_mfe = [mean([mean(mfe_to_plot[l]) for l in list_len[max(0, i-5):min(nb_el, i+5)]]) for i, len_ in enumerate(list_len)]
+slide_mean_line = [mean([mean(line_to_plot[l]) for l in list_len[max(0, i-5):min(nb_el, i+5)]]) for i, len_ in enumerate(list_len)]
+# slide_mean_cont = [mean([mean(cont_to_plot[l]) for l in list_len[max(0, i-5):min(nb_el, i+5)]]) for i, len_ in enumerate(list_len)]
+# slide_mean_mx = [mean([mean(mx_to_plot[l]) for l in list_len[max(0, i-5):min(nb_el, i+5)]]) for i, len_ in enumerate(list_len)]
 
 bpros = dict(color="orange", linewidth=0.2)
 fig = plt.figure(1)
@@ -188,16 +190,16 @@ fft_f.xaxis.set_ticks([i for i in range(nb_el)][::20])
 name_fft = "FFT"
 name_mfe = "VRNA"
 name_cont = "ContextFold"
-name_line = "Linear"
+name_line = "Mxfold"
 name_mx = "Mxfold"
 
-fft_f.set_title(f"PVV")
+fft_f.set_title(f"Positive Predicted Value")
 # fft_f.legend((fft_l,mfe_l,line_l,cont_l, mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
 #                                     f"{name_line}({line_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})",
 #                                     f"{name_mx}({mx_mean:4.1f})"), loc="bottom center", ncol=3)
 fft_f.legend((fft_l,mfe_l,line_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
                                     f"{name_line}({line_mean:4.1f})"), loc="upper center", ncol=3)
-# plt.savefig("img/comp_stack_pvv.png", dpi=300)
+# plt.savefig("img/comp_max_50n_50_stacks.png", dpi=300)
 plt.show()
 #+end_src
 
@@ -363,19 +365,9 @@ plt.show()
 .((((.....))).......)..........(((....)))................................ 3.0
 ((((.......))))...........................((((((((.((...(.....)...)).))))))))(((((.(.....((((...))))..(((((((....)))))))..)))))).......................(((((((.........(((.(((((((....))))))))))))))).)).(((((.(.(((.(((((((((((............((((((((((..((((((((((.(((((((.((....)))))))))..))).)))).))).....(((((((((..))).)))))).((((((....((((.....(((......))).....)))).)))))).))))))).)))...)))))))...))))...)))).)))))................. 99878.5
 .(...(...(.(.(...(.(....(..((.....((((....(((....)))....))))...))..)...).)..)...).)...)......)....... 12.100000381469727
-nb_el 252
+2296
 #+end_example
 
-#+begin_src R :results output :session *compt*
-dat = read.table("./analysis.log")
-boxplot(dat$V3 -dat$V4 ~ dat$V5)
-mean(dat$V2 - dat$V4)
-mean(dat$V3 - dat$V4)
-#+end_src
-
-#+RESULTS:
-: [1] 10.10849
-: [1] 0.1228902
 
 * compare loop contents
 
@@ -397,7 +389,8 @@ def read_true_struct(infile="./test_data/benchmark_data_full.csv"):
     results = {}
     for l in open(infile):
         seq, struct, name = l.strip().split(",")
-        results[seq] = struct
+        if "<" not in struct:
+            results[seq] = struct
     return results
 
 def read_csv(infile):
@@ -419,20 +412,22 @@ def get_loop_content(struct):
     stack = findall(r"S\d+", shap)
     multi = findall(r"M\d+", shap)
     hairpin = findall(r"H\d+", shap)
+    bulge = findall(r"B\d+", shap)
     all_loop = findall(r"A\d+", shap)
     interior_nb = sum(int(el[1:]) for el in interior)
     stack_nb    = sum(int(el[1:]) for el in stack)
     multi_nb    = sum(int(el[1:]) for el in multi)
     hairpin_nb  = sum(int(el[1:]) for el in hairpin)
     all_loop_nb = sum(int(el[1:]) for el in all_loop)
-    tot_ = interior_nb +stack_nb +multi_nb +hairpin_nb +all_loop_nb
-    try:
-        return float(interior_nb)/tot_, float(stack_nb)/tot_, float(multi_nb)/tot_, float(hairpin_nb)/tot_, float(all_loop_nb)/tot_
-    except:
-        return 0.0, 0.0, 0.0, 0.0, 0.0
+    bulge_nb = sum(int(el[1:]) for el in bulge)
+    tot_ = interior_nb +stack_nb +multi_nb +hairpin_nb +all_loop_nb+bulge_nb
+    if tot_ > 0:
+        return float(interior_nb)/tot_, float(stack_nb)/tot_, float(multi_nb)/tot_, float(hairpin_nb)/tot_, float(all_loop_nb)/tot_, float(bulge_nb)/tot_
+    else:
+        return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
 
-fft_pred = read_csv("./test_data/results_fft_langdon_scores.csv")
+fft_pred = read_csv("./test_data/results_fft_100n_30_stack_scores.csv")
 line_pred = read_csv("./test_data/results_linear_scores.csv")
 cont_pred = read_csv("./test_data/results_context_scores.csv")
 mx_pred = read_csv("./test_data/results_mxfold_scores.csv")
@@ -443,7 +438,7 @@ results = []
 fft_all_v, mfe_all_v, cont_all_v, line_all_v, mx_all_v = [], [], [], [], []
 with open("./scratch/fft_loop_content.csv", "w") as out:
     out.write(f"pcc_fft,int_l,sta_l,mul_l,hai_l\n")
-    for seq in fft_pred:
+    for seq in targets:
         if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
@@ -453,8 +448,8 @@ with open("./scratch/fft_loop_content.csv", "w") as out:
             save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
 
             true_struct = targets[seq]
-            int_l, sta_l, mul_l, hai_l, all_l = get_loop_content(true_struct)
-            results += [[int_l, sta_l, mul_l, hai_l]]
+            int_l, sta_l, mul_l, hai_l, all_l, bul_l = get_loop_content(true_struct)
+            results += [[int_l, sta_l, mul_l, hai_l, bul_l]]
 
             fft_all_v += [save_fft]
             mfe_all_v += [save_mfe]
@@ -486,11 +481,11 @@ cont_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 mx_f.set_aspect("equal", adjustable="box")
 mx_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 
-wrong_fft = [i for i, el in enumerate(fft_all_v) if el <= 10]
-wrong_mfe = [i for i, el in enumerate(mfe_all_v) if el <= 10]
-wrong_cont = [i for i, el in enumerate(cont_all_v) if el <= 10]
+wrong_fft = [i for i, el in enumerate(fft_all_v) if el <= 20]
+wrong_mfe = [i for i, el in enumerate(mfe_all_v) if el <= 20]
+wrong_cont = [i for i, el in enumerate(cont_all_v) if el <= 20]
 # wrong_line = [i for i, el in enumerate(line_all_v) if el <= 10]
-wrong_mx = [i for i, el in enumerate(mx_all_v) if el <= 10]
+wrong_mx = [i for i, el in enumerate(mx_all_v) if el <= 20]
 
 fft_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=10)
 fft_f.scatter(results[wrong_fft, :].dot(W[:,0]) , results[wrong_fft, :].dot(W[:,1]) , edgecolor="", color="deepskyblue", alpha=0.5, s=14)
@@ -502,6 +497,8 @@ fft_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head
 fft_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
 fft_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
 fft_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+fft_f.arrow(0, 0, W[4,0]*0.3, W[4,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+fft_f.annotate("H", xy=(W[4,0]*0.3-0.02, W[4,1]*0.3+0.03), size=12)
 fft_f.tick_params(axis="x", labelbottom=False, size=0)
 fft_f.set_title(f"FFT")
 
@@ -515,6 +512,8 @@ mfe_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head
 mfe_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
 mfe_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
 mfe_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+mfe_f.arrow(0, 0, W[4,0]*0.3, W[4,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mfe_f.annotate("H", xy=(W[4,0]*0.3-0.02, W[4,1]*0.3+0.03), size=12)
 mfe_f.tick_params(axis="y", labelleft=False, size=0)
 mfe_f.tick_params(axis="x", labelbottom=False, size=0)
 mfe_f.set_title(f"VRNA")
@@ -529,6 +528,8 @@ cont_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", hea
 cont_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
 cont_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
 cont_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+cont_f.arrow(0, 0, W[4,0]*0.3, W[4,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+cont_f.annotate("H", xy=(W[4,0]*0.3-0.02, W[4,1]*0.3+0.03), size=12)
 cont_f.set_title(f"ContextFold")
 
 mx_f.scatter(results.dot(W[:,0]) , results.dot(W[:,1]) , edgecolor="", color="grey", alpha=0.5, s=10)
@@ -541,10 +542,12 @@ mx_f.arrow(0, 0, W[2,0]*0.3, W[2,1]*0.3, width = 0.002, facecolor="black", head_
 mx_f.annotate("M", xy=(W[2,0]*0.3-0.01, W[2,1]*0.3+0.02), size=12)
 mx_f.arrow(0, 0, W[3,0]*0.3, W[3,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
 mx_f.annotate("H", xy=(W[3,0]*0.3-0.02, W[3,1]*0.3+0.03), size=12)
+mx_f.arrow(0, 0, W[4,0]*0.3, W[4,1]*0.3, width = 0.002, facecolor="black", head_width = 0.02)
+mx_f.annotate("H", xy=(W[4,0]*0.3-0.02, W[4,1]*0.3+0.03), size=12)
 mx_f.tick_params(axis="y", labelleft=False, size=0)
 mx_f.set_title(f"Mxfold")
 
-plt.savefig("img/content_fail_all.png", dpi=300)
+plt.savefig("img/comp_fails.png", dpi=300)
 plt.show()
 #+end_src
 
