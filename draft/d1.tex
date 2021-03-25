@@ -1,4 +1,4 @@
-% Created 2021-03-25 jeu. 10:52
+% Created 2021-03-25 jeu. 12:02
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -9,7 +9,6 @@
 \usepackage{amsmath}
 \usepackage{caption,graphicx,subcaption}
 \usepackage[boxed]{algorithm2e}
-\usepackage{authblk}
 \date{\today}
 \title{A Mirror encoding combined with the FFT for a fast heuristic of the RNA folding dynamics}
 \begin{document}
@@ -17,7 +16,7 @@
 \maketitle
 
 \section{Abstract}
-\label{sec:org24465a6}
+\label{sec:org9d90e07}
 \begin{itemize}
 \item Simple and fast heuristic for the folding path of RNAs.
 \item It is straightforward to model Pseudoknots
@@ -30,21 +29,24 @@ sensitivity \textasciitilde{} 76\%.
 BP regions.
 \end{itemize}
 
-\section{Introduction}
-\label{sec:org032f979}
 \clearpage
+\section{Introduction}
+\label{sec:orgb808b13}
 \subsection{RNA folding dynamics}
-\label{sec:org76c62ec}
+\label{sec:orga1ee2ce}
+bla bla dynamic of secondary structure relevant bla biological function.
+
+\subsection{RNA folding dynamics}
+\label{sec:orga0d38a2}
 \begin{enumerate}
 \item Description of RNA structure
 \item going up to the 2ndary structure only
-\item Simple rules to compute a structure: multiple BPs compensate the lost en
-entropy during the folding process
+\item Simple rules to compute a structure: multiple BPs compensate the lost of
+entropy during the folding process.
 \end{enumerate}
 
-\clearpage
 \subsection{Existing methods}
-\label{sec:orga28bff2}
+\label{sec:org829134c}
 \begin{enumerate}
 \item MC sampling: kinefold; atomic moves; MC-style simulation
 \item Barrier trees from conformation landscape subopt tree: Sample from the
@@ -53,7 +55,15 @@ boltzmann ensemble of structures
 
 \clearpage
 \section{FFT based folding dynamic heuristic}
-\label{sec:orgc101774}
+\label{sec:org2c0a75f}
+\begin{enumerate}
+\item Encoding into two complementary strands
+\item Search for high BPs regions
+\item Use a sliding window to form large consecutive BPs
+\item split the strands into interior and exterior
+\item start again from 2) for the two sub-sequences
+\end{enumerate}
+
 We now describe the heuristic folding algorithm starting from one sequence S and
 its associated unfolded structure of lenght L. We first create a numerical
 representation of S where each type of nucleotide in replaced by a unit vector
@@ -72,10 +82,10 @@ type channel. Here, the first row would be the A channel which we refer to as
 sequence and use the following complementary encoding:
 \begin{equation}
 \begin{split}
-\bar{A} \rightarrow \begin{pmatrix} 0 0 0 w_{\tiny AU} \end{pmatrix}
-\bar{U} \rightarrow \begin{pmatrix} w_{\tiny AU} w_{\tiny GU} 0 0 \end{pmatrix}
-\bar{C} \rightarrow \begin{pmatrix} 0 0 w_{\tiny GC} 0 \end{pmatrix}
-\bar{G} \rightarrow \begin{pmatrix} 0 w_{\tiny GC} 0 w_{\tinyGU} \end{pmatrix}
+\bar{A} \rightarrow \begin{pmatrix} 0 0 0 w_{\scalebox{0.5}{AU}} \end{pmatrix}
+\bar{U} \rightarrow \begin{pmatrix} w_{\scalebox{0.5}{AU}} w_{\scalebox{0.5}{GU}} 0 0 \end{pmatrix}
+\bar{C} \rightarrow \begin{pmatrix} 0 0 w_{\scalebox{0.5}{GC}} 0 \end{pmatrix}
+\bar{G} \rightarrow \begin{pmatrix} 0 w_{\scalebox{0.5}{GC}} 0 w_{\scalebox{0.5}{GU}} \end{pmatrix}
 \end{split}
 \end{equation}
 where \(w_{AU}\), \(w_{GC}\), \(w_{GU\) are tunable parameters for the next step. We
@@ -91,7 +101,7 @@ where \(c_{X^A,\bar{X}^A(k)\) is the correlation in the \(A\) channel between th
 two copies. The correlation \(cor(k)\) gives the average number of base pairs for
 a positional lag \(k\). One channel correlation between the copies is given by:
 \begin{equation}
-c_{X^A,\bar{X}^A(k) = \sum_{1\leq i \leq L, 1 \leq i + k \leq M} X^A(i) \times \bar{X}^A(i+k)
+c_{X^A,\bar{X}^A}(k) = \sum\limits_{1\leq i \leq L, 1 \leq i + k \leq M} X^A(i) \times \bar{X}^A(i+k)
 \end{equation}
 where \(X^A(i)\) and \(\bar{X}^A(i+k)\) are the A channel of site \(i\) and \(i+k\).
 X\textsuperscript{A}(i) \texttimes{} \bar{X}\textsuperscript{A}(i+k) is non zero if sites \(i\) and \(i+k\) can form a base
@@ -125,11 +135,36 @@ shows the whole procedure.
 
 \clearpage
 \section{Folding RNAs}
-\label{sec:org5499fc4}
+\label{sec:org0c55b0f}
+\begin{enumerate}
+\item comparisons to DP folding algorithm -> RNAfold and MFE prediction or MEA
+\item Comparisons to ML folding algorithm -> Mxfold or Contextfold
+\item The discrepancy between FFT and RNAfold for the folding task can be explained
+by the greedyness of the algorithm.
+\item Show the best trajectory among the 50 predicted and its PVV performance =>
+means that one trajectory is relevant most of the case. Could be combine with
+ML method to determine which one.
+\item How natural loop compositions are distributed -> bias toward some specific
+composition while.
+\item Show two folding trajectories, one where it works, and one where the
+greedyness is a problem.
+\end{enumerate}
+
 To evaluate the relevance of the folding trajectories produced, we benchmarked
-the algorithm performance for the folding task. We compared the performance of
-the MFE structure computed by RNAfold and the performance of a machine learning
-approach implemented in Contrafold/Mxfold.
+the algorithm performance for the folding task. In addition, we want to assess
+the effect of sequence length on these predictions.
+
+We compared the performance of the MFE structure computed by RNAfold and the
+performance of a machine learning approach implemented in Contrafold/Mxfold.
+
+The performance analysis were performed sequence-length-wise to asses the impact
+of length increase.
+
+To investigate the region of the structure space where the thermodynamic model
+tends to fail, we computed the composition content of the natural structures and
+mapped the ones that had a low PVV score. It shows that the MFE tends to fail
+when the structure contains a high proportion of interior loops as shown in
+\textbf{figure}.
 
 \begin{figure}[htbp]
 \centering
@@ -150,9 +185,9 @@ approach implemented in Contrafold/Mxfold.
 \end{figure}
 
 \section{Methods}
-\label{sec:orgcb4cd39}
+\label{sec:org306b1fe}
 \begin{enumerate}
-\item ArchiveII dataset used
+\item Dataset used
 \begin{enumerate}
 \item We considered all structures with nrj < 0 and no pseudoknot (since the
 energy parameters doesn't take them into account).
@@ -161,16 +196,23 @@ which we expect the thermodynamic model to be the most accurate. (maybe
 put that above)
 \end{enumerate}
 \item Folding parameter applied for all methods considered
+\item Analysis: PVV and sensitivity + PCA and composition extraction
 \end{enumerate}
+\subsection{Datasets}
+\label{sec:org4ee8a03}
+We formed two sub-datasets based on the ArchiveII (\textbf{ref}) dataset. We first
+removed from all the structure containing pseudoknot since all tool considered
+here don't handle pseudoknots. Next, we removed all the structures which were
+evaluated with a positive energy or null energy with the Turner 2004 energy
+parameters. Since positive energies means that the completely unfolded structure
+is more stable than the native one, we assume that those structure are not well
+modeled by the parameter set.
 
 \clearpage
-\section{Natural folding path from parcimonious trajectory extraction}
-\label{sec:org89ad4a0}
-\clearpage
 \section{Concluding discussion}
-\label{sec:orga4c63e8}
+\label{sec:org861e6ca}
 \subsection{Good stuff}
-\label{sec:org346bebe}
+\label{sec:orge4ec0ab}
 \begin{enumerate}
 \item Simple heuristic to compute folding path
 \item Versatile method: allow simple modeling of pseudoknot and more information
@@ -182,7 +224,7 @@ accuracy than ML methods).
 \end{enumerate}
 
 \subsection{limits}
-\label{sec:orgaa0f88c}
+\label{sec:org61e50bb}
 \begin{enumerate}
 \item Choosing the maximum number each time is not an optimal choice
 \item In average, the scores are not good. Only a few out of the predicted

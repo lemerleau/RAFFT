@@ -5,7 +5,11 @@
 #+LaTeX_HEADER: \usepackage{amsmath}
 #+LaTeX_HEADER: \usepackage{caption,graphicx,subcaption}
 #+LaTeX_HEADER: \usepackage[boxed]{algorithm2e}
-#+latex_header: \usepackage{authblk} 
+# #+latex_header: \usepackage{authblk} 
+# #+latex_header: \author[1]{Vaitea}
+# #+latex_header: \author[1]{Nono}
+# #+latex_header: \author[1]{Matteo}
+# #+latex_header: \affil[1]{MPI ...}
 
 * Abstract
 - Simple and fast heuristic for the folding path of RNAs.
@@ -18,15 +22,17 @@
 - We propose a fast algorithm method based on the FFT to search for high density
   BP regions.
 
-* Introduction
 \clearpage
+* Introduction
+** RNA folding dynamics
+bla bla dynamic of secondary structure relevant bla biological function.
+
 ** RNA folding dynamics
 1) Description of RNA structure
 2) going up to the 2ndary structure only
-3) Simple rules to compute a structure: multiple BPs compensate the lost en
-   entropy during the folding process
+3) Simple rules to compute a structure: multiple BPs compensate the lost of
+   entropy during the folding process.
 
-\clearpage
 ** Existing methods
 1) MC sampling: kinefold; atomic moves; MC-style simulation
 2) Barrier trees from conformation landscape subopt tree: Sample from the
@@ -34,14 +40,12 @@
 
 \clearpage
 * FFT based folding dynamic heuristic
-# # description of the algorithm
-# 1) Algorithm
-#    1) Encoding into two complementary strands
-#    2) Search for high BPs regions
-#    3) Use a sliding window to form large consecutive BPs
-#    4) split the strands into interior and exterior
-#    5) start again from 2) for the two sub-sequences
-# 2) Show one example of a folding path
+# description of the algorithm
+1) Encoding into two complementary strands
+2) Search for high BPs regions
+3) Use a sliding window to form large consecutive BPs
+4) split the strands into interior and exterior
+5) start again from 2) for the two sub-sequences
 
 # 1 mirror encoding
 We now describe the heuristic folding algorithm starting from one sequence S and
@@ -62,10 +66,10 @@ $X^A$. Then, we create a second copy for which we revert the order of the
 sequence and use the following complementary encoding:
 \begin{equation}
 \begin{split}
-\bar{A} \rightarrow \begin{pmatrix} 0 0 0 w_{\tiny AU} \end{pmatrix}
-\bar{U} \rightarrow \begin{pmatrix} w_{\tiny AU} w_{\tiny GU} 0 0 \end{pmatrix}
-\bar{C} \rightarrow \begin{pmatrix} 0 0 w_{\tiny GC} 0 \end{pmatrix}
-\bar{G} \rightarrow \begin{pmatrix} 0 w_{\tiny GC} 0 w_{\tinyGU} \end{pmatrix}
+\bar{A} \rightarrow \begin{pmatrix} 0 0 0 w_{\scalebox{0.5}{AU}} \end{pmatrix}
+\bar{U} \rightarrow \begin{pmatrix} w_{\scalebox{0.5}{AU}} w_{\scalebox{0.5}{GU}} 0 0 \end{pmatrix}
+\bar{C} \rightarrow \begin{pmatrix} 0 0 w_{\scalebox{0.5}{GC}} 0 \end{pmatrix}
+\bar{G} \rightarrow \begin{pmatrix} 0 w_{\scalebox{0.5}{GC}} 0 w_{\scalebox{0.5}{GU}} \end{pmatrix}
 \end{split}
 \end{equation}
 where $w_{AU}$, $w_{GC}$, $w_{GU$ are tunable parameters for the next step. We
@@ -82,7 +86,7 @@ where $c_{X^A,\bar{X}^A(k)$ is the correlation in the $A$ channel between the
 two copies. The correlation $cor(k)$ gives the average number of base pairs for
 a positional lag $k$. One channel correlation between the copies is given by:
 \begin{equation}
-c_{X^A,\bar{X}^A(k) = \sum_{1\leq i \leq L, 1 \leq i + k \leq M} X^A(i) \times \bar{X}^A(i+k)
+c_{X^A,\bar{X}^A}(k) = \sum\limits_{1\leq i \leq L, 1 \leq i + k \leq M} X^A(i) \times \bar{X}^A(i+k)
 \end{equation}
 where $X^A(i)$ and $\bar{X}^A(i+k)$ are the A channel of site $i$ and $i+k$.
 X^A(i) \times \bar{X}^A(i+k) is non zero if sites $i$ and $i+k$ can form a base
@@ -120,18 +124,37 @@ shows the whole procedure.
 
 \clearpage
 * Folding RNAs
-# 1) comparisons to DP folding algorithm
-# 2) Comparisons to ML folding algorithm
-# 3) Comparisons to kinfold
-# 4) How natural loop compositions are distributed
+1) comparisons to DP folding algorithm -> RNAfold and MFE prediction or MEA
+2) Comparisons to ML folding algorithm -> Mxfold or Contextfold
+3) The discrepancy between FFT and RNAfold for the folding task can be explained
+   by the greedyness of the algorithm.
+4) Show the best trajectory among the 50 predicted and its PVV performance =>
+   means that one trajectory is relevant most of the case. Could be combine with
+   ML method to determine which one.
+4) How natural loop compositions are distributed -> bias toward some specific
+   composition while.
+5) Show two folding trajectories, one where it works, and one where the
+   greedyness is a problem.
 
 To evaluate the relevance of the folding trajectories produced, we benchmarked
-the algorithm performance for the folding task. We compared the performance of
-the MFE structure computed by RNAfold and the performance of a machine learning
-approach implemented in Contrafold/Mxfold.
+the algorithm performance for the folding task. In addition, we want to assess
+the effect of sequence length on these predictions.
 
-# ArchiveII is the dataset used here contains:
-# -
+We compared the performance of the MFE structure computed by RNAfold and the
+performance of a machine learning approach implemented in Contrafold/Mxfold.
+
+# rough performances 
+# fft has a comparable performance compare to the state of the art methods.
+
+The performance analysis were performed sequence-length-wise to asses the impact
+of length increase.
+
+To investigate the region of the structure space where the thermodynamic model
+tends to fail, we computed the composition content of the natural structures and
+mapped the ones that had a low PVV score. It shows that the MFE tends to fail
+when the structure contains a high proportion of interior loops as shown in
+*figure*.
+
 #+caption: Folding comparison by taking the best energy among the 30 predicted trajectories
 file:img/comp_100n_30s_pvv.png
 
@@ -142,17 +165,24 @@ file:img/comp_max_50n_50_stacks.png
 file:img/comp_fails.png
 
 * Methods
-1) ArchiveII dataset used
+1) Dataset used
    1) We considered all structures with nrj < 0 and no pseudoknot (since the
       energy parameters doesn't take them into account).
    2) We studied a smaller subsets of shorter sequences length <= 200 nuc in
       which we expect the thermodynamic model to be the most accurate. (maybe
       put that above)
 2) Folding parameter applied for all methods considered
+3) Analysis: PVV and sensitivity + PCA and composition extraction
 
-\clearpage
-* Natural folding path from parcimonious trajectory extraction
-# we took natural structures from the ensemble
+# Dataset
+** Datasets
+We formed two sub-datasets based on the ArchiveII (*ref*) dataset. We first
+removed from all the structure containing pseudoknot since all tool considered
+here don't handle pseudoknots. Next, we removed all the structures which were
+evaluated with a positive energy or null energy with the Turner 2004 energy
+parameters. Since positive energies means that the completely unfolded structure
+is more stable than the native one, we assume that those structure are not well
+modeled by the parameter set.
 
 \clearpage
 * Concluding discussion

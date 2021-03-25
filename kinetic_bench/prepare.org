@@ -39,3 +39,17 @@ with open("./benchmark_cleaned_midle_length.csv", "w") as out:
 #+end_src
 
 #+RESULTS:
+
+below 300 size constraints:
+
+#+begin_src python :results output
+from RNA import energy_of_struct
+sequences = [l.strip().split(",") for l in open("./benchmark_data_full.csv")]
+with open("./benchmark_cleaned_300_length.csv", "w") as out:
+    for seq, struct, name in sequences:
+        nrj = energy_of_struct(seq, struct)
+        if len(seq) < 300 and nrj < 0 and "<" not in struct:
+            out.write(f"{seq},{struct},{name}\n")
+#+end_src
+
+#+RESULTS:
