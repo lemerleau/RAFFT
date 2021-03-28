@@ -64,7 +64,7 @@ with open("analysis.log", "w") as out:
         # if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
         # if seq in fft_pred and seq in vrna_pred and seq in line_pred:
         
-        if seq in fft_pred and seq in line_pred and seq in mx_pred :
+        if seq in fft_pred and seq in line_pred and seq in mx_pred and len(seq) > 300:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
             len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
@@ -101,15 +101,17 @@ fft_mean = [mean(fft_to_plot[len_]) for len_ in list_len if len_ < 200]
 mfe_mean = [mean(mfe_to_plot[len_]) for len_ in list_len if len_ < 200]
 line_mean = [mean(line_to_plot[len_]) for len_ in list_len if len_ < 200]
 mx_mean = [mean(mx_to_plot[len_]) for len_ in list_len if len_ < 200]
-
+print(len(fft_all_v))
 print(mean(fft_mean) - mean(mx_mean))
 print(ttest_ind(mx_mean, fft_mean))
 #+end_src
 
 #+RESULTS:
-: -1.2609491684050909
-: Ttest_indResult(statistic=0.5815889676507102, pvalue=0.5614131338780556)
+: 140
+: nan
+: Ttest_indResult(statistic=nan, pvalue=nan)
 
+0.8641114982578397
 * Scoring
 
 read structures
