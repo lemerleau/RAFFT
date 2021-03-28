@@ -85,9 +85,9 @@ def window_slide(seq, cseq, pos, pos_list):
             max_i, max_j = ip, jp
             list_sol += [(max_nb, max_i, max_j, max_score)]
 
-    # return max_nb, max_i, max_j, max_score
-    list_sol.sort(key=lambda el: el[0])
-    return list_sol
+    # list_sol.sort(key=lambda el: el[0])
+    # return list_sol
+    return max_nb, max_i, max_j, max_score
 
 def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     # find largest bp region
@@ -97,21 +97,21 @@ def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     best_nrj = MIN_NRJ
     # print("".join([SEQ[i] for i in pos_list]))
     for pos, c in cor_l[::-1][:NB_MODE]:
-        # mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
-        for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
+        mx_i, mip, mjp, ms = window_slide(seq, cseq, pos, pos_list)
+        # for mx_i, mip, mjp, ms in window_slide(seq, cseq, pos, pos_list):
 
-            if mx_i > 0:
-                tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
-                tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
-            else:
-                tmp_nrj = MIN_NRJ
+        if mx_i > 0:
+            tmp_pair = [(pos_list[mip-i], pos_list[mjp+i]) for i in range(mx_i)]
+            tmp_nrj = eval_dynamic(SEQ_COMP, pair_list, tmp_pair, LEN_SEQ, SEQ)
+        else:
+            tmp_nrj = MIN_NRJ
 
-            # if ms > max_s:
-            if tmp_nrj < MIN_NRJ:
-                max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
-                best_tmp = tmp_pair
-                best_nrj = tmp_nrj
-                best_sol += [(max_bp, max_s, max_i, max_j, best_nrj, best_tmp)]
+        # if ms > max_s:
+        if tmp_nrj < MIN_NRJ:
+            max_bp, max_s, max_i, max_j = mx_i, ms, mip, mjp
+            best_tmp = tmp_pair
+            best_nrj = tmp_nrj
+            best_sol += [(max_bp, max_s, max_i, max_j, best_nrj, best_tmp)]
 
     best_sol.sort(key=lambda el: el[4])
     return best_sol

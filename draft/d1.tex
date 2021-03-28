@@ -1,4 +1,4 @@
-% Created 2021-03-25 jeu. 12:02
+% Created 2021-03-28 dim. 17:11
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -9,6 +9,11 @@
 \usepackage{amsmath}
 \usepackage{caption,graphicx,subcaption}
 \usepackage[boxed]{algorithm2e}
+\usepackage{authblk}
+\author[1]{Vaitea Opuu}
+\author[1]{Nono S. C. Merleau}
+\author[1]{Matteo Smerlak}
+\affil[1]{Max Planck Institute for Mathematics in the Sciences, D-04103 Leipzig, Germany}
 \date{\today}
 \title{A Mirror encoding combined with the FFT for a fast heuristic of the RNA folding dynamics}
 \begin{document}
@@ -16,7 +21,7 @@
 \maketitle
 
 \section{Abstract}
-\label{sec:org9d90e07}
+\label{sec:org03f64b1}
 \begin{itemize}
 \item Simple and fast heuristic for the folding path of RNAs.
 \item It is straightforward to model Pseudoknots
@@ -27,43 +32,46 @@
 sensitivity \textasciitilde{} 76\%.
 \item We propose a fast algorithm method based on the FFT to search for high density
 BP regions.
+\item There are smooth coarse-grain folding path which lead to near native structures.
 \end{itemize}
 
 \clearpage
 \section{Introduction}
-\label{sec:orgb808b13}
-\subsection{RNA folding dynamics}
-\label{sec:orga1ee2ce}
+\label{sec:org614aaae}
+\subsection{RNA folding introduction}
+\label{sec:org8769818}
 bla bla dynamic of secondary structure relevant bla biological function.
 
+\begin{itemize}
+\item MFE and MEA not significantly different in term of performances (how to bench RNA)
+\end{itemize}
+
 \subsection{RNA folding dynamics}
-\label{sec:orga0d38a2}
+\label{sec:orgbcb036b}
 \begin{enumerate}
 \item Description of RNA structure
 \item going up to the 2ndary structure only
 \item Simple rules to compute a structure: multiple BPs compensate the lost of
 entropy during the folding process.
 \end{enumerate}
-
+\subsection{Energy model}
+\label{sec:org0ce990e}
+\begin{enumerate}
+\item issue with additivity principle in model. Might be worst when the sequence
+lengthens since more tertiary interactions interplay.
+\end{enumerate}
 \subsection{Existing methods}
-\label{sec:org829134c}
+\label{sec:orgb299693}
 \begin{enumerate}
 \item MC sampling: kinefold; atomic moves; MC-style simulation
 \item Barrier trees from conformation landscape subopt tree: Sample from the
 boltzmann ensemble of structures
+\item Vfold, simplified folding model
 \end{enumerate}
 
 \clearpage
 \section{FFT based folding dynamic heuristic}
-\label{sec:org2c0a75f}
-\begin{enumerate}
-\item Encoding into two complementary strands
-\item Search for high BPs regions
-\item Use a sliding window to form large consecutive BPs
-\item split the strands into interior and exterior
-\item start again from 2) for the two sub-sequences
-\end{enumerate}
-
+\label{sec:org47bec4d}
 We now describe the heuristic folding algorithm starting from one sequence S and
 its associated unfolded structure of lenght L. We first create a numerical
 representation of S where each type of nucleotide in replaced by a unit vector
@@ -133,50 +141,57 @@ where the 50 best trajectories are stored in a stack and evolved in parallel.
 Hence, it offers the flexibility of overcoming some energy barriers. \textbf{Figure}
 shows the whole procedure.
 
-\clearpage
 \section{Folding RNAs}
-\label{sec:org0c55b0f}
-\begin{enumerate}
-\item comparisons to DP folding algorithm -> RNAfold and MFE prediction or MEA
-\item Comparisons to ML folding algorithm -> Mxfold or Contextfold
-\item The discrepancy between FFT and RNAfold for the folding task can be explained
-by the greedyness of the algorithm.
-\item Show the best trajectory among the 50 predicted and its PVV performance =>
-means that one trajectory is relevant most of the case. Could be combine with
-ML method to determine which one.
-\item How natural loop compositions are distributed -> bias toward some specific
-composition while.
-\item Show two folding trajectories, one where it works, and one where the
-greedyness is a problem.
-\end{enumerate}
+\label{sec:orga1ab6cf}
+To evaluate the relevance of the folding model, we compared the algorithm
+performance for the folding task. In addition, to assess the effect of sequence
+lengthens on these predictions, we displayed their performance length-wise.
 
-To evaluate the relevance of the folding trajectories produced, we benchmarked
-the algorithm performance for the folding task. In addition, we want to assess
-the effect of sequence length on these predictions.
+\textbf{Figure} shows the performance in PPV and sensitivity for the four methods. It
+shows that the ML method is consistently better than thermodynamic methods.
+Length-wise T-test between the MFE and ML predicitons showed that this
+difference is significant (pvalue \(\approx\) 10\textsuperscript{-12}) with a substantial
+improvement of about 10\%. Although RAFFT predictions were found to be comparable
+to MFE predictions, they are significantly less accurate (pvalue \(\approx\)
+0.0002), with a drastic lost of performance for sequences of length greater than
+300 nucleotides.
 
-We compared the performance of the MFE structure computed by RNAfold and the
-performance of a machine learning approach implemented in Contrafold/Mxfold.
+Among the 50 configurations produced by RAFFT, we found in average at least one
+prediction with in average 59\% of PPV and <SENS> of sensitivity (blue curve in
+\textbf{figure}). The overall gain of performances is not significantly different from
+the MFE predictions. However, for the sequences of length lesser than 200
+nucleotides, this gain was found to be substantial and significant (\(\approx\) 16 \%
+better than the MFE). The accuracy for those sequences is equivalent to ML
+performances. For sequence lengths greater than 300 nucleotides, we observed the
+same drastic lost of accuracy, although we took only the best prediction among
+the 50 saved configurations for each sequence.
 
-The performance analysis were performed sequence-length-wise to asses the impact
-of length increase.
-
-To investigate the region of the structure space where the thermodynamic model
-tends to fail, we computed the composition content of the natural structures and
-mapped the ones that had a low PVV score. It shows that the MFE tends to fail
-when the structure contains a high proportion of interior loops as shown in
-\textbf{figure}.
+Two regions of lack of performances were observed for all methods. A group of 28
+sequences of length shorter than 80 nucleotides were evaluated with free of
+their known structures about 9.8 kcal/mol greater than the MFE structures. Some
+of them involve large exterior loop such as displayed in \textbf{figure}. The second
+region is around 200 nucleotides length. The known structure of these sequences
+also displayed large unpaired regions such as the one shown in \textbf{figure}.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=.9\linewidth]{img/comp_100n_30s_pvv.png}
+\includegraphics[width=.9\linewidth]{img/fold_perf_pvv.png}
 \caption{Folding comparison by taking the best energy among the 30 predicted trajectories}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.9\linewidth]{img/comp_max_50n_50_stacks.png}
-\caption{Is there a good trajectory among 50 saved trajectories}
-\end{figure}
+To investigate the region of the structure space where the thermodynamic model
+tends to fail, we computed the composition content of the known structures.
+\textbf{Figure} shows the prcent of base pairs or positions involved in the five loop
+types: interior, exterior, hairpin, stacking, and multi-branch loops. Those
+prcents were then represented in a principal component analysis. From the PCA,
+we observed that the known structures are distributed in the structure space
+non-uniformly. Some natural structures, as observed above, have large exterior
+loops. The center of mass in the principal component space is located in between
+the high density stacking and interior loops. This shows that the dataset
+contains many elongated structures.
+
+It shows that the MFE predictions tend to fail when the structure contains a
+high proportion of interior loops as shown in \textbf{figure}.
 
 \begin{figure}[htbp]
 \centering
@@ -184,35 +199,71 @@ when the structure contains a high proportion of interior loops as shown in
 \caption{where does the methods failed? PCA RNAfold, Mxfold, FFT, and}
 \end{figure}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.9\linewidth]{img/content_predicted_data.png}
+\caption{What kind of structure these method naturally produce}
+\end{figure}
+
 \section{Methods}
-\label{sec:org306b1fe}
-\begin{enumerate}
-\item Dataset used
-\begin{enumerate}
-\item We considered all structures with nrj < 0 and no pseudoknot (since the
-energy parameters doesn't take them into account).
-\item We studied a smaller subsets of shorter sequences length <= 200 nuc in
-which we expect the thermodynamic model to be the most accurate. (maybe
-put that above)
-\end{enumerate}
-\item Folding parameter applied for all methods considered
-\item Analysis: PVV and sensitivity + PCA and composition extraction
-\end{enumerate}
-\subsection{Datasets}
-\label{sec:org4ee8a03}
-We formed two sub-datasets based on the ArchiveII (\textbf{ref}) dataset. We first
+\label{sec:orga61564e}
+We formed two sub-datasets based on the ArchiveII (\textbf{ref}) dataset. First, we
 removed from all the structure containing pseudoknot since all tool considered
 here don't handle pseudoknots. Next, we removed all the structures which were
 evaluated with a positive energy or null energy with the Turner 2004 energy
 parameters. Since positive energies means that the completely unfolded structure
-is more stable than the native one, we assume that those structure are not well
-modeled by the parameter set.
+is more stable than the native one, we assume that those structures are not well
+modeled by the energy function used here. This dataset is composed of 2698
+structures. 240 sequences were found multiple times (from 2 to 8 times). 19 of
+them were found with different structures. We discarded all duplication and
+picked the structure with the lowest energy for each. We obtained a dataset of
+2296 sequences.
+
+To compute the MFE structure, we used RNAfold (version) with the default
+parameters and the Turner 2004 set of energy parameters. For the machine
+learning tool, we computed the prediction using Mxfold2 with the default
+parameters. The structures for both were used for the statistics.
+
+For kinfold, we performed for each sequence, 40 simulations of 10\textsuperscript{4} (unit?).
+Then, we counted the occurrences of each structures and selected the 50 most
+populated structures. The best structure in terms of PPV was displayed and used
+for the statistics.
+
+For the FFT-based algorithm, we used two sets of parameters. First, we used
+search for consecutive base pairs in the 50 best modes and stored 50
+conformations for which we displayed the best energy found. The correlation were
+computed using the weights w\textsubscript{GC}=3, w\textsubscript{AU}=2, and w\textsubscript{GU}=1.
+
+To measure the predictions accuracy, we used two metrics from epimiology. The
+positive predictive value (PPV) which is the fraction of correct base pairs
+predictions in the predicted structure. The sensitivity is the fraction of
+correctly predicted base pairs in the true structure. Both metrics are defined
+as follow:
+\begin{equation}
+PPV = \frac{TP}{TP + FN} \;\;\; \text{Sensitivity} = \frac{TP}{TP+FP}
+\end{equation}
+where TP, FN, and FP stand respectively for the number of correctly predicted
+base pairs (true positives), the number of base pairs not detected (false
+negatives), and the number of wrongly predicted base pairs (false positives). To
+maintain consistency with previous and future studies, we computed these metrics
+using the implementation in the \texttt{scorer} tool provided in \textbf{ref Mathews}, which
+provide also a more flexible estimate where shift are allowed.
+
+The loop composition were extracted in terms of proportion to have an overall
+measure of the structure distribution. We first convert all natural structures
+into Shapiro notation using Vienna Package utilies. From the notation, we
+extracted the proportion of base pairs involved into the interior, exterior,
+bulge, stacking, and multibranch loops. For each true structure, we obtained a
+prcent of type of loops from which we extracted the principal components. Next,
+the structure compositions where projected on the first two principal components
+for visual conveniences. The composition arrows represents the eigen vectors
+obtained from the diagonalization of the covariance matrix.
 
 \clearpage
 \section{Concluding discussion}
-\label{sec:org861e6ca}
+\label{sec:org66df435}
 \subsection{Good stuff}
-\label{sec:orge4ec0ab}
+\label{sec:org31cbbc4}
 \begin{enumerate}
 \item Simple heuristic to compute folding path
 \item Versatile method: allow simple modeling of pseudoknot and more information
@@ -224,7 +275,7 @@ accuracy than ML methods).
 \end{enumerate}
 
 \subsection{limits}
-\label{sec:org61e50bb}
+\label{sec:orgf0917bf}
 \begin{enumerate}
 \item Choosing the maximum number each time is not an optimal choice
 \item In average, the scores are not good. Only a few out of the predicted

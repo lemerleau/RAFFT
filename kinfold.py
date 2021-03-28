@@ -30,6 +30,7 @@ def parse_arguments():
     parser.add_argument('--seq_file', '-sf', help="sequence file")
     parser.add_argument('-t', '--time', help="simulation time", type=int, default=500)
     parser.add_argument('-ns', '--nb_sim', help="number of trajectories", type=int, default=1)
+    parser.add_argument('-np', '--nb_print', help="number of conformations to print", type=int, default=50)
     return parser.parse_args()
 
 
@@ -47,7 +48,7 @@ def main():
     dens_str_ = density_struct(results.read().split("\n"))
     dens_str = [(struct, count) for struct, count in dens_str_.items()]
     dens_str.sort(key=lambda el: el[1][0])
-    for struct, (count, nrj) in dens_str:
+    for struct, (count, nrj) in dens_str[::-1][:args.nb_print]:
         # print(struct, count, nrj)
         print(f"{struct} {count:10}")
 
