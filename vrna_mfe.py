@@ -19,7 +19,7 @@ def main():
         sequence = "".join([l.strip() for l in open(args.seq_file) if not l.startswith(">")]).replace("T", "U")
     
     # read_parameter_file("/home/vaitea/programs/ViennaRNA-2.4.17/misc/dna_mathews1999.par")
-    read_parameter_file("/home/vaitea/programs/ViennaRNA-2.4.17/misc/rna_langdon2018.par")
+    # read_parameter_file("/home/vaitea/programs/ViennaRNA-2.4.17/misc/rna_langdon2018.par")
     # read_parameter_file("/home/vaitea/programs/ViennaRNA-2.4.17/misc/rna_andronescu2007.par")
     len_seq = len(sequence)
     vrna_struct, vrna_mfe = fold(sequence)

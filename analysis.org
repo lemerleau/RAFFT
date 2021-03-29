@@ -64,7 +64,7 @@ with open("analysis.log", "w") as out:
         # if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
         # if seq in fft_pred and seq in vrna_pred and seq in line_pred:
         
-        if seq in fft_pred and seq in line_pred and seq in mx_pred and len(seq) > 300:
+        if seq in fft_pred and seq in line_pred and seq in mx_pred:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
             len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
@@ -97,19 +97,19 @@ list_len = list(fft_to_plot.keys())
 list_len.sort()
 nb_el = len(list_len)
 
-fft_mean = [mean(fft_to_plot[len_]) for len_ in list_len if len_ < 200]
-mfe_mean = [mean(mfe_to_plot[len_]) for len_ in list_len if len_ < 200]
-line_mean = [mean(line_to_plot[len_]) for len_ in list_len if len_ < 200]
-mx_mean = [mean(mx_to_plot[len_]) for len_ in list_len if len_ < 200]
+fft_mean = [mean(fft_to_plot[len_]) for len_ in list_len]
+mfe_mean = [mean(mfe_to_plot[len_]) for len_ in list_len]
+line_mean = [mean(line_to_plot[len_]) for len_ in list_len]
+mx_mean = [mean(mx_to_plot[len_]) for len_ in list_len]
 print(len(fft_all_v))
 print(mean(fft_mean) - mean(mx_mean))
 print(ttest_ind(mx_mean, fft_mean))
 #+end_src
 
 #+RESULTS:
-: 140
-: nan
-: Ttest_indResult(statistic=nan, pvalue=nan)
+: 2294
+: -14.182351019772419
+: Ttest_indResult(statistic=7.166827315023949, pvalue=2.797744871674337e-12)
 
 0.8641114982578397
 * Scoring
@@ -313,7 +313,7 @@ name_cont = "ContextFold"
 name_line = "RAFFT*"
 name_mx = "Mxfold"
 
-fft_f.set_title(f"Positive Predicted Value")
+fft_f.set_title(f"Sensitivity")
 # fft_f.legend((fft_l,mfe_l,line_l,cont_l, mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
 #                                     f"{name_line}({line_mean:4.1f})", f"{name_cont}({cont_mean:4.1f})",
 #                                     f"{name_mx}({mx_mean:4.1f})"), loc="bottom center", ncol=3)
@@ -462,6 +462,9 @@ with open("./kinetic_bench/benchmark_cleaned_red_all_length.csv" ,"w") as out:
                 tot += [len(true_str[seq])]
                 min_st, min_nrj = min([(st, seq_comp.eval_structure(st)) for st, s_, n_ in true_str[seq]], key=lambda el: el[1])
                 struct = min_st
+                print(seq, len(seq))
+                for st in set([st for st, s_, n_ in true_str[seq]]):
+                    print(st)
             # else:
                 
         out.write(f"{seq},{struct},{name}\n")
@@ -473,10 +476,70 @@ print(len(tot))
 #+end_src
 
 #+RESULTS:
-: 2.789473684210526
-: 2
-: 6
-: 19
+#+begin_example
+CUCUUAUUUAGACCUAUGCAAUAGGAUUUUAGGGUAACGCUUCAGGGUAGGAAUACAGCAGAGUCCCCUAAUUUCUUGUGUGCCUUAGCCAUCUGAAUAGGAG 103
+..(((.(.(.(..(((.((.((((((..((((((....((((....(((....)))....)))).))))))..)))))))...).))).....)..).).)))
+((((((((((((.(((.((.((((((..((((((....((((....(((....)))....)))).))))))..)))))))...).)))...))))))))))))
+GACGGGCCUCCUCGCAUGGUGGGGCGGUCAACCUGGUCAGGUCGGGAACGAAGCAGCCACAGCCGUUUUCCGCCAGUGCCGAGGGUCGGGCUCGUC 96
+(((((((((((((((.((((((((((((.....((((....(((....)))....))))..))))))..)))))))...))))))...))))))))
+(((((((((((((((.((((((((((((.....((((....(((....)))....))))..))))))..)))))))...))))))..)).))))))
+GGCGUGCGCCUGUAAUCCAGUUACUUGGAGGCUUGGGUUGGAGGACGGUGUGAGAUUGGGAGCUCUGUGGCGCUCUGUCCUCUGUCCUAUGUCGAUCGGGCGUCCGCGCUAAGCUCGGCGUCAAUAUGGGCAUUCCAGGGGAGCCCGGAGUGGCCAGGUUGUCCAAGGAGGAACGCACCGGGCGAGGCCCGAAAGGGAGCAGCCAAAAGUUCCCACGUUGAUCAGUAGCGGGAUAGCGCCUGUGAAUAGGCGGAGCGUUGCAGCCCAGUCAAUAUCGCGGGACCCAAUCCUUU 293
+...............(((........))).....(((((((....(.(((...(((((((....((((((((.......(((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((.((((((.((....)).)))))).))).))))((...)).((.((......(((....(((....)))....)))....))..))))))))).)..)))))))...))))))).).))))))))))))))))))))))))).....))).)...)))))))...
+...............(((........))).....(((((((....(.(((...(.(.((.....((((((((.......(((((.(((((.(....(((((((((.(((((.(.(((((((((((.(((.((((((.((....)).)))))).))).))))((...)).((.((......(((....(((....)))....)))....))..))))))))).)..)))))))...))))))).).)))))))))))))))))))).)..).....))).)...)))))))...
+CCGAAAGGCUAGGACAAUGGCGGGCUAGUGAAUUGUGUCAGAUCCGGAAGGAAGCAGCACUAAGCAAGUGCCGCCAUGUGUCUGAUUGAAUAA 93
+......((.(.(((((.((((((.((.((.....((((....(((....)))....))))...)).))..))))))))..))).).)...)..
+......((.(.(((((.(((((((((.((.....((((....(((....)))....))))...)).))).))))))))..))).).)...)..
+GACAAAUGUUUUCAGGUCUUCUAAAUCUGUUUUGGAGAAAUCCGUUUGUUUCCA 54
+(((((((............((((((.....)))))).......)))))))....
+(((((((.....(((((.......)))))....(((....))))))))))....
+UUAAGUGACGAUAGCCUAGGAGAUACACCUGUUCCCAUGCCGAACACAGAAGUUAAGCCCUAGUACGCCUGAUGUAGUUGGGGGUUGCCCCCUGUUAGAUACGGUAGUCGCUUAGC 116
+((((((((.....(.(((((......((((((.............))))..)).....)))))..).((..(....((.(((((...))))).))....)..))...)))))))).
+((((((((.....(.(((((......((((((.............))))..)).....)))))..).((..(....((.((((.....)))).))....)..))...)))))))).
+GCCGCGAUAAGAAUAACAUCUGAACGAGUUAGGACCGGAAGGUAGCAGCUAUAAGGAAAAGUGUUCUGUAUUGCGGU 77
+(((((((((.(((((...(((.....(((....(((....)))....)))....)))....)))))))..)))))))
+.((((((((.(((((...(((.....(((....(((....)))....)))....)))....)))))))..)))))).
+GGAGAUCGGCGCGGACGGAGUCCUCGCCAACCUGGUCAGGGCCGAGAGGCAGCAGCCACAACGAGAUCACCUCUGGGUCGUCUGCCGGUCUCCACCUCAUUUU 103
+((......(.((((.(((((..((((......((((....(((....)))....))))...)))).....)))))..)))).).....)).............
+(((((((.(.((((.(((((..((((......((((....(((....)))....))))...)))).....)))))..)))).)...)))))))..........
+GACUCGGACCCAUGCGGCCGCGACGCCUAAAUCUGGUCAGGACCGGAAGGGAGCAGCCACACGGGAUGCUCGUGACAGGCGUGGACUCCGGGUCACC 97
+((((((((.((((((.(.((((((((((.....((((.....((....)).....))))...))).)).))))).)..))))))..))))))))...
+(.((.((..((((((.(.((((((((((.....((((.....((....)).....))))...))).)).))))).)..))))))..)).)).)....
+AGCCCCCGGUCCAGCGCGGCGGGCCAGGCGUGAACCGGGUCAGGUCCGGAAGGAAGCAGCCCUAAGCGCCUCGGUCCGGGCGCCGCUGGGAAGCCGGGGGCGCUU 105
+.(((((((((((((((((.(((((.((((((.....((((....(((....)))....))))...))))))..)))))..)).)))))))...))))))))....
+.(((((((((((((((((.((((((((((((.....((((....(((....)))....))))...)))))).))))))..)).)))))))...))))))))....
+GUUGGGGGCCUUUUAAGAGAAGGAACCUGCGAAUCGGGUCAGGACUGGAAGGUAGCAGCCCUAAGGAGAGUUUUCUUUUGCUAAAAGAAUGUUCUCCAACUUAC 104
+..((((((.((((((.(((.(((...((.(.....((((....(((....)))....))))...).))...))).)))...))))))....)).))))......
+..((((((.(((((..(((.(((...((.(.....((((....(((....)))....))))...).))...))).)))....)))))....)).))))......
+AUGGUCAGGUAGGGUGGAGGGUCUCGCCAGCCCUUAUACCCACAUGGCGCAACGUGGGCACCAGUAACUCCUAUGCUAUAAUACCUGCUCUUCGAGAUCCCAGUCUAACUAUGAUCAUCGCCCGACGGGGCGAGAUAGUCGUGGGUUCCCUUUCUGGAGGGAGAGGGAAUUCCACGUUGACCGGGGGAACCGGCCAGGCCCGGAAGGGAGCAACCGUGCCCGGCUAUCCGCGUUCGUCGGUCUCCGAUAGGAGGAAGACUGGGGGUAAAUCUCGGGGAGUAAGGGUUAUGGCAUAGGGGAGCUGACCAU 309
+((((((((.(..((((((((((.......))))))...(((((..........))))))))).....(((((((((((((((...(((((((((((.(((((((((..((....(.((((.(((((((.(((.(((((.((((((((((((((((....))))))))))).))))).)..(((.((....(((.....(((....))).....)))..))))).))))))).).))))))....)))))...)).)))))))))......)))))))))))..).))))))))))))))).))))))))
+((((((((.(..((((((((((.......))))))...(((((..........))))))))).....(((((((((((((((...(((((((((((.(((((((((..(..(..(.((((.(((((((.(((.(((((.((((((((((((((((....))))))))))).))))).)..((((.(....(((.....(((....))).....)))..))))).))))))).).))))))....)))).)).)..)))))))))......)))))))))))..).))))))))))))))).))))))))
+UUUGGUCAUCAUUGCGAUGGAGAUACACCUGUUCCCAUGUCGAACACAGAAGUUAAGUCCAUCUACGGCGGAAGUACUUGGGGGUUGCCCCCUGGGAGAUAGGCGAGUGGCCAAGU 116
+((((((((.....(.((((((.....((((((.............))))..))....))))))..).((..(....((.(((((...))))).))....)..))...)))))))).
+((((((((.....(.((((((.....((((((.............))))..))....))))))..).((.(.....(..(((((...))))).).....).).)...)))))))).
+GGAGCAACAUUUACUCGUGAAGUGGGUCAGGGGAGGAAUCCAGCAGCCCUAAGCGAUGCUAAAUGUGUGCUCUUUUU 77
+((((((.(((((..((((.....((((....(((....)))....))))...))))....)))))))..))))....
+((((((.(((((((.(((.....((((....(((....)))....))))...)))..).))))))))..))))....
+UUUGCCGUGCUAAGCGGGGAGGUAGCGGUGCCCUAUACUCGCAAUCCGCUCUAGCGAGGCCGAAUCCCUUCUCGAGGUUAUGUUGCUGUAAGGCCUGCCUUAAGUAAGUGGUGUUGACGUUUGGGUCCUGCGCAACGGGACCCCGUGAACCUUGUCAGGUCCGGAAGGAAGCAGCAAUAAGCGGGUCUUCUCGUGUGCCGCAGGAGUGCCUGAACCGAGCUAACUGCUUAAGUAACGCUUAUGGUACGUAAUCGACAGAAGGUGCACGG 269
+....((((((...((((((.(.(...).).))))...(((((...........)))))))......((((((...((((((..((.((((((...(((.((((((.((((((......((((((((((((((((.(((((.(((((.....((((....(((....)))....))))...)))))...)))))))...))))))...))))))))...))).))))))))))))...))))).))).))))))...)))))).))))))
+....((((((...((((((.(.(...).).))))...(((((...........)))))))......((((((...((((((..((((..(..(..(((.((((((.((((((......((((((((((((((((.((((((((.((.....((((....(((....)))....))))...))))))...))))))...))))))...))))))))...))).)))))))))))).)..)...)))).))))))...)))))).))))))
+....((((((....(((((.(.(...).).))))...((.............)).)..........(((..(.(.((((((..(((((((((...(((..(.((..((((((......((((((((((((((((.(((((.(((((.....((((....(((....)))....))))...)))))...)))))))...))))))...))))))))...))).)))..)).))))...))))))))).))))))..).).))).))))))
+CGUUUGGGUCCUGCGCAACGGGACCCCGUGAACCUUGUCAGGUCCGGAAGGAAGCAGCAAUAAGCGGGUCUUCUCGUGUGCCGCAGGAGUGCCUGAACCGAGC 103
+.((((((((((((((((.(((((.(((((.....((((....(((....)))....))))...)))))...)))))))...))))))...)))))))).....
+.((((((((((((((((.((((((((.((.....((((....(((....)))....))))...))))))...))))))...))))))...)))))))).....
+CCCUCACGCGGCGCUAUCUGACUGAACUCCCCCAGGGCCGGAAGGCAGCAAGGGUAGGUCGGCUCUGGCGGGUGCGUGGGGG 82
+(((((((((..(((((.((((((.....(((.....(((....))).....)))..))))))...))))).)..))))))))
+(((.(.(((..(((((.((((((.....(((.....(((....))).....)))..))))))...))))).))).).)))..
+UAGUUUGCCUCCGCGCGGCGUUACCCGGGUGAACUCCCCCAGGUUAGGAAUAAAGCAAGGGUAGCUCGGCUCUGGCGGGUGUGCGGGGGUCUUGCGGGCUCCGUU 105
+..(.((..((((((((..(((((.((((((.....(((.....(((....))).....)))..))))))...))))).)..)))))))........)).).....
+..(...((((((((((..(((((.((((((.....(((.....(((....))).....)))..))))))...))))).)..)))))))))..)............
+GGGAGGUUGGUGGUGGACGAGCCACUCGCCAACCGGGUCAGGUCCGGAAGGAAGCAGCCCUAACGAGCCAGGCACGGGUCGCCGUGCCAGCCUCCCACCUUUU 103
+(((.(...((((((((.((.(((.((((......((((....(((....)))....))))...))))...))).))..))))))).)...).)))........
+(((.(.(..(((((((.((.(((.((((......((((....(((....)))....))))...))))...))).))..)))))))...).).)))........
+2.789473684210526
+2
+6
+19
+#+end_example
 
 402
 * compare loop contents
@@ -1492,7 +1555,7 @@ def read_csv(infile):
     return results
 
 
-fft_pred = read_csv("./kinetic_bench/results_fft_all_length_200n_200ms_scores.csv")
+fft_pred = read_csv("./kinetic_bench/results_fft_all_length_100n_50ms_scores.csv")
 # fft_pred = read_csv("./test_data/results_fft_100n_30_stack_scores.csv")
 vrna_pred = read_csv("./test_data/results_mfe_scores.csv")
 mx_pred = read_csv("./test_data/results_mxfold_scores.csv")
@@ -1519,13 +1582,13 @@ for seq, (struct, name) in true_str.items():
         for pi, pj in pair_list_true:
             dist = abs(pi - pj)
 
-            if (pi, pj) in pair_list_mfe and fft_pvv > 0.5:
+            if (pi, pj) in pair_list_mfe:
                 results_mfe[dist] += 1.0
 
-            if (pi, pj) in pair_list_fft and fft_pvv > 0.5:
+            if (pi, pj) in pair_list_fft:
                 results_fft[dist] += 1.0
                     
-            if (pi, pj) in pair_list_mx and fft_pvv > 0.5:
+            if (pi, pj) in pair_list_mx:
                 results_mx[dist] += 1.0
 
             results_norm[dist] += 1.0
@@ -1539,10 +1602,6 @@ pvv_list_mfe = [results_mfe[d]/results_norm[d] for d in dist_list]
 pvv_list_fft = [results_fft[d]/results_norm[d] for d in dist_list]
 pvv_list_mx = [results_mx[d]/results_norm[d] for d in dist_list]
 
-pvv_list_mfe = [results_mfe[d] for d in dist_list]
-pvv_list_fft = [results_fft[d] for d in dist_list]
-pvv_list_mx = [results_mx[d] for d in dist_list]
-
 nb_el = len(dist_list)
 slide_mean_mfe = [mean([d for d in pvv_list_mfe[max(0, i-10):min(nb_el, i+10)]]) for i, d_ in enumerate(pvv_list_mfe)]
 slide_mean_fft = [mean([d for d in pvv_list_fft[max(0, i-10):min(nb_el, i+10)]]) for i, d_ in enumerate(pvv_list_mfe)]
@@ -1552,6 +1611,7 @@ slide_mean_mx = [mean([d for d in pvv_list_mx[max(0, i-10):min(nb_el, i+10)]]) f
 fig = plt.figure(1)
 fft_f = fig.add_subplot(111)
 
+fft_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 fft_f.plot(dist_list, slide_mean_mfe, linestyle="--", c="orangered", alpha = 0.5)
 fft_f.scatter(dist_list, pvv_list_mfe, c="orangered", alpha = 0.8, s=6)
 fft_f.plot(dist_list, slide_mean_fft, linestyle="--", c="deepskyblue", alpha = 0.5)

@@ -10,6 +10,7 @@ from RNA import energy_of_struct
 def density_struct(trajectory):
     results = {}
     for el in trajectory:
+        # print(el)
         try:
             str_struct, nrj, time = el.strip().split()[:3]
             if str_struct in results:
@@ -43,12 +44,12 @@ def main():
     len_seq = len(sequence)
     sim_time = args.time
     sim_nb = args.nb_sim
-    cmd_line = f'echo "{sequence}" | Kinfold --time={sim_time} --num={sim_nb} --met'
+    cmd_line = f'echo "{sequence}" | Kinfold --time={sim_time} --num={sim_nb} --cut 0'
     results = popen(cmd_line)
     dens_str_ = density_struct(results.read().split("\n"))
     dens_str = [(struct, count) for struct, count in dens_str_.items()]
-    dens_str.sort(key=lambda el: el[1][0])
-    for struct, (count, nrj) in dens_str[::-1][:args.nb_print]:
+    dens_str.sort(key=lambda el: el[1][1])
+    for struct, (count, nrj) in dens_str[:args.nb_print]:
         # print(struct, count, nrj)
         print(f"{struct} {count:10}")
 
