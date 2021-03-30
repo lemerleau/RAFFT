@@ -64,7 +64,7 @@ with open("analysis.log", "w") as out:
         # if seq in fft_pred and seq in vrna_pred and seq in cont_pred and seq in line_pred and seq in mx_pred:
         # if seq in fft_pred and seq in vrna_pred and seq in line_pred:
         
-        if seq in fft_pred and seq in line_pred and seq in mx_pred:
+        if seq in fft_pred and seq in line_pred and seq in mx_pred and len(seq) < 200:
             len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
             len_seq, line_st, line_nrj, line_nbp, line_pvv, line_sens = line_pred[seq]
             len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
@@ -73,7 +73,7 @@ with open("analysis.log", "w") as out:
             # len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
             # save_fft, save_mfe, save_cont, save_line, save_mx = fft_pvv, mfe_pvv, cont_pvv, line_pvv, mx_pvv
             
-            save_fft, save_mfe, save_line, save_mx = fft_sens, mfe_sens, line_sens, mx_sens
+            save_fft, save_mfe, save_line, save_mx = fft_pvv, mfe_pvv, line_pvv, mx_pvv
             fft_all_v += [save_fft]
             mfe_all_v += [save_mfe]
             line_all_v += [save_line]
@@ -103,13 +103,15 @@ line_mean = [mean(line_to_plot[len_]) for len_ in list_len]
 mx_mean = [mean(mx_to_plot[len_]) for len_ in list_len]
 print(len(fft_all_v))
 print(mean(fft_mean) - mean(mx_mean))
+print(mean(fft_mean))
 print(ttest_ind(mx_mean, fft_mean))
 #+end_src
 
 #+RESULTS:
-: 2294
-: -14.182351019772419
-: Ttest_indResult(statistic=7.166827315023949, pvalue=2.797744871674337e-12)
+: 1984
+: 2.3222335391217115
+: 79.04952429300945
+: Ttest_indResult(statistic=-0.882471482720692, pvalue=0.3784432640336083)
 
 0.8641114982578397
 * Scoring
@@ -155,7 +157,7 @@ def read_csv(infile):
     return results
 
 
-fft_pred = read_csv("./kinetic_bench/results_fft_all_length_100n_50ms_best_nrj_scores.csv")
+fft_pred = read_csv("./kinetic_bench/results_fft_all_length_200n_200ms_scores.csv")
 # fft_pred = read_csv("./test_data/results_fft_100n_30_stack_scores.csv")
 # line_pred = read_csv("./kinetic_bench/results_kinefold_scores.csv")
 line_pred = read_csv("./kinetic_bench/results_fft_all_length_100n_50ms_scores.csv")
@@ -319,7 +321,7 @@ fft_f.set_title(f"Sensitivity")
 #                                     f"{name_mx}({mx_mean:4.1f})"), loc="bottom center", ncol=3)
 fft_f.legend((fft_l,mfe_l,line_l,mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_mfe}({mfe_mean:4.1f})",
                                     f"{name_line}({line_mean:4.1f})", f"{name_mx}({mx_mean:4.1f})"), loc="lower center", ncol=4)
-plt.savefig("img/fold_perf_sens.png", dpi=300)
+plt.savefig("img/fold_perf_200_sens.png", dpi=300)
 plt.show()
 #+end_src
 
