@@ -1,3 +1,134 @@
 \begin{thebibliography}{}
 
+\bibitem[Amman et~al., 2013]{amman13_troub_long_range_base_pairs_rna_foldin}
+Amman, F., Bernhart, S.~H., Doose, G., Hofacker, I.~L., Qin, J., Stadler,
+  P.~F., and Will, S. (2013).
+\newblock {\em The Trouble with Long-Range Base Pairs in RNA Folding}, pages
+  1--11.
+\newblock Advances in Bioinformatics and Computational Biology. Springer
+  International Publishing.
+
+\bibitem[Baranov et~al.,
+  2005]{baranov05_progr_ribos_frames_decod_sars_cov_genom}
+Baranov, P.~V., Henderson, C.~M., Anderson, C.~B., Gesteland, R.~F., Atkins,
+  J.~F., and Howard, M.~T. (2005).
+\newblock Programmed ribosomal frameshifting in decoding the sars-cov genome.
+\newblock {\em Virology}, 332(2):498--510.
+
+\bibitem[Dill, 1997]{dill97_addit_princ_bioch}
+Dill, K.~A. (1997).
+\newblock Additivity principles in biochemistry.
+\newblock {\em Journal of Biological Chemistry}, 272(2):701--704.
+
+\bibitem[Felsenstein et~al.,
+  1982]{felsenstein82_effic_method_match_nucleic_acid_sequen}
+Felsenstein, J., Sawyer, S., and Kochin, R. (1982).
+\newblock An efficient method for matching nucleic acid sequences.
+\newblock {\em Nucleic Acids Research}, 10(1):133--139.
+
+\bibitem[FLAMM et~al., 2000]{flamm00_rna_foldin_at_elemen_step_resol}
+FLAMM, C., FONTANA, W., HOFACKER, I.~L., and SCHUSTER, P. (2000).
+\newblock Rna folding at elementary step resolution.
+\newblock {\em RNA}, 6(3):325--338.
+
+\bibitem[Hofacker, 2003]{hofacker03_vienn_rna_secon_struc_server}
+Hofacker, I.~L. (2003).
+\newblock Vienna rna secondary structure server.
+\newblock {\em Nucleic Acids Research}, 31(13):3429--3431.
+
+\bibitem[Huang et~al., 2019]{huang19_linear}
+Huang, L., Zhang, H., Deng, D., Zhao, K., Liu, K., Hendrix, D.~A., and Mathews,
+  D.~H. (2019).
+\newblock Linearfold: Linear-time approximate rna folding by 5'-to-3' dynamic
+  programming and beam search.
+\newblock {\em Bioinformatics}, 35(14):i295--i304.
+
+\bibitem[Katoh, 2002]{katoh02_mafft}
+Katoh, K. (2002).
+\newblock Mafft: a novel method for rapid multiple sequence alignment based on
+  fast fourier transform.
+\newblock {\em Nucleic Acids Research}, 30(14):3059--3066.
+
+\bibitem[LEONTIS and WESTHOF,
+  2001]{leontis01_geomet_nomen_class_rna_base_pairs}
+LEONTIS, N.~B. and WESTHOF, E. (2001).
+\newblock Geometric nomenclature and classification of rna base pairs.
+\newblock {\em RNA}, 7(4):499--512.
+
+\bibitem[Lorenz et~al., 2011]{lorenz11_vienn_packag}
+Lorenz, R., Bernhart, S.~H., zu~Siederdissen, C.~H., Tafer, H., Flamm, C.,
+  Stadler, P.~F., and Hofacker, I.~L. (2011).
+\newblock Viennarna package 2.0.
+\newblock {\em Algorithms for Molecular Biology}, 6(1):26.
+
+\bibitem[Martinez, 1984]{martinez84_rna_foldin_rule}
+Martinez, H.~M. (1984).
+\newblock An rna folding rule.
+\newblock {\em Nucleic Acids Research}, 12(1Part1):323--334.
+
+\bibitem[Mathews, 2019]{mathews19_how_to_bench_rna_secon}
+Mathews, D.~H. (2019).
+\newblock How to benchmark rna secondary structure prediction accuracy.
+\newblock {\em Methods}, 162-163(nil):60--67.
+
+\bibitem[Mathews et~al., 2004]{mathews04_incor_chemic_modif_const_into}
+Mathews, D.~H., Disney, M.~D., Childs, J.~L., Schroeder, S.~J., Zuker, M., and
+  Turner, D.~H. (2004).
+\newblock Incorporating chemical modification constraints into a dynamic
+  programming algorithm for prediction of rna secondary structure.
+\newblock {\em Proceedings of the National Academy of Sciences},
+  101(19):7287--7292.
+
+\bibitem[Pan et~al., 1997]{pan97_foldin_rna_invol_paral_pathw}
+Pan, J., Thirumalai, D., and Woodson, S.~A. (1997).
+\newblock Folding of rna involves parallel pathways.
+\newblock {\em Journal of Molecular Biology}, 273(1):7--13.
+
+\bibitem[Reuter and Mathews, 2010]{reuter10_rnast}
+Reuter, J.~S. and Mathews, D.~H. (2010).
+\newblock Rnastructure: Software for rna secondary structure prediction and
+  analysis.
+\newblock {\em BMC Bioinformatics}, 11(1):129.
+
+\bibitem[Russell et~al., 2001]{russell01_explor_foldin_lands_struc_rna}
+Russell, R., Zhuang, X., Babcock, H.~P., Millett, I.~S., Doniach, S., Chu, S.,
+  and Herschlag, D. (2001).
+\newblock Exploring the folding landscape of a structured rna.
+\newblock {\em Proceedings of the National Academy of Sciences},
+  99(1):155--160.
+
+\bibitem[Sato et~al., 2020]{sato20_rna}
+Sato, K., Akiyama, M., and Sakakibara, Y. (2020).
+\newblock Rna secondary structure prediction using deep learning with
+  thermodynamic integration.
+
+\bibitem[Solomatin et~al., 2010]{solomatin10_multip_nativ_states_reveal_persis}
+Solomatin, S.~V., Greenfeld, M., Chu, S., and Herschlag, D. (2010).
+\newblock Multiple native states reveal persistent ruggedness of an rna folding
+  landscape.
+\newblock {\em Nature}, 463(7281):681--684.
+
+\bibitem[Tinoco and Bustamante, 1999]{tinoco99_how_rna_folds}
+Tinoco, I. and Bustamante, C. (1999).
+\newblock How rna folds.
+\newblock {\em Journal of Molecular Biology}, 293(2):271--281.
+
+\bibitem[Turner and Mathews, 2009]{turner09_nndb}
+Turner, D.~H. and Mathews, D.~H. (2009).
+\newblock Nndb: the nearest neighbor parameter database for predicting
+  stability of nucleic acid secondary structure.
+\newblock {\em Nucleic Acids Research}, 38(suppl_1):D280--D282.
+
+\bibitem[Zuker, 2003]{zuker03_mfold_web_server_nucleic_acid}
+Zuker, M. (2003).
+\newblock Mfold web server for nucleic acid folding and hybridization
+  prediction.
+\newblock {\em Nucleic Acids Research}, 31(13):3406--3415.
+
+\bibitem[Zuker and Stiegler, 1981]{zuker81_optim_comput_foldin_large_rna}
+Zuker, M. and Stiegler, P. (1981).
+\newblock Optimal computer folding of large rna sequences using thermodynamics
+  and auxiliary information.
+\newblock {\em Nucleic Acids Research}, 9(1):133--148.
+
 \end{thebibliography}
