@@ -1,29 +1,36 @@
-"""Fold an RNA sequence by searching for complementary segments.
+"""RAFFT is a folding tool that builds fast-folding path for a given sequence.
+Starting from the completely unfolded structure, it quickly identifies stems
+with an FFT-based technique. Then, forms them if they improve the overall
+stability in a sequential fashion. Multiple folding paths can be explored and
+displayed.
 
-Take one RNA sequence and produce two strands: X, X'. X' is a complementary
-strand of X so the alignment of both strands is good if it contains canonical
-pairs.
+Usage:
+To display only the k=10 structures found
+python rafft.py [-s <SEQ> | -sf <SEQ_FILE>] -ms 10
 
-Using the auto-correlation, taking advantage of the FFT, one can find quickly
-the regions with many canonical pairs.
+To display the k=10 visited at each folding steps
+python rafft.py [-s <SEQ> | -sf <SEQ_FILE>] -ms 10 --verbose
 
-Next, we take the largest consecutive pairs, and fix them into the list of base-pairs (BP)
+Inputs:
+-s <SEQ> is the sequence given in the standard input
+-sf <SEQ_FILE> is a fasta formatted file (or a simple text file with only the
+ sequence in it)
 
-Then the sequence is split into inner loop and outer loop.
+The algorithm has two critical parameters:
+-ms <INT> is the number of saved structures at each folding steps (default=1)
+-n <INT> is the number of positional lag to search for stems (default=100)
 
-The inner and outer loops are treated recursively until no BP can be formed
 """
 
-from numpy import concatenate
 from numpy import sum as npsum
-from os.path import realpath, dirname
-from utils import plot_bp_matrix, auto_cor, dot_bracket
-from utils import prep_sequence, benchmark_vrna, eval_dynamic
+from utils import auto_cor, dot_bracket
+from utils import prep_sequence, eval_dynamic
 from utils import get_inner_loop, get_outer_loop, eval_one_struct
 from utils import merge_pair_list
 from itertools import product
 import argparse
 from RNA import fold_compound
+
 
 # window size when searching for pairs
 PK_MODE = False
@@ -156,7 +163,7 @@ def bfs_pairs(glob_tree, step=0):
             if len(tree) > 0:
                 tmp_pair_l = tree[0][2]
                 tmp_str = dot_bracket(tmp_pair_l, LEN_SEQ)
-                print(tmp_str, "{:.2f}".format(eval_one_struct(SEQ_COMP, tmp_pair_l, LEN_SEQ, SEQ)))
+                print(tmp_str, "{:6.1f}".format(eval_one_struct(SEQ_COMP, tmp_pair_l, LEN_SEQ, SEQ)))
 
     new_sol = False
     # split current nodes
@@ -247,16 +254,15 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--sequence', '-s', help="sequence")
     parser.add_argument('--seq_file', '-sf', help="sequence file")
-    parser.add_argument('--n_mode', '-n', help="number of mode to test during the search", type=int, default=100)
-    parser.add_argument('--pad', '-p', help="padding, a normalization constant for the autocorrelation", type=float, default=1.0)
-    parser.add_argument('--min_bp', '-mb', help="minimum bp to be detectable", type=int, default=1)
+    parser.add_argument('--n_mode', '-n', help="Number of positional lags to search for stems", type=int, default=100)
+    parser.add_argument('--max_stack', '-ms', help="number of stored structures (default=1)", type=int, default=1)
+    parser.add_argument('--min_nrj', '-mn', help="minimum loop energy to be formed", type=float, default=0)
+    parser.add_argument('--min_bp', '-mb', help="minimum bp number to be detectable", type=int, default=1)
     parser.add_argument('--min_hp', '-mh', help="minimum unpaired positions in hairpins", type=int, default=3)
-    parser.add_argument('--min_nrj', '-mn', help="minimum nrj loop", type=float, default=0)
-    parser.add_argument('--max_stack', '-ms', help="maximum stored stacks", type=int, default=1)
+    parser.add_argument('--pad', '-p', help="padding, a normalization constant for the autocorrelation", type=float, default=1.0)
     parser.add_argument('--max_stack_branch', '-msb', help="maximum branches to explor", type=int, default=1000)
     parser.add_argument('--bp_only', action="store_true", help="don't use the NRJ")
-    parser.add_argument('--fasta', action="store_true", help="fasta output")
-    parser.add_argument('--one', action="store_true", help="output only the structure with lowest energy")
+    parser.add_argument('--bench', action="store_true", help="output for benchmarks")
     parser.add_argument('--verbose', action="store_true", help="verbose output")
     parser.add_argument('--GC', type=float, help="GC weight", default=3.00)
     parser.add_argument('--AU', type=float, help="GC weight", default=2.00)
@@ -297,18 +303,17 @@ def main():
     all_struct = bfs_pairs([[((eseq, cseq, pos_list), None, [], 0.0)]])
     all_struct.sort(key=lambda el: eval_one_struct(SEQ_COMP, el, LEN_SEQ, SEQ))
 
-    if args.one:
-        all_struct = [all_struct[0]]
-
     if not VERBOSE:
-        for pair_list in all_struct[::-1]:
+        if not args.bench:
+            print(f"{SEQ}")
+        for pair_list in all_struct:
             str_struct = dot_bracket(pair_list, len_seq)
             nrj_pred = SEQ_COMP.eval_structure(str_struct)
 
-            if args.fasta:
-                print(f"{str_struct} {nrj_pred:10.2f}")
+            if args.bench:
+                print(sequence, len_seq, str_struct, f"{nrj_pred:6.1f}", str_struct.count("("))
             else:
-                print(sequence, len_seq, str_struct, f"{nrj_pred:4.2f}", str_struct.count("("))
+                print(f"{str_struct} {nrj_pred:6.1f}")
 
 
 if __name__ == '__main__':

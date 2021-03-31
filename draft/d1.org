@@ -352,13 +352,13 @@ ref:diff_struct.
 
 \begin{figure}[!ht]
   \centering
-  \subfloat[]{\includegraphics[scale=0.7]{img/fold_perf_pvv.png}}\\
-  \subfloat[]{\includegraphics[scale=0.7]{img/fold_perf_sens.png}}
+  \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_ppv.png}}\\
+  \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_sens.png}}
   \caption{\textbf{Predicted positive values and sensitivity results\label{perf_fig}.}
   RAFFT (blue) displayed the best energy found. RAFFT* displayed the best score found among 50 saved structures.}
 \end{figure}
 
-#+attr_latex: :scale 0.6
+#+attr_latex: :scale 0.5
 #+name: diff_struct
 #+caption: *Structures found to be difficult to predict with thermodynamic models.* WT is the known structure.
 file:img/comb_rna_struct.png
@@ -373,10 +373,10 @@ exterior loops. The center of mass in the principal component space is located
 in between the high-density stacking and interior loops. This shows that the
 dataset contains many elongated structures.
 
-#+attr_latex: :scale 0.5
+#+attr_latex: :scale 0.6
 #+name: pca_fails
 #+caption: *PCA analysis of the known structure space where prediction with PPV = 0 were colored for RAFFT and the MFE prediction.*
-file:img/comp_fails.png
+file:img/pca_known.png
 
 Next, we investigated the structure space produced by the three methods. The
 thermodynamic model tends to produce more diverse structure spaces as shown in
@@ -388,7 +388,7 @@ regions in long hairpins which tend to be closer to the dataset structure space.
 
 #+name: pred_struct_space
 #+caption: *PCA analysis of the predicted structures for the three methods.*
-file:img/content_predicted_data.png
+file:img/pca_predicted.png
 
 \clearpage
 * Test case to predict fast-folding paths

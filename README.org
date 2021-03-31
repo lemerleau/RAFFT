@@ -1,55 +1,105 @@
-* FFT-based RNA folding
-** Overview
-The accuracy and sensitivity of this approach is lower than existing methods.
-The gain in speed is similar to Linearfold however, Linearfold performs better
-in PPV and sensitivity.
+RAFFT is a folding tool that builds fast-folding path for a given sequence.
+Starting from the completely unfolded structure, it quickly identifies stems
+with an FFT-based technique. Then, it forms them if these stems improve the
+overall stability. Multiple folding paths can be explored and displayed.
+Therefore, given a sequence, the user will obtained several structures or
+folding paths.
 
-*Note1:* ML-based scores performed better than thermodynamic-based energy
-function in PPV and sensitivity. Even for large sequences which may not be
-prevalent in their respective training dataset.
+* Requirements
+- Vienna RNA package (version >= 2.4.17)
+- Numpy, scipy with python 3
 
-*Note2:* LinearFold performed better than ViennaRNA since it uses the ML-based
-scoring function from ContraFold. With the same energy function their
-performance is the same.
+* Usage
+For the examples, we use the Coronavirus frameshifting stimulation element
+obtained from RFAM.
 
-*Note3:* The dataset used here is biased toward structures containing (in
-percent) more interior loops and multiloops. In the other hand, the
-thermodynamic energy function is not bias toward a specific type of structural
-composition.
+To display only the final structures:
+#+begin_src bash :results output
+python rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU  -ms 5 
+#+end_src
 
-** Benchmarks
-Thermodynamic tools considered: RNAfold (VRNA), LinearFold (Linear)
-ML-based tools considered: LinearFold (Linear), ContextFold (ContextFold), Mxfold (Mxfold)
+To display the visited/saved intermediates:
+#+begin_src bash :results output
+python rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU  -ms 5  --verbose
+#+end_src
 
-Metrics: PPV, Sensitivity
+The algorithm has two critical parameters:
+~-ms <INT>~ is the number of saved structures at each folding steps (default=1)
+~-n  <INT>~ is the number of positional lag to search for stems (default=100)
 
-** Comparisons of thermodynamic methods alone (sequence length-wise)
-Vienna (using rna_langdon2018 parameters) and LinearFold (using ContraFold
-score) have similar performances. The FFT-based method performed poorly in PVV
-and sensitivity.
+The search of stems can be tuned using weights on base pairs types:
+~--GC <FLOAT>~ GC base pairs weight (default = 3.0)
+~--AU <FLOAT>~ AU base pairs weight (default = 2.0)
+~--GU <FLOAT>~ GU base pairs weight (default = 1.0)
 
-[[img/comp_stack_pvv.png]]
-[[img/comp_stack_sens.png]]
+* Inputs
+It takes as inputs either the sequence in the standard input or a simple text
+file with only one sequence in it (it can be fasta format).
 
-** Comparisons of thermodynamic with ML methods
-NB: The ML based methods crashed on various sequences
+* Outputs
+For the trajectory output format. At each steps, numbered from 0 to 3 here, the
+structure saved are given below the sequence with their stability (computed with
+Vienna RNA API).
 
-The ML based method performed better in both metrics. ContextFold performed
-better than all considered methods. 
+#+begin_example
+# ---------0----------
+GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU
+..................................................................................    0.0
+# ---------1----------
+GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU
+.....(((((((((((..........))))))))))).............................................  -14.0
+..................................((((((((................))))))))................   -6.8
+...................(((((.............................................)))))........   -6.4
+..................................((((.......)))).................................   -5.5
+(((((..............)))))..........................................................   -4.6
+# ---------2----------
+GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU
+........((((((((..........))))))))(((((((((((.........))).))))))))................  -23.1
+........((((((((..........))))))))((((((((..((........))..))))))))................  -20.9
+...................(((((..........(((((((((((.........))).))))))))...)))))........  -18.8
+........((((((((..........))))))))((((((((...((....)).....))))))))................  -18.7
+.....(((((((((((.((.....)))))))))))))....................((((((.............))))))  -18.2
+# ---------3----------
+GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU
+........((((((((.((.....))))))))))(((((((((((.........))).))))))))................  -24.0
+........((((((((.((.....))))))))))(((((((((((((....)).))).))))))))................  -24.0
+........((((((((..........))))))))(((((((((((.........))).))))))))................  -23.1
+........((((((((.((.....))))))))))((((((((..((........))..))))))))................  -21.8
+........((((((((..........))))))))((((((((..((........))..))))))))................  -20.9
+#+end_example
 
-[[img/comp_stack_ml_pvv.png]]
-[[img/comp_stack_ml_sens.png]]
+The output of the final structures only is the following.
 
-We computed the % of loop types in the true structures and plot them on their
-compositions PCA. Then, we colored the structure compositions for which the PVV
-< 10%. The thermodynamics-based methods tends to fail when the structure
-contains many interior loops.
+#+begin_example
+GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU
+........((((((((.((.....))))))))))(((((((((((.........))).))))))))................  -24.0
+........((((((((.((.....))))))))))(((((((((((((....)).))).))))))))................  -24.0
+........((((((((..........))))))))(((((((((((.........))).))))))))................  -23.1
+........((((((((.((.....))))))))))((((((((..((........))..))))))))................  -21.8
+........((((((((..........))))))))((((((((..((........))..))))))))................  -20.9
+#+end_example
 
-[[img/content_fail_all.png]]
+* Reproducibility of the benchmarks
+The dataset curated we used for the benchmarks is in
+~benchmarks_results/benchmark_cleaned_all_length.csv~.
 
-** Distribution of the structures produced by thermodynamic model and the dataset
+The benchmark results files (and associated script to produce them) are given in
+the following table (for details about those results, see the associated
+reference):
+|--------+---------------------------------------+-------------------------------|
+| Method | file                                  | Notes                         |
+|--------+---------------------------------------+-------------------------------|
+| RAFFT  | ~rafft_100n_50ms_best_nrj_scores.csv~ | ~-n 100 -ms 50~ (best energy) |
+|        | ~rafft_100n_50ms_scores.csv~          | ~-n 100 -ms 50~ (best score)  |
+|        | ~rafft_200n_200ms_scores.csv~         | ~-n 200 -ms 200~ (best score) |
+|--------+---------------------------------------+-------------------------------|
+| MFE    | ~mfe_scores.csv~                      | ~bench_mfe.py~                |
+|--------+---------------------------------------+-------------------------------|
+| ML     | ~mxfold_scores.csv~                   | ~bench_mxfold.py~             |
+|--------+---------------------------------------+-------------------------------|
 
-The structure dataset seems to be biased toward interior and multi loops. The
-thermodynamic model isn't.
+~analysis.org~ and ~utils_analysis.py~ contain the pieces of script used to
+perform the analysis and the figures.
 
-[[img/content_mfe_data.png]]
+For the test case, we used the command line given in the Usage section above.
+Figures were derived from its output.

@@ -1,4 +1,4 @@
-% Created 2021-03-30 mar. 19:27
+% Created 2021-03-31 mer. 18:46
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -37,7 +37,7 @@ fast-folding paths. Since the algorithm was designed toward speed, it can be
 readily applied to large RNAs.
 
 \section{Introduction}
-\label{sec:orgd06c84f}
+\label{sec:org1b0d77d}
 Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA\ldots{}), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
@@ -156,7 +156,7 @@ Coronavirus frameshifting stimulation element
 better than the MFE.
 
 \section{FFT based folding dynamic heuristic}
-\label{sec:orgf15bb9f}
+\label{sec:org80bffde}
 We now describe the heuristic starting from one sequence S and its associated
 unfolded structure of length L. We first create a numerical representation of S
 where each type of nucleotide is replaced by a unit vector of 4 components:
@@ -233,7 +233,7 @@ output the structure with the best energy found among the structures saved in
 the stack.
 
 \section{Application to the folding task}
-\label{sec:orgdce29a6}
+\label{sec:orgdeda5fd}
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
@@ -273,15 +273,15 @@ sequences also displayed large unpaired regions such as the one shown in
 
 \begin{figure}[!ht]
   \centering
-  \subfloat[]{\includegraphics[scale=0.7]{img/fold_perf_pvv.png}}\\
-  \subfloat[]{\includegraphics[scale=0.7]{img/fold_perf_sens.png}}
+  \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_ppv.png}}\\
+  \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_sens.png}}
   \caption{\textbf{Predicted positive values and sensitivity results\label{perf_fig}.}
   RAFFT (blue) displayed the best energy found. RAFFT* displayed the best score found among 50 saved structures.}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.6]{img/comb_rna_struct.png}
+\includegraphics[scale=0.5]{img/comb_rna_struct.png}
 \caption{\label{diff_struct}\textbf{Structures found to be difficult to predict with thermodynamic models.} WT is the known structure.}
 \end{figure}
 
@@ -297,7 +297,7 @@ dataset contains many elongated structures.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.5]{img/comp_fails.png}
+\includegraphics[scale=0.6]{img/pca_known.png}
 \caption{\label{pca_fails}\textbf{PCA analysis of the known structure space where prediction with PPV = 0 were colored for RAFFT and the MFE prediction.}}
 \end{figure}
 
@@ -311,13 +311,13 @@ regions in long hairpins which tend to be closer to the dataset structure space.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=.9\linewidth]{img/content_predicted_data.png}
+\includegraphics[width=.9\linewidth]{img/pca_predicted.png}
 \caption{\label{pred_struct_space}\textbf{PCA analysis of the predicted structures for the three methods.}}
 \end{figure}
 
 \clearpage
 \section{Test case to predict fast-folding paths}
-\label{sec:org910fe3d}
+\label{sec:orgadc1fa5}
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
 with a secondary structure determined by sequence analysis and obtained from
@@ -338,7 +338,7 @@ structures, found to be closer than the MFE, and depicted simple folding paths.
 
 \clearpage
 \section{Concluding discussion}
-\label{sec:org3f3be65}
+\label{sec:org8ceb2a2}
 We have proposed a simple heuristic of the RNA folding dynamic called RAFFT for
 fast-folding paths. This heuristic uses a greedy rule. Groups of consecutive
 base pairs, stems, found to improve the energy are formed along with the
@@ -425,7 +425,7 @@ an ML-base scoring to discriminate the folding path that is likely to be
 observed.
 
 \section{Methods}
-\label{sec:org1590352}
+\label{sec:orgfeebe38}
 Starting from the ArchiveII dataset, we first removed all the structures with
 pseudoknots since all tools considered here don't handle pseudoknots. Next, we
 removed all the structures which were evaluated with positive or null energy
