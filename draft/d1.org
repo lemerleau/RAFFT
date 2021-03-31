@@ -5,7 +5,13 @@
 #+LaTeX_HEADER: \usepackage{amsmath}
 #+LaTeX_HEADER: \usepackage{caption,graphicx,subcaption}
 #+LaTeX_HEADER: \usepackage[boxed]{algorithm2e}
-#+latex_header: \usepackage{authblk} 
+#+latex_header: \usepackage{authblk,tikz} 
+
+
+#+latex_header: \usetikzlibrary{arrows,positioning} 
+#+latex_header:   \tikzset{
+#+latex_header:    >=stealth',
+#+latex_header:    pil/.style={ ->, thick, shorten <=2pt, shorten >=2pt,}}
 #+latex_header: \author[]{Vaitea Opuu}
 #+latex_header: \author[]{Nono S. C. Merleau}
 #+latex_header: \author[]{Matteo Smerlak}
@@ -350,6 +356,7 @@ region is around 200 nucleotides in length. The known structure of these
 sequences also displayed large unpaired regions such as the one shown in
 ref:diff_struct.
 
+#+begin_src latex :results output
 \begin{figure}[!ht]
   \centering
   \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_ppv.png}}\\
@@ -358,10 +365,37 @@ ref:diff_struct.
   RAFFT (blue) displayed the best energy found. RAFFT* displayed the best score found among 50 saved structures.}
 \end{figure}
 
-#+attr_latex: :scale 0.5
-#+name: diff_struct
-#+caption: *Structures found to be difficult to predict with thermodynamic models.* WT is the known structure.
-file:img/comb_rna_struct.png
+\begin{figure}[!ht]
+  \centering
+  \subfloat[\texttt{srp\_Synt.wolf.\_CP000448}]{
+  \begin{tikzpicture}
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.02]{./img/illed_img/srp_Heli_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.02]{./img/illed_img/srp_Heli_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_mx.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_wt.png}}};
+  \end{tikzpicture}
+  }
+  \subfloat[\texttt{srp\_Meth.mari.\_CP000745}]{
+  \begin{tikzpicture}
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_mx.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_wt.png}}};
+  \end{tikzpicture}
+  }\\
+  \subfloat[\texttt{tmRNA\_Cyan.mero.\_AY286123\_1\-236}]{
+  \begin{tikzpicture}
+    \node (s11) at (0cm,0cm) {\subfloat[RAFFT]{\includegraphics[scale=0.03]{./img/illed_img/tmRNA_Cyan_fft.png}}};
+    \node (s12) at (3cm,0cm) {\subfloat[MFE]{\includegraphics[scale=0.03]{./img/illed_img/tmRNA_Cyan_mfe.png}}};
+    \node (s13) at (6cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/tmRNA_Cyan_mx.png}}};
+    \node (s14) at (9cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/tmRNA_Cyan_wt.png}}};
+  \end{tikzpicture}
+  }
+
+  \caption{\textbf{Structures found to be difficult to predict with thermodynamic models.}  WT is the known structure.\label{diff_struct}}
+\end{figure}
+#+end_src
+
 
 To investigate the region of the structure space where the thermodynamic model
 tends to fail, we computed the composition content of the known structures. Loop
@@ -377,6 +411,7 @@ dataset contains many elongated structures.
 #+name: pca_fails
 #+caption: *PCA analysis of the known structure space where prediction with PPV = 0 were colored for RAFFT and the MFE prediction.*
 file:img/pca_known.png
+
 
 Next, we investigated the structure space produced by the three methods. The
 thermodynamic model tends to produce more diverse structure spaces as shown in
@@ -404,12 +439,64 @@ structures explored were not saved or evolved since no further improvement
 (relative to all possibilities) was found. RAFFT was able to recover near-native
 structures, found to be closer than the MFE, and depicted simple folding paths.
 
-#+name: folding_dynamics
-#+attr_latex: :scale 0.5
-#+caption: *Fast folding path prediction for the Coronavirus frameshifting stimulation element.*
-file:img/comb_frame_shift.png
+# #+name: folding_dynamics
+# #+attr_latex: :scale 0.5
+# #+caption: *Fast folding path prediction for the Coronavirus frameshifting stimulation element.*
+# file:img/comb_frame_shift.png
 
 # show the natural distribution of structures for methods.
+
+#+begin_src latex :results output
+\begin{figure}
+  \begin{tikzpicture}
+    \node (s0) at (0cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_0.png}};
+
+    \node (s11) at (2.5cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_0.png}};
+    \node (s12) at (2.5cm,6cm) {\includegraphics[scale=0.03]{img/frame_shift/step_1_1.png}};
+    \node (s13) at (2.5cm,4cm) {\includegraphics[scale=0.03]{img/frame_shift/step_1_2.png}};
+    \node (s14) at (2.5cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_3.png}};
+    \node (s15) at (2.5cm,0cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_4.png}};
+
+    \node (s21) at (6cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_0.png}};
+    \node (s22) at (5.6cm,6cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_1.png}};
+    \node (s23) at (6cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_2.png}};
+    \node (s24) at (5.7cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_3.png}};
+    \node (s25) at (5.6cm,0cm) {\includegraphics[scale=0.05]{img/frame_shift/step_2_4.png}};
+
+    \node (s31) at (9cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_0.png}};
+    \node (s32) at (9cm,6cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_1.png}};
+    \node (s33) at (9cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_2.png}};
+    \node (s34) at (9cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_3.png}};
+    \node (s35) at (8.8cm,0cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_4.png}};
+
+    \node (wt) at  (13cm,2cm) {\includegraphics[scale=0.1]{img/frame_shift/wt.png}};
+    \node (wtn) at  (11cm,1cm) {WT};
+    \node (mfe) at (13cm,6cm) {\includegraphics[scale=0.1]{img/frame_shift/mfe.png}};
+    \node (mfen) at  (11cm,6cm) {MFE};
+
+    \draw (s0) edge[pil,->,thick,bend,right] (s11);
+    \draw (s0) edge[pil,->,thick,bend,right] (s12);
+    \draw (s0) edge[pil,->,thick,bend,right] (s13);
+    \draw (s0) edge[pil,->,thick,bend,right] (s14);
+    \draw (s0) edge[pil,->,thick,bend,right] (s15);
+
+    \draw (s13) edge[pil,->,thick,bend,right] (s23);
+    \draw (s11) edge[pil,->,thick,bend,right] (s21);
+    \draw (s11) edge[pil,->,thick,bend,right] (s22);
+    \draw (s11) edge[pil,->,thick,bend,right] (s24);
+    \draw (s11) edge[pil,->,thick,bend,right] (s25);
+
+    \draw (s21) edge[pil,->,thick,bend,right] (s31);
+    \draw (s21) edge[pil,->,thick,bend,right] (s32);
+    \draw (s21) edge[pil,->,thick,bend,right] (s33);
+    \draw (s21) edge[pil,->,thick,bend,right] (s34);
+    \draw (s21) edge[pil,->,thick,bend,right] (s35);
+    \draw (s24) edge[pil,->,thick,bend,right] (s34);
+
+  \end{tikzpicture}
+  \caption{\textbf{Fast folding path prediction for the Coronavirus frameshifting stimulation element.\label{folding_dynamics}.}}
+\end{figure}
+#+end_src
 
 \clearpage
 * Concluding discussion

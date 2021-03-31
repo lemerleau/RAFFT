@@ -1,4 +1,4 @@
-% Created 2021-03-31 mer. 18:46
+% Created 2021-03-31 mer. 23:46
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -9,7 +9,11 @@
 \usepackage{amsmath}
 \usepackage{caption,graphicx,subcaption}
 \usepackage[boxed]{algorithm2e}
-\usepackage{authblk}
+\usepackage{authblk,tikz}
+\usetikzlibrary{arrows,positioning}
+\tikzset{
+>=stealth',
+pil/.style={ ->, thick, shorten <=2pt, shorten >=2pt,}}
 \author[]{Vaitea Opuu}
 \author[]{Nono S. C. Merleau}
 \author[]{Matteo Smerlak}
@@ -37,7 +41,7 @@ fast-folding paths. Since the algorithm was designed toward speed, it can be
 readily applied to large RNAs.
 
 \section{Introduction}
-\label{sec:org1b0d77d}
+\label{sec:org2c90d94}
 Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA\ldots{}), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
@@ -156,7 +160,7 @@ Coronavirus frameshifting stimulation element
 better than the MFE.
 
 \section{FFT based folding dynamic heuristic}
-\label{sec:org80bffde}
+\label{sec:orgf461629}
 We now describe the heuristic starting from one sequence S and its associated
 unfolded structure of length L. We first create a numerical representation of S
 where each type of nucleotide is replaced by a unit vector of 4 components:
@@ -233,7 +237,7 @@ output the structure with the best energy found among the structures saved in
 the stack.
 
 \section{Application to the folding task}
-\label{sec:orgdeda5fd}
+\label{sec:org990a892}
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
@@ -279,11 +283,36 @@ sequences also displayed large unpaired regions such as the one shown in
   RAFFT (blue) displayed the best energy found. RAFFT* displayed the best score found among 50 saved structures.}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[scale=0.5]{img/comb_rna_struct.png}
-\caption{\label{diff_struct}\textbf{Structures found to be difficult to predict with thermodynamic models.} WT is the known structure.}
+\begin{figure}[!ht]
+  \centering
+  \subfloat[\texttt{srp\_Synt.wolf.\_CP000448}]{
+  \begin{tikzpicture}
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.02]{./img/illed_img/srp_Heli_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.02]{./img/illed_img/srp_Heli_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_mx.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_wt.png}}};
+  \end{tikzpicture}
+  }
+  \subfloat[\texttt{srp\_Meth.mari.\_CP000745}]{
+  \begin{tikzpicture}
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_mx.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_wt.png}}};
+  \end{tikzpicture}
+  }\\
+  \subfloat[\texttt{tmRNA\_Cyan.mero.\_AY286123\_1\-236}]{
+  \begin{tikzpicture}
+    \node (s11) at (0cm,0cm) {\subfloat[RAFFT]{\includegraphics[scale=0.03]{./img/illed_img/tmRNA_Cyan_fft.png}}};
+    \node (s12) at (3cm,0cm) {\subfloat[MFE]{\includegraphics[scale=0.03]{./img/illed_img/tmRNA_Cyan_mfe.png}}};
+    \node (s13) at (6cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/tmRNA_Cyan_mx.png}}};
+    \node (s14) at (9cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/tmRNA_Cyan_wt.png}}};
+  \end{tikzpicture}
+  }
+
+  \caption{\textbf{Structures found to be difficult to predict with thermodynamic models.}  WT is the known structure.\label{diff_struct}}
 \end{figure}
+
 
 To investigate the region of the structure space where the thermodynamic model
 tends to fail, we computed the composition content of the known structures. Loop
@@ -301,6 +330,7 @@ dataset contains many elongated structures.
 \caption{\label{pca_fails}\textbf{PCA analysis of the known structure space where prediction with PPV = 0 were colored for RAFFT and the MFE prediction.}}
 \end{figure}
 
+
 Next, we investigated the structure space produced by the three methods. The
 thermodynamic model tends to produce more diverse structure spaces as shown in
 figure \ref{pred_struct_space}. Loops content was extracted from the predicted
@@ -317,7 +347,7 @@ regions in long hairpins which tend to be closer to the dataset structure space.
 
 \clearpage
 \section{Test case to predict fast-folding paths}
-\label{sec:orgadc1fa5}
+\label{sec:org5792606}
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
 with a secondary structure determined by sequence analysis and obtained from
@@ -330,15 +360,59 @@ structures explored were not saved or evolved since no further improvement
 (relative to all possibilities) was found. RAFFT was able to recover near-native
 structures, found to be closer than the MFE, and depicted simple folding paths.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[scale=0.5]{img/comb_frame_shift.png}
-\caption{\label{folding_dynamics}\textbf{Fast folding path prediction for the Coronavirus frameshifting stimulation element.}}
+\begin{figure}
+  \begin{tikzpicture}
+    \node (s0) at (0cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_0.png}};
+
+    \node (s11) at (2.5cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_0.png}};
+    \node (s12) at (2.5cm,6cm) {\includegraphics[scale=0.03]{img/frame_shift/step_1_1.png}};
+    \node (s13) at (2.5cm,4cm) {\includegraphics[scale=0.03]{img/frame_shift/step_1_2.png}};
+    \node (s14) at (2.5cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_3.png}};
+    \node (s15) at (2.5cm,0cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_4.png}};
+
+    \node (s21) at (6cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_0.png}};
+    \node (s22) at (5.6cm,6cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_1.png}};
+    \node (s23) at (6cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_2.png}};
+    \node (s24) at (5.7cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_3.png}};
+    \node (s25) at (5.6cm,0cm) {\includegraphics[scale=0.05]{img/frame_shift/step_2_4.png}};
+
+    \node (s31) at (9cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_0.png}};
+    \node (s32) at (9cm,6cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_1.png}};
+    \node (s33) at (9cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_2.png}};
+    \node (s34) at (9cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_3.png}};
+    \node (s35) at (8.8cm,0cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_4.png}};
+
+    \node (wt) at  (13cm,2cm) {\includegraphics[scale=0.1]{img/frame_shift/wt.png}};
+    \node (wtn) at  (11cm,1cm) {WT};
+    \node (mfe) at (13cm,6cm) {\includegraphics[scale=0.1]{img/frame_shift/mfe.png}};
+    \node (mfen) at  (11cm,6cm) {MFE};
+
+    \draw (s0) edge[pil,->,thick,bend,right] (s11);
+    \draw (s0) edge[pil,->,thick,bend,right] (s12);
+    \draw (s0) edge[pil,->,thick,bend,right] (s13);
+    \draw (s0) edge[pil,->,thick,bend,right] (s14);
+    \draw (s0) edge[pil,->,thick,bend,right] (s15);
+
+    \draw (s13) edge[pil,->,thick,bend,right] (s23);
+    \draw (s11) edge[pil,->,thick,bend,right] (s21);
+    \draw (s11) edge[pil,->,thick,bend,right] (s22);
+    \draw (s11) edge[pil,->,thick,bend,right] (s24);
+    \draw (s11) edge[pil,->,thick,bend,right] (s25);
+
+    \draw (s21) edge[pil,->,thick,bend,right] (s31);
+    \draw (s21) edge[pil,->,thick,bend,right] (s32);
+    \draw (s21) edge[pil,->,thick,bend,right] (s33);
+    \draw (s21) edge[pil,->,thick,bend,right] (s34);
+    \draw (s21) edge[pil,->,thick,bend,right] (s35);
+    \draw (s24) edge[pil,->,thick,bend,right] (s34);
+
+  \end{tikzpicture}
+  \caption{\textbf{Fast folding path prediction for the Coronavirus frameshifting stimulation element.\label{folding_dynamics}.}}
 \end{figure}
 
 \clearpage
 \section{Concluding discussion}
-\label{sec:org8ceb2a2}
+\label{sec:orgfa9b029}
 We have proposed a simple heuristic of the RNA folding dynamic called RAFFT for
 fast-folding paths. This heuristic uses a greedy rule. Groups of consecutive
 base pairs, stems, found to improve the energy are formed along with the
@@ -425,7 +499,7 @@ an ML-base scoring to discriminate the folding path that is likely to be
 observed.
 
 \section{Methods}
-\label{sec:orgfeebe38}
+\label{sec:orge6ef0d0}
 Starting from the ArchiveII dataset, we first removed all the structures with
 pseudoknots since all tools considered here don't handle pseudoknots. Next, we
 removed all the structures which were evaluated with positive or null energy
