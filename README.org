@@ -88,7 +88,7 @@ python rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGU
 python plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o tmp_rafft_fig/paths.png
 #+end_src
 
-[[paths.png]]
+[[example/paths.png]]
 
 * Reproducibility of the benchmarks
 The dataset curated we used for the benchmarks is in
