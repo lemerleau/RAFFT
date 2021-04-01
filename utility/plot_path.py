@@ -14,7 +14,7 @@ from utils import paired_positions
 import aggdraw
 
 
-def parse_rafft_outpumt(infile):
+def parse_rafft_output(infile):
     results = []
     with open(infile) as rafft_out:
         seq = rafft_out.readline().strip()
@@ -57,7 +57,7 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    fast_paths, seq = parse_rafft_outpumt(args.rafft_out)
+    fast_paths, seq = parse_rafft_output(args.rafft_out)
 
     # draw structures
     out_dir = "./tmp_rafft_fig"
@@ -86,8 +86,9 @@ def main():
 
     # width of points
     pw = args.line_thick
-    outline = aggdraw.Pen("black", pw)
+    outline = aggdraw.Pen("#051C2C", pw)
     pos_hor = 0
+    crop_side = 0
     for step_i, fold_step in enumerate(fast_paths):
         pos_vert = 0
         tmp_left = 0
@@ -137,8 +138,11 @@ def main():
             actual_position[(step_i, str_i)] = (pos_hor + n_fig_w, height//2)
             tmp_left = n_fig_w
 
+        crop_side = pos_hor + tmp_left
         pos_hor += max(int(tmp_left), int(rate_w))
 
+
+    path_img = path_img.crop((0, 0, crop_side, height))
 
     if args.out is not None:
         path_img.save(args.out)
