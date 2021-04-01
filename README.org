@@ -83,7 +83,7 @@ GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGAC
 To create path figures, one can use the utility ~utility/plot_path.py~ with on
 rafft output:
 
-*It uses [VARNA](http://varna.lri.fr/) to produce the secondary structure representation, should be
+*It uses <<http://varna.lri.fr>>VARNA to produce the secondary structure representation, should be
 download directly from its website*
 
 #+begin_src bash :results output
