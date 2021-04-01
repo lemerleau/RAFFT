@@ -79,6 +79,25 @@ GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGAC
 ........((((((((..........))))))))((((((((..((........))..))))))))................  -20.9
 #+end_example
 
+* Analysis
+To create path figures, one can use the utility ~utility/plot_path.py~ with on
+rafft output:
+
+*It uses [[http://varna.lri.fr][VARNA]] to produce the secondary structure representation, should be
+download directly from its website*
+
+#+begin_src bash :results output
+cd example
+python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 5 -n 100 --verbose > rafft.out
+python ../utility/plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o tmp_rafft_fig/paths.png
+#+end_src
+
+[[example/path_5.png]]
+
+With 20 saved structures:
+
+[[example/path_20.png]]
+
 * Reproducibility of the benchmarks
 The dataset curated we used for the benchmarks is in
 ~benchmarks_results/benchmark_cleaned_all_length.csv~.

@@ -396,10 +396,9 @@ ref:diff_struct.
 \end{figure}
 #+end_src
 
-
 To investigate the region of the structure space where the thermodynamic model
 tends to fail, we computed the composition content of the known structures. Loop
-type length was computed in percents. Figure ref:pca_fails shows principal
+type length was computed in percents. Figure ref:pca_struct shows principal
 component analysis (PCA) of the structural composition. From the PCA, we
 observed that the known structures are distributed in the structure space toward
 interior loops. Also, some natural structures, as observed above, have large
@@ -407,23 +406,26 @@ exterior loops. The center of mass in the principal component space is located
 in between the high-density stacking and interior loops. This shows that the
 dataset contains many elongated structures.
 
-#+attr_latex: :scale 0.6
-#+name: pca_fails
-#+caption: *PCA analysis of the known structure space where prediction with PPV = 0 were colored for RAFFT and the MFE prediction.*
-file:img/pca_known.png
-
-
 Next, we investigated the structure space produced by the three methods. The
 thermodynamic model tends to produce more diverse structure spaces as shown in
-figure ref:pred_struct_space. Loops content was extracted from the predicted
-structures of each method and projected onto their respective two first
-principal components space. Both RAFFT and MFE predictions seem to produce
-similar structure spaces while the ML method does allow for long unpaired
-regions in long hairpins which tend to be closer to the dataset structure space.
+figure ref:pca_struct. Loops content was extracted from the predicted structures
+of each method and projected onto their respective two first principal
+components space. Both RAFFT and MFE predictions seem to produce similar
+structure spaces while the ML method does allow for long unpaired regions in
+long hairpins which tend to be closer to the dataset structure space.
 
-#+name: pred_struct_space
-#+caption: *PCA analysis of the predicted structures for the three methods.*
-file:img/pca_predicted.png
+#+begin_src latex :results output
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[scale=0.5]{img/pca_known.png}\\
+  \includegraphics[scale=0.7]{img/pca_predicted.png} 
+  \caption{\textbf{PCA analysis of the known structure and predicted structures. \label{pca_struct}}
+    First row shows two PCA for the known structures.
+    The left side shows the mapped of predictions where RAFFT obtained $\leq$ 10 of PPV.
+    The right side shows the mapped of preditions where MFE obtained $\leq$ 10 of PPV.
+    The second row shows the PCA of the predicted strucrures for RAFFT, the MFE, and the ML predictions.}
+\end{figure}[!ht]
+#+end_src
 
 \clearpage
 * Test case to predict fast-folding paths
@@ -447,7 +449,7 @@ structures, found to be closer than the MFE, and depicted simple folding paths.
 # show the natural distribution of structures for methods.
 
 #+begin_src latex :results output
-\begin{figure}
+\begin{figure}[!h]
   \begin{tikzpicture}
     \node (s0) at (0cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_0.png}};
 
