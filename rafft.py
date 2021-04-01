@@ -158,7 +158,7 @@ def bfs_pairs(glob_tree, step=0):
 
     if VERBOSE:
         print("# {:-^20}".format(step))
-        print(SEQ)
+        # print(SEQ)
         for tree in glob_tree:
             if len(tree) > 0:
                 tmp_pair_l = tree[0][2]
@@ -300,6 +300,10 @@ def main():
     pos_list = list(range(len_seq))
     # encode the sequence into 2 mirror strands
     eseq, cseq = prep_sequence(sequence, args.GC, args.AU, args.GU)
+
+    if VERBOSE:
+        print(SEQ)
+    # fast folding paths
     all_struct = bfs_pairs([[((eseq, cseq, pos_list), None, [], 0.0)]])
     all_struct.sort(key=lambda el: eval_one_struct(SEQ_COMP, el, LEN_SEQ, SEQ))
 

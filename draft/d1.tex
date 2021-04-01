@@ -1,4 +1,4 @@
-% Created 2021-03-31 mer. 23:46
+% Created 2021-04-01 jeu. 00:42
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -41,7 +41,7 @@ fast-folding paths. Since the algorithm was designed toward speed, it can be
 readily applied to large RNAs.
 
 \section{Introduction}
-\label{sec:org2c90d94}
+\label{sec:orgd8cd854}
 Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA\ldots{}), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
@@ -160,7 +160,7 @@ Coronavirus frameshifting stimulation element
 better than the MFE.
 
 \section{FFT based folding dynamic heuristic}
-\label{sec:orgf461629}
+\label{sec:org0716584}
 We now describe the heuristic starting from one sequence S and its associated
 unfolded structure of length L. We first create a numerical representation of S
 where each type of nucleotide is replaced by a unit vector of 4 components:
@@ -237,7 +237,7 @@ output the structure with the best energy found among the structures saved in
 the stack.
 
 \section{Application to the folding task}
-\label{sec:org990a892}
+\label{sec:orga99cbd2}
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
@@ -313,10 +313,9 @@ sequences also displayed large unpaired regions such as the one shown in
   \caption{\textbf{Structures found to be difficult to predict with thermodynamic models.}  WT is the known structure.\label{diff_struct}}
 \end{figure}
 
-
 To investigate the region of the structure space where the thermodynamic model
 tends to fail, we computed the composition content of the known structures. Loop
-type length was computed in percents. Figure \ref{pca_fails} shows principal
+type length was computed in percents. Figure \ref{pca_struct} shows principal
 component analysis (PCA) of the structural composition. From the PCA, we
 observed that the known structures are distributed in the structure space toward
 interior loops. Also, some natural structures, as observed above, have large
@@ -324,30 +323,28 @@ exterior loops. The center of mass in the principal component space is located
 in between the high-density stacking and interior loops. This shows that the
 dataset contains many elongated structures.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[scale=0.6]{img/pca_known.png}
-\caption{\label{pca_fails}\textbf{PCA analysis of the known structure space where prediction with PPV = 0 were colored for RAFFT and the MFE prediction.}}
-\end{figure}
-
-
 Next, we investigated the structure space produced by the three methods. The
 thermodynamic model tends to produce more diverse structure spaces as shown in
-figure \ref{pred_struct_space}. Loops content was extracted from the predicted
-structures of each method and projected onto their respective two first
-principal components space. Both RAFFT and MFE predictions seem to produce
-similar structure spaces while the ML method does allow for long unpaired
-regions in long hairpins which tend to be closer to the dataset structure space.
+figure \ref{pca_struct}. Loops content was extracted from the predicted structures
+of each method and projected onto their respective two first principal
+components space. Both RAFFT and MFE predictions seem to produce similar
+structure spaces while the ML method does allow for long unpaired regions in
+long hairpins which tend to be closer to the dataset structure space.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.9\linewidth]{img/pca_predicted.png}
-\caption{\label{pred_struct_space}\textbf{PCA analysis of the predicted structures for the three methods.}}
-\end{figure}
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[scale=0.5]{img/pca_known.png}\\
+  \includegraphics[scale=0.7]{img/pca_predicted.png} 
+  \caption{\textbf{PCA analysis of the known structure and predicted structures. \label{pca_struct}}
+    First row shows two PCA for the known structures.
+    The left side shows the mapped of predictions where RAFFT obtained $\leq$ 10 of PPV.
+    The right side shows the mapped of preditions where MFE obtained $\leq$ 10 of PPV.
+    The second row shows the PCA of the predicted strucrures for RAFFT, the MFE, and the ML predictions.}
+\end{figure}[!ht]
 
 \clearpage
 \section{Test case to predict fast-folding paths}
-\label{sec:org5792606}
+\label{sec:orgb2cf62d}
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
 with a secondary structure determined by sequence analysis and obtained from
@@ -360,7 +357,7 @@ structures explored were not saved or evolved since no further improvement
 (relative to all possibilities) was found. RAFFT was able to recover near-native
 structures, found to be closer than the MFE, and depicted simple folding paths.
 
-\begin{figure}
+\begin{figure}[!h]
   \begin{tikzpicture}
     \node (s0) at (0cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_0.png}};
 
@@ -412,7 +409,7 @@ structures, found to be closer than the MFE, and depicted simple folding paths.
 
 \clearpage
 \section{Concluding discussion}
-\label{sec:orgfa9b029}
+\label{sec:org0267d44}
 We have proposed a simple heuristic of the RNA folding dynamic called RAFFT for
 fast-folding paths. This heuristic uses a greedy rule. Groups of consecutive
 base pairs, stems, found to improve the energy are formed along with the
@@ -499,7 +496,7 @@ an ML-base scoring to discriminate the folding path that is likely to be
 observed.
 
 \section{Methods}
-\label{sec:orge6ef0d0}
+\label{sec:orgdac674e}
 Starting from the ArchiveII dataset, we first removed all the structures with
 pseudoknots since all tools considered here don't handle pseudoknots. Next, we
 removed all the structures which were evaluated with positive or null energy

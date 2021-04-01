@@ -79,6 +79,17 @@ GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGAC
 ........((((((((..........))))))))((((((((..((........))..))))))))................  -20.9
 #+end_example
 
+* Analysis
+To create path figures, one can use the utility ~utility/plot_path.py~ with on
+rafft output:
+
+#+begin_src bash :results output
+python rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 5 -n 100 --verbose > rafft.out
+python plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o tmp_rafft_fig/paths.png
+#+end_src
+
+[[paths.png]]
+
 * Reproducibility of the benchmarks
 The dataset curated we used for the benchmarks is in
 ~benchmarks_results/benchmark_cleaned_all_length.csv~.
