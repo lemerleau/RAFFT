@@ -7,11 +7,41 @@ import argparse
 import subprocess
 from os import system
 from os.path import realpath, dirname
-import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 from utils import paired_positions
 import aggdraw
+from colour import Color
+
+
+def get_gradient(quant):
+    blue = Color("LightSkyBlue")
+    colors = list(blue.range_to(Color("DarkBlue"),20))
+    col = min(int(quant * len(colors)), len(colors)-1)
+    color = tuple([int(el * 255) for el in colors[col].rgb])
+    return color
+
+
+def get_gradient_img():
+    img = Image.new('RGBA', (100, 900))
+    for i in range(900):
+        col = get_gradient(float(i)/900)
+        for j in range(100):
+            img.putpixel((j, i), col)
+    return img
+
+
+def add_grad_img(path_img, max_val, min_val, fnt):
+    "add the logo gradient image"
+    grad_img = get_gradient_img()
+    grad_x = int(path_img.size[0] * 0.15)
+    grad_y = int(path_img.size[1] * 0.02)
+    grad_img = grad_img.resize((grad_y, grad_x))
+    path_img.paste(grad_img, (0, 0))
+
+    draw = ImageDraw.Draw(path_img)
+    x_size, y_size = fnt.getsize("{:.1f}".format(max_val))
+    draw.text((grad_y, 0), "{:.2f}".format(max_val), "black", fnt)
+    draw.text((grad_y, grad_x-y_size), "{:.2f}".format(min_val), "black", fnt)
 
 
 def parse_rafft_output(infile):
@@ -42,14 +72,16 @@ def get_connected_prev(cur_struct, prev_pos):
 def parse_arguments():
     """Parsing command line
     """
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description="Uses VARNA to plot the fast-paths predicted by RAFFT. !! It creates a temporary directory in the current folder!!")
     parser.add_argument('rafft_out', help="rafft_output")
     parser.add_argument('--out', '-o', help="output file")
     parser.add_argument('--width', '-wi', help="figure width", type=int, default=500)
     parser.add_argument('--height', '-he', help="figure height", type=int, default=300)
     parser.add_argument('--res_varna', '-rv', help="change varna resolution", type=float, default=1.0)
     parser.add_argument('--line_thick', '-lt', help="line thickness", type=int, default=2)
+    parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=3)
     parser.add_argument('--varna_jar', help="varna jar (please download it from VARNA website)")
+    parser.add_argument('--no_col', action="store_true", help="don't use the color gradient for the edges")
     parser.add_argument('--no_fig', action="store_true", help="you already computed the structures previously?")
     return parser.parse_args()
 
@@ -82,13 +114,18 @@ def main():
     rate_w, rate_h = float(width)/float(nb_steps), float(height)/float(nb_saved)
 
     # save position in the canvas for each structure
-    actual_position = {}
+    actual_position, actual_sizes = {}, {}
+
+    # save nrj differences
+    nrj_changes = {}
 
     # width of points
     pw = args.line_thick
-    outline = aggdraw.Pen("#051C2C", pw)
     pos_hor = 0
     crop_side = 0
+    # store best change
+    min_change = 0
+
     for step_i, fold_step in enumerate(fast_paths):
         pos_vert = 0
         tmp_left = 0
@@ -103,23 +140,18 @@ def main():
 
                 cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIAS)
 
+                actual_sizes[(step_i, str_i)] = (n_fig_w, n_fig_h)
                 actual_position[(step_i, str_i)] = (pos_hor+n_fig_w, pos_vert+n_fig_h//2)
 
                 lprev_co = get_connected_prev(struct, fast_paths[step_i - 1])
+                nrj_changes[(step_i, str_i)] = {}
 
-                draw_path = aggdraw.Draw(path_img)
                 for si in lprev_co:
-                    prev_w, prev_h = actual_position[(step_i-1, si)]
-                    cur_w, cur_h = actual_position[(step_i, str_i)]
-                    cur_w -= n_fig_w
+                    prev_st, prev_nrj = fast_paths[step_i-1][si]
+                    nrj_changes[(step_i, str_i)][(step_i-1, si)] = nrj - prev_nrj
 
-                    pathstring = " M{},{} C{},{},{},{},{},{}".format(int(prev_w), int(prev_h),
-                                                                     int(prev_w + (cur_w - prev_w)//2), int(prev_h),
-                                                                     int(prev_w + (cur_w - prev_w)//2), int(cur_h),
-                                                                     int(cur_w), int(cur_h))
-                    symbol = aggdraw.Symbol(pathstring)
-                    draw_path.symbol((0, 0), symbol, outline)
-                    draw_path.flush()
+                    if nrj_changes[(step_i, str_i)][(step_i-1, si)] <= min_change:
+                        min_change = nrj_changes[(step_i, str_i)][(step_i-1, si)]
 
                 path_img.paste(cur_str, (pos_hor, pos_vert))
                 pos_vert += int(n_fig_h)
@@ -141,8 +173,36 @@ def main():
         crop_side = pos_hor + tmp_left
         pos_hor += max(int(tmp_left), int(rate_w))
 
+    # past the paths
+    for step_i, fold_step in enumerate(fast_paths):
+        if len(fold_step) > 1:
+            for str_i, (struct, nrj) in enumerate(fold_step):
+                lprev_co = get_connected_prev(struct, fast_paths[step_i - 1])
+                draw_path = aggdraw.Draw(path_img)
+                n_fig_w, n_fig_h = actual_sizes[(step_i, str_i)]
 
+                for si in lprev_co:
+                    prev_w, prev_h = actual_position[(step_i-1, si)]
+                    cur_w, cur_h = actual_position[(step_i, str_i)]
+                    nrj_sta = nrj_changes[(step_i, str_i)][(step_i-1, si)]
+                    cur_w -= n_fig_w
+
+                    pathstring = " M{},{} C{},{},{},{},{},{}".format(int(prev_w), int(prev_h),
+                                                                     int(prev_w + (cur_w - prev_w)//2), int(prev_h),
+                                                                     int(prev_w + (cur_w - prev_w)//2), int(cur_h),
+                                                                     int(cur_w), int(cur_h))
+                    symbol = aggdraw.Symbol(pathstring)
+                    if args.no_col:
+                        outline = aggdraw.Pen("black", pw)
+                    else:
+                        outline = aggdraw.Pen(get_gradient(nrj_sta/min_change), pw)
+                    draw_path.symbol((0, 0), symbol, outline)
+                    draw_path.flush()
+
+    fnt_pos = ImageFont.truetype("{}/Times_New_Roman.ttf".format(dirname(realpath(__file__))), args.font_size)
     path_img = path_img.crop((0, 0, crop_side, height))
+    if not args.no_col:
+        add_grad_img(path_img, 0, min_change, fnt_pos)
 
     if args.out is not None:
         path_img.save(args.out)

@@ -1,4 +1,4 @@
-% Created 2021-04-02 ven. 11:40
+% Created 2021-04-02 ven. 16:02
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -40,7 +40,7 @@ fast-folding paths. Since the algorithm was designed toward speed, it can
 readily be applied to large RNAs.
 
 \section{Introduction}
-\label{sec:org694519e}
+\label{sec:orgf6a759d}
 Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA\ldots{}), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
@@ -155,7 +155,7 @@ element \cite{baranov05_progr_ribos_frames_decod_sars_cov_genom}, where it
 found closer structures than the MFE.
 
 \section{FFT based folding dynamic heuristic}
-\label{sec:org8c259e4}
+\label{sec:org24fb77c}
 We now describe the heuristic starting from one sequence S and its associated
 unfolded structure of length L. We first create a numerical representation of S
 where each type of nucleotide is replaced by a unit vector of 4 components:
@@ -232,7 +232,7 @@ output the structure with the best energy found among the structures saved in
 the stack.
 
 \section{Application to the folding task}
-\label{sec:org99c9fb1}
+\label{sec:orgac48060}
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
@@ -343,7 +343,7 @@ regions in long hairpins which tend to be closer to the dataset structure space.
 
 \clearpage
 \section{Test case to predict fast-folding paths}
-\label{sec:org8f2ad47}
+\label{sec:org74ed67c}
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
 with a secondary structure determined by sequence analysis and obtained from the
@@ -370,7 +370,7 @@ tested with 20 saved structure (see supp. mat.), and obtained similar results.
 
 \clearpage
 \section{Concluding discussion}
-\label{sec:orge2d3fbe}
+\label{sec:org8e7f763}
 We have proposed a heuristic of the RNA fast-fold paths called RAFFT. This
 heuristic uses a greedy rules. First, it searches for groups of consecutive base
 pairs, stems, and from them if they improve the energy. Hence, it produces
@@ -459,7 +459,7 @@ an ML-base scoring to discriminate the folding path that is likely to be
 observed.
 
 \section{Methods}
-\label{sec:org8e39b3a}
+\label{sec:org16c0721}
 Starting from the ArchiveII dataset, we first removed all the structures with
 pseudoknots since all tools considered here don't handle pseudoknots. Next, we
 removed all the structures which were evaluated with positive or null energy
