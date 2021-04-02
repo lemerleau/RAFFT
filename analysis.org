@@ -16,7 +16,7 @@ plt.rcParams["font.size"] = 8
 plt.rcParams["figure.figsize"] = 7, 4
 
 fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
-fftb_pred = read_csv("./benchmark_results/fft_100n_50ms_scores.csv")
+fftb_pred = read_csv("./benchmark_results/fft_200n_200ms_scores.csv")
 mx_pred = read_csv("./benchmark_results/mxfold_scores.csv")
 vrna_pred = read_csv("./benchmark_results/mfe_scores.csv")
 true_str = read_true_struct()
@@ -37,7 +37,7 @@ for seq, (struct, name) in true_str.items():
         len_seq, fftb_st, fftb_nrj, fftb_nbp, fftb_pvv, fftb_sens = fftb_pred[seq]
         len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
 
-        save_fft, save_mfe, save_fftb, save_mx = fft_pvv, mfe_pvv, fftb_pvv, mx_pvv
+        save_fft, save_mfe, save_fftb, save_mx = fft_sens, mfe_sens, fftb_sens, mx_sens
         fft_all_v += [save_fft]
         mfe_all_v += [save_mfe]
         fftb_all_v += [save_fftb]
@@ -141,13 +141,13 @@ fft_f.xaxis.set_ticks([i for i in range(nb_el)][::20])
 
 name_fft = "RAFFT"
 name_mfe = "MFE"
-name_fftb = "RAFFT*"
+name_fftb = "RAFFT*(200)"
 name_mx = "ML"
 
-fft_f.set_title(f"PPV", fontsize=10)
+fft_f.set_title(f"Sensitivity", fontsize=10)
 fft_f.legend((fft_l,fftb_l,mfe_l,mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_fftb}({fftb_mean:4.1f})",
                                     f"{name_mfe}({mfe_mean:4.1f})", f"{name_mx}({mx_mean:4.1f})"), loc="lower center", ncol=4)
-plt.savefig("img/fold_perf_ppv.png", dpi=300)
+plt.savefig("img/fold_perf_sens_200.png", dpi=300)
 plt.show()
 #+end_src
 
@@ -870,17 +870,41 @@ GGGGCUGUAAGGUGUUCGACAUAAGUUGUUGUUAUUCAAUAAUUGCAAAUCAAAUUCUACCUUUUUCUAUUCCCGUUAAA
 #+end_example
 
 
-#+begin_src bash :results none
-seq="GGGGCUGUAAGGUGUUCGACAUAAGUUGUUGUUAUUCAAUAAUUGCAAAUCAAAUUCUACCUUUUUCUAUUCCCGUUAAACAUCUAGCUGUUUAAAUUUAAAGACAAUUUAAAGACAAUCUAAAGACUCAAGAGACAAAAAUUUUAGGUAUUUAGGUAACUUUUAGGUAACUAAGUAAGGAACUAAGUAACGAAAACAACUUAUGGACGUGGGUUCAAUUCCCACCAGCUCCAAUG"
-struct="(((((((............((((.(.......).).......................................................................................................................................................................)))...(((((.......))))))))))))...."
+#+begin_src bash :results output
+seq="UGGCUAGGCUGGGAAGUUAGGCGUUUCCUGUAACUCGAAAUCGCCUUUGCGAGAGCCGAAAACUUGAGGGCGGUUUUAAAUUCUGUCAUUCAUUCUCAAGUUUUGUGUAGACAUUUCGUCCUUUGGGGUAAGAUGGAGGAGGAACCUUUUUUGGAAGAAAAAGACAAACCUCCCUUAUCUUUCGAACCCCGUCAGGCCCGGAAGGGAGCAGCGGUAGA"
+struct_fft="(((((((............(((((((((((((((((......((((.............................(((((((......))))))).((((((.....))))))....(((((((.(((.((((........)))).))).))))))).....((((....)))))))).......))))))...)))))))))))...(((((.......))))))))))))...."
+struct_mfe="(((((((............(((((((((((((((((......((((.............................(((((((......))))))).((((((.....))))))....(((((((.(((.((((........)))).))).))))))).....((((....)))))))).......))))))...)))))))))))...(((((.......))))))))))))...."
+struct_mle="(((((((............((((((((((((.....)......................................(((((((......))))))).....................................................(((((((....(((((((....))))..)))...))))))).....)))))))))))...(((((.......))))))))))))...."
+struct_wts="(((((((............((((.(.......).).......................................................................................................................................................................)))...(((((.......))))))))))))...."
 
-output="img/illed_img/tmRNA_Cyan_wt.png"
-resolution=4
+rna_name=tmRNA_Cyan
+output_fft=img/illed_img/${rna_name}_fft.png
+resolution=2
 java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
-        -sequenceDBN $seq -structureDBN $struct -o $output -resolution $resolution\
+        -sequenceDBN $seq -structureDBN $struct_fft -o $output_fft -resolution $resolution\
         -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
         -background "#000000" -periodNum 1000
-        # -background "#000000" -periodNum 1000
-# -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.5 -baseInner "#051C2C"\
-# -baseName "#051C2C" -background "#000000" -periodNum 1000
+
+output_mfe=img/illed_img/${rna_name}_mfe.png
+resolution=2
+java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+     -sequenceDBN $seq -structureDBN $struct_mfe -o $output_mfe -resolution $resolution\
+     -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
+     -background "#000000" -periodNum 1000
+
+output_mle=img/illed_img/${rna_name}_mle.png
+resolution=2
+java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+     -sequenceDBN $seq -structureDBN $struct_mle -o $output_mle -resolution $resolution\
+     -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
+     -background "#000000" -periodNum 1000
+
+output_wts=img/illed_img/${rna_name}_wts.png
+resolution=2
+java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+     -sequenceDBN $seq -structureDBN $struct_wts -o $output_wts -resolution $resolution\
+     -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
+     -background "#000000" -periodNum 1000
 #+end_src
+
+#+RESULTS:

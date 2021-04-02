@@ -1,4 +1,4 @@
-#+TITLE: A Mirror encoding and FFT for an RNA fast-folding path heuristic
+#+TITLE: RNA fast-folding paths
 #+OPTIONS: H:4 toc:nil
 #+OPTIONS: author:nil
 #+LaTeX_CLASS: orgReadme
@@ -36,19 +36,18 @@
 We propose a heuristic to the folding dynamic making use of a mirror encoding
 and the fast Fourier transform (FFT) called RAFFT. Based on simple folding
 rules, it can create many parallel folding paths. The performance in the folding
-task when compared to the state-of-the-art folding tools was reasonable on a
-well-curated dataset. However, when all parallel folding paths were analyzed, it
-revealed near-native predictions (PVV \approx 79% and sensitivity \approx 81%)
-for sequences of length below 200 nucleotides. On average, those predictions
-were found to be of similar quality to recent deep-learning-based methods. The
-dynamics were built with the stem-based rate model which displays coarse-grained
-folding paths. Moreover, stems are sequentially added to the predicted
-structures if it improves their overall stability. Those simple rules create
-smooth coarse-grained folding paths which are intuitive to analyze and get along
-the traditional two states view of the protein folding landscape and the
-fast-folding path concept. Hence, those paths could well approximate
-fast-folding paths. Since the algorithm was designed toward speed, it can be
-readily applied to large RNAs.
+task on a well-curated dataset when compared to the state-of-the-art folding
+tools was fair. However, when all parallel folding paths were analyzed, it
+revealed near-native predictions (79% PPV and 81% sensitivity) for sequences of
+length below 200 nucleotides. On average, those predictions were found to be of
+similar quality to recent deep-learning-based methods. The folding paths were
+built with the stem rate model which displays coarse-grained folding paths.
+Stems are sequentially added during the folding if it improves the overall
+stability. Those two simple rules create smooth coarse-grained folding paths
+which are intuitive to analyze and get along with the traditional two states
+view of the protein folding landscape. Hence, those paths could well approximate
+fast-folding paths. Since the algorithm was designed toward speed, it can
+readily be applied to large RNAs.
 
 * Introduction
 # ** RNA folding introduction
@@ -78,9 +77,9 @@ cellular contexts such as protein translation (mRNA, tRNA...), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
 functions can be better understood through the light of their static
 tri-dimensional structure. However, with the discovery of riboswitch RNA
-molecules (*ref*), the dynamic behavior of RNA is getting more interest. Several
-other RNA systems were found to allow multiple metastable structures allowing
-for highly tunable functions (*ref from kinwalker*).
+molecules (*ref*), the dynamic behavior of RNA got more interest. Several other
+RNA systems were found to allow multiple metastable structures allowing for
+highly tunable functions (*ref from kinwalker*).
 
 # general introduction on RNA structures
 # hierarchical
@@ -91,21 +90,21 @@ variable nucleobase. Four different canonical bases/nucleobases compose the RNA,
 namely adenine (A), guanine (G), uracil (U), and cytosine (C). As amino-acid
 sequences, these nucleotide sequences can form complex tri-dimensional
 structures critical for their biological functions. Three main structure types
-are usually considered: the primary structure which is the nucleotide sequence
-itself. The secondary structure is usually defined by interacting pairs of
-nucleobases called canonical base pairs, such as G-C, A-U, and G-U. Next, the
-tertiary interactions involve other non-trivial interactions within the same
-sequence. However, unlike proteins, these structures are usually hierarchically
-formed. The secondary structure is generally formed first, then the tertiary
-structure cite:tinoco99_how_rna_folds. Moreover, unlike proteins, the secondary
-structure provides an accurate enough description of the thermodynamics and
-kinetics of RNA molecules. Although base pairing can be formed with various
-configurations cite:leontis01_geomet_nomen_class_rna_base_pairs, we considered
-here only the canonical base pairs edge-to-edge interactions. Many subtleties
-can be used to define the secondary structure, but we used here a well-accepted
-formal definition called pseudoknot-free. This forces the RNA secondary
-structure to be drawable onto a plan where base pairs cannot cross. This has
-computational and theoretical benefits as will be described later.
+are generally considered: the primary structure which is the nucleotide sequence
+itself. The secondary structure is defined by interacting pairs of nucleobases
+called base pairs. Next, the tertiary interactions involve other weaker
+non-trivial interactions within the same sequence. Unlike proteins, RNA
+structures are usually hierarchically formed. The secondary structure is formed
+first, followed by the tertiary structure cite:tinoco99_how_rna_folds. Moreover,
+the secondary structure provides an accurate enough description of the
+thermodynamics and kinetics of RNA molecules. Although base pairs can be formed
+with various configurations cite:leontis01_geomet_nomen_class_rna_base_pairs, we
+considered here only the canonical base pairs edge-to-edge interactions: G-C,
+A-U, and G-U. Many subtleties can be used to define the secondary structure, but
+we used here a well-accepted formal definition called pseudoknot-free. This
+forces the RNA secondary structure to be drawable onto a plan where base pairs
+cannot cross. In the res of this work, structure refers to the RNA secondary
+structure.
 
 # energy model and thermodynamic description
 # turner like energy model based on loop decomposition
@@ -118,35 +117,34 @@ computational and theoretical benefits as will be described later.
 # thermodynamic of RNA molecules
 The structure space of an RNA molecule is described by the stability of
 individual possible structures. The stability $\Delta G_s$ of a structure $s$ is
-measured by the free energy changes with the completely unfolded state. To
-predict secondary structures, thermodynamic-based methods use empirical data to
-estimate RNA stability. By assuming the additivity cite:dill97_addit_princ_bioch
-of the loop contributions to the overall stability, the nearest-neighbor loop
-energy model was developed cite:turner09_nndb. It associates free energy values,
-determined by optical melting experiments, to individual loop types and
-compositions such as the well known Turner2004 set of parameters
-cite:mathews04_incor_chemic_modif_const_into. Its functional form allows for
-generalizable energy parameters and the use of an efficient dynamic programming
-algorithm. It can determine the minimum free energy (MFE) structure of a
-sequence. The MFE is considered a gold standard for free-energy-based
-predictions. Other estimates exist such as the maximum expected accuracy (MEA),
-however, it was not found to be significantly better than the MFE
-cite:mathews19_how_to_bench_rna_secon. Also, the MFE has an intuitive
-interpretation. Several tools implement this algorithm, namely Zucker algorithm
-cite:zuker81_optim_comput_foldin_large_rna, such as RNAfold
+the free energy changes with the completely unfolded state. To predict secondary
+structures, thermodynamic-based methods use empirical data to estimate RNA
+stability. By assuming the additivity cite:dill97_addit_princ_bioch of the loop
+contributions to the overall stability, the nearest-neighbor loop energy model
+is the most used model cite:turner09_nndb. It is a tabulated set of parameters
+associating free energy values, determined by optical melting experiments, to
+individual loop types and compositions such as the well known Turner2004 set of
+parameters cite:mathews04_incor_chemic_modif_const_into. Its functional form
+allows for generalizable energy parameters and the use of an efficient dynamic
+programming algorithm. It can determine the minimum free energy (MFE) structure
+of a sequence in the structure space. The MFE is considered a gold standard for
+free-energy-based predictions. Other estimates exist such as the maximum
+expected accuracy (MEA), however, it was not found to be significantly better
+than the MFE cite:mathews19_how_to_bench_rna_secon. Also, the MFE has an
+intuitive interpretation. Several tools implement this algorithm, namely Zucker
+algorithm cite:zuker81_optim_comput_foldin_large_rna, such as RNAfold
 cite:hofacker03_vienn_rna_secon_struc_server, Mfold
 cite:zuker03_mfold_web_server_nucleic_acid, or RNAstructure cite:reuter10_rnast.
 Although those methods were found to be consistently accurate at predicting RNA
 secondary structures as shown in recent benchmarks
-cite:sato20_rna,huang19_linear. the additivity foundation is expected to be
+cite:sato20_rna,huang19_linear, the additivity foundation is expected to be
 doomed when sequences get larger and structures complexify. The non-additivity
 of tertiary interactions and pseudoknots pairings can partially explain this
-discrepancy. Therefore, pseudoknots loop contributions are not defined in the
-main parameters sets like the Turner2004 model. In addition, the thermodynamic
-energy models are not perfect. Another limit of such prediction estimates is the
-static picture that it gives to the RNA folding landscape. From a dynamic
-standpoint, the sequence navigates the structure space by following the
-landscape drawn by the stability.
+discrepancy. Pseudoknots loop are not defined in the main parameters sets like
+the Turner2004 model. Another limit of such structure estimates is the static
+picture that it gives to the RNA folding landscape. From a dynamical standpoint,
+the sequence navigates the structure space by following the landscape drawn by
+the stability.
 
 # folding rate models:
 # - stack base
@@ -154,27 +152,26 @@ landscape drawn by the stability.
 # - stem based like
 # hypothesis on the transition states hidden in the coarse grained paths.
 # seems that no rate model is sure to be correct
-Kinetic information on RNA molecules was found to give valuable complementary
-information (*riboswitch, regulatory*). To follow the dynamic of individual RNA
-molecules, three rate models describing elementary steps in the structure space
-are currently used. The base stack model uses base stacks formation and breaking
-as elementary moves . The base pair rate model uses base pairs as
-elementary steps as implemented in kinfold
-cite:flamm00_rna_foldin_at_elemen_step_resol. kinfold implemented a
+Dynamical information on RNA molecules was found to give valuable complementary
+information. To follow the dynamic of individual RNA molecules, three rate
+models describing elementary steps in the structure space are currently used.
+The base stack model uses base stacks formation and breaking as elementary moves
+. The base pair rate model uses base pairs as elementary steps as implemented in
+kinfold cite:flamm00_rna_foldin_at_elemen_step_resol. kinfold uses a
 continuous-time Monte Carlo simulation to follow the RNA folding. It gives the
-finest resolution in the secondary structure folding landscape but the cost of
-computation time. The stem-based model uses the creation or deletion of stems to
+finest resolution in the secondary structure folding landscape, but at the cost
+of computation time. The stem model uses the creation or deletion of stems to
 construct the folding dynamics. It is the first strategy explored
 cite:martinez84_rna_foldin_rule, and provides a coarse-grained description of
 the kinetic. The folding rates are determined by the free energy changes when
 stems are added or removed. Although none of these models were definitively
 rejected nor accepted, this one makes a notable assumption. Indeed, transition
 states (or saddle points) hidden in the formation of a given stem are not
-considered. An alternative approach, implemented in kinwalker (*ref*), used the
-observation that folding paths are generally composed of locally optimal
-conformations. Therefore, locally optimal structures are formed using the
-standard dynamic programming algorithm and aggregated together along with the
-folding dynamic.
+considered. An alternative approach, implemented in kinwalker
+cite:geis2008folding, used the observation that folded intermediates are
+generally locally optimal conformations. Therefore, locally optimal structures
+are formed using the standard dynamic programming algorithm and aggregated
+together along with the folding dynamic.
 
 # fast folding paths
 From folding experiments, Pan and coworkers found parallel pathways for a
@@ -199,20 +196,18 @@ create multiple parallel folding paths. Here, stems are not allowed to be
 removed and can be formed only if it improves the stability. It uses a mirror
 encoding and relies on the fast Fourier transform to speed up the search of
 stems. This method is inspired by MAFFT cite:katoh02_mafft, a well-known
-multiple-sequence-alignment tool. Another FFT-based algorithm was already
-developed in the RNA structure field, FFTbor2D, but it uses the FFT (TODO: ???).
-The mirror encoding is a simple numerical orthogonal representation of
-nucleotide sequences. Several other similar encodings combined with the FFT were
-developed for the analysis of DNA
+multiple-sequence-alignment tool. The mirror encoding is a simple numerical
+orthogonal representation of nucleotide sequences. Other similar encodings
+combined with the FFT were developed for the analysis of DNA
 cite:felsenstein82_effic_method_match_nucleic_acid_sequen. To assess the
 reliability of the paths predicted, we compared its performance on the folding
 task for a well-curated dataset, archive II
 cite:mathews19_how_to_bench_rna_secon. The algorithm is compared to two
-estimates: the MFE computed by RNAfold and an ML-based computed by MxFold2
-cite:sato20_rna. Next, we applied the algorithm to a simple test case, the
-Coronavirus frameshifting stimulation element
-cite:baranov05_progr_ribos_frames_decod_sars_cov_genom, where it performed
-better than the MFE.
+estimates: the MFE computed by RNAfold and an ML estimate computed with MxFold2,
+a recent deep-learning based method cite:sato20_rna. Next, we applied the
+algorithm to a simple test case, the Coronavirus frameshifting stimulation
+element cite:baranov05_progr_ribos_frames_decod_sars_cov_genom, where it
+found closer structures than the MFE.
 
 * FFT based folding dynamic heuristic
 # # description of the algorithm
@@ -318,11 +313,11 @@ the stack.
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
-localize its performance, we compared with two estimates: the MFE computed by
-RNAfold and the ML-based prediction computed by MxFold2. RAFFT predictions were
-performed using non-optimized weights. 50 structures are evolved in parallel for
-each sequence and 100 positional lags were explored at each step for each stored
-structure.
+localize its performance, we compared with two estimates: the MFE structure
+computed by RNAfold and the ML-based structure computed by MxFold2. RAFFT
+predictions were performed using non-optimized weights. 50 structures are formed
+in parallel for each sequence and 100 positional lags were explored at each step
+for each of the 50 structures.
 
 # basic performance comparison
 Figure ref:perf_fig shows the performance in predicted positive values (PPV) and
@@ -344,75 +339,79 @@ the MFE) with PVV \approx 79% and sensitivity \approx 81%. The accuracy for
 those sequences is equivalent to ML performances. For sequence lengths greater
 than 300 nucleotides, we observed the same drastic loss of accuracy, although we
 took only the best prediction among the 50 saved configurations for each
-sequence.
+sequence. We investigated the dependency to the base pair spanning, however, we
+did not find any significant effect (see supp. mat.).
 
 # where it fails here when the structure is small
 # unpaired regions are difficult to predict if that's a signal of something.
 Two regions of lack of performance were observed for all methods. A group of 28
 sequences of length shorter than 80 nucleotides have their known structures at
 on average 9.8 kcal/mol greater than the MFE structures. Some of them involve
-large exterior loops such as displayed in figure ref:diff_struct. The second
-region is around 200 nucleotides in length. The known structure of these
-sequences also displayed large unpaired regions such as the one shown in
-ref:diff_struct.
+large unpaired loops such as displayed in figure ref:diff_struct. The second
+region is around 200 nucleotides in length. The known structure of those
+sequences also displayed large unpaired regions ref:diff_struct.
 
 #+begin_src latex :results output
 \begin{figure}[!ht]
   \centering
   \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_ppv.png}}\\
   \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_sens.png}}
-  \caption{\textbf{Predicted positive values and sensitivity results\label{perf_fig}.}
-  RAFFT (blue) displayed the best energy found. RAFFT* displayed the best score found among 50 saved structures.}
+  \caption{\textbf{Predicted positive values and sensitivity
+      results\label{perf_fig}.} RAFFT (blue) displayed the best energy found.
+    RAFFT* shows the best score found among 50 saved structures. Left pans show
+    the density (sequence-wise) of the accuracy measures.}
 \end{figure}
 
 \begin{figure}[!ht]
   \centering
   \subfloat[\texttt{srp\_Synt.wolf.\_CP000448}]{
   \begin{tikzpicture}
-    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.02]{./img/illed_img/srp_Heli_fft.png}}};
-    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.02]{./img/illed_img/srp_Heli_mfe.png}}};
-    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_mx.png}}};
-    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_wt.png}}};
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.03]{./img/illed_img/srp_Heli_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.03]{./img/illed_img/srp_Heli_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.07]{./img/illed_img/srp_Heli_mle.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.07]{./img/illed_img/srp_Heli_wts.png}}};
   \end{tikzpicture}
   }
   \subfloat[\texttt{srp\_Meth.mari.\_CP000745}]{
   \begin{tikzpicture}
-    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_fft.png}}};
-    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_mfe.png}}};
-    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_mx.png}}};
-    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Meth_wt.png}}};
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_mle.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_wts.png}}};
   \end{tikzpicture}
   }\\
   \subfloat[\texttt{tmRNA\_Cyan.mero.\_AY286123\_1\-236}]{
   \begin{tikzpicture}
-    \node (s11) at (0cm,0cm) {\subfloat[RAFFT]{\includegraphics[scale=0.03]{./img/illed_img/tmRNA_Cyan_fft.png}}};
-    \node (s12) at (3cm,0cm) {\subfloat[MFE]{\includegraphics[scale=0.03]{./img/illed_img/tmRNA_Cyan_mfe.png}}};
-    \node (s13) at (6cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.05]{./img/illed_img/tmRNA_Cyan_mx.png}}};
-    \node (s14) at (9cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.05]{./img/illed_img/tmRNA_Cyan_wt.png}}};
+    \node (s11) at (0cm,0cm) {\subfloat[RAFFT]{\includegraphics[scale=0.06]{./img/illed_img/tmRNA_Cyan_fft.png}}};
+    \node (s12) at (3cm,0cm) {\subfloat[MFE]{\includegraphics[scale=0.06]{./img/illed_img/tmRNA_Cyan_mfe.png}}};
+    \node (s13) at (6cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.08]{./img/illed_img/tmRNA_Cyan_mle.png}}};
+    \node (s14) at (9cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.08]{./img/illed_img/tmRNA_Cyan_wts.png}}};
   \end{tikzpicture}
   }
 
-  \caption{\textbf{Structures found to be difficult to predict with thermodynamic models.}  WT is the known structure.\label{diff_struct}}
+  \caption{\textbf{Structures found to be difficult to predict with the
+      thermodynamic model.} The sequence name where extracted directly from the
+    dataset. WT is the known structure.\label{diff_struct}}
 \end{figure}
 #+end_src
 
 To investigate the region of the structure space where the thermodynamic model
-tends to fail, we computed the composition content of the known structures. Loop
-type length was computed in percents. Figure ref:pca_struct shows principal
-component analysis (PCA) of the structural composition. From the PCA, we
-observed that the known structures are distributed in the structure space toward
-interior loops. Also, some natural structures, as observed above, have large
-exterior loops. The center of mass in the principal component space is located
-in between the high-density stacking and interior loops. This shows that the
-dataset contains many elongated structures.
+tends to fail, we computed the composition of the known structures. Loop type
+lengths were computed in percents. Figure ref:pca_struct shows principal
+component analysis (PCA) of those compositions. From the PCA, we observed that
+the known structures are distributed in the structure space toward interior
+loops. Also, some natural structures, as shown in figure ref:diff_struct, have
+large unpaired loops. The center of mass in the principal component space is
+located in between the high-density stacking and interior loops. This shows that
+the dataset contains many elongated structures.
 
 Next, we investigated the structure space produced by the three methods. The
-thermodynamic model tends to produce more diverse structure spaces as shown in
-figure ref:pca_struct. Loops content was extracted from the predicted structures
-of each method and projected onto their respective two first principal
-components space. Both RAFFT and MFE predictions seem to produce similar
-structure spaces while the ML method does allow for long unpaired regions in
-long hairpins which tend to be closer to the dataset structure space.
+thermodynamic approach seems to produce a more diverse structure space as shown
+in figure ref:pca_struct. Loop contents were extracted from the predicted
+structures of each method and projected onto their respective two first
+principal components space. Both RAFFT and MFE predictions seem to produce
+similar structure spaces while the ML method does allow for long unpaired
+regions in long hairpins which tend to be closer to the dataset structure space.
 
 #+begin_src latex :results output
 \begin{figure}[!ht]
@@ -431,72 +430,28 @@ long hairpins which tend to be closer to the dataset structure space.
 * Test case to predict fast-folding paths
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
-with a secondary structure determined by sequence analysis and obtained from
+with a secondary structure determined by sequence analysis and obtained from the
 RFAM database. The assumed known structure has a pseudoknot but was not
 displayed here. Figure ref:folding_dynamics shows the folding path predicted,
 the MFE prediction, and the assumed known structure. The approximated
-fast-folding path is predicted in three steps where 5 structures were store in
-the stack and 10 positional lags were searched for stems. As shown, some
-structures explored were not saved or evolved since no further improvement
-(relative to all possibilities) was found. RAFFT was able to recover near-native
-structures, found to be closer than the MFE, and depicted simple folding paths.
-
-# #+name: folding_dynamics
-# #+attr_latex: :scale 0.5
-# #+caption: *Fast folding path prediction for the Coronavirus frameshifting stimulation element.*
-# file:img/comb_frame_shift.png
+fast-folding paths are predicted in three steps where 5 structures were stored
+and 100 positional lags were searched for stems. As shown, some structures
+explored were not saved or evolved since no further improvement (relative to all
+possibilities) was found. RAFFT was able to recover near-native structures,
+found to be closer than the MFE, and depicted simple folding paths. We also
+tested with 20 saved structure (see supp. mat.), and obtained similar results.
 
 # show the natural distribution of structures for methods.
-
 #+begin_src latex :results output
 \begin{figure}[!h]
   \begin{tikzpicture}
-    \node (s0) at (0cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_0.png}};
-
-    \node (s11) at (2.5cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_0.png}};
-    \node (s12) at (2.5cm,6cm) {\includegraphics[scale=0.03]{img/frame_shift/step_1_1.png}};
-    \node (s13) at (2.5cm,4cm) {\includegraphics[scale=0.03]{img/frame_shift/step_1_2.png}};
-    \node (s14) at (2.5cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_3.png}};
-    \node (s15) at (2.5cm,0cm) {\includegraphics[scale=0.04]{img/frame_shift/step_1_4.png}};
-
-    \node (s21) at (6cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_0.png}};
-    \node (s22) at (5.6cm,6cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_1.png}};
-    \node (s23) at (6cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_2.png}};
-    \node (s24) at (5.7cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_2_3.png}};
-    \node (s25) at (5.6cm,0cm) {\includegraphics[scale=0.05]{img/frame_shift/step_2_4.png}};
-
-    \node (s31) at (9cm,8cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_0.png}};
-    \node (s32) at (9cm,6cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_1.png}};
-    \node (s33) at (9cm,4cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_2.png}};
-    \node (s34) at (9cm,2cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_3.png}};
-    \node (s35) at (8.8cm,0cm) {\includegraphics[scale=0.04]{img/frame_shift/step_3_4.png}};
-
-    \node (wt) at  (13cm,2cm) {\includegraphics[scale=0.1]{img/frame_shift/wt.png}};
-    \node (wtn) at  (11cm,1cm) {WT};
-    \node (mfe) at (13cm,6cm) {\includegraphics[scale=0.1]{img/frame_shift/mfe.png}};
-    \node (mfen) at  (11cm,6cm) {MFE};
-
-    \draw (s0) edge[pil,->,thick,bend,right] (s11);
-    \draw (s0) edge[pil,->,thick,bend,right] (s12);
-    \draw (s0) edge[pil,->,thick,bend,right] (s13);
-    \draw (s0) edge[pil,->,thick,bend,right] (s14);
-    \draw (s0) edge[pil,->,thick,bend,right] (s15);
-
-    \draw (s13) edge[pil,->,thick,bend,right] (s23);
-    \draw (s11) edge[pil,->,thick,bend,right] (s21);
-    \draw (s11) edge[pil,->,thick,bend,right] (s22);
-    \draw (s11) edge[pil,->,thick,bend,right] (s24);
-    \draw (s11) edge[pil,->,thick,bend,right] (s25);
-
-    \draw (s21) edge[pil,->,thick,bend,right] (s31);
-    \draw (s21) edge[pil,->,thick,bend,right] (s32);
-    \draw (s21) edge[pil,->,thick,bend,right] (s33);
-    \draw (s21) edge[pil,->,thick,bend,right] (s34);
-    \draw (s21) edge[pil,->,thick,bend,right] (s35);
-    \draw (s24) edge[pil,->,thick,bend,right] (s34);
-
+    \node (s11) at (0cm,0cm) {\includegraphics[scale=0.5]{img/frame_shift/path_5.png}};
+    \node (wt) at  (9cm,-2cm) {\includegraphics[scale=0.1]{img/frame_shift/wt.png}};
+    \node (wtn) at  (8cm,-3cm) {WT};
+    \node (mfe) at (9cm,3cm) {\includegraphics[scale=0.1]{img/frame_shift/mfe.png}};
+    \node (mfen) at  (8cm,3cm) {MFE};
   \end{tikzpicture}
-  \caption{\textbf{Fast folding path prediction for the Coronavirus frameshifting stimulation element.\label{folding_dynamics}.}}
+  \caption{\textbf{Fast-folding paths prediction for the Coronavirus frameshifting stimulation element.\label{folding_dynamics}.}}
 \end{figure}
 #+end_src
 
@@ -524,74 +479,76 @@ structures, found to be closer than the MFE, and depicted simple folding paths.
 #    Boltzmann ensemble and the natural structures.
 
 # summarize the method
-We have proposed a simple heuristic of the RNA folding dynamic called RAFFT for
-fast-folding paths. This heuristic uses a greedy rule. Groups of consecutive
-base pairs, stems, found to improve the energy are formed along with the
-procedure. Hence, it produces smooth and coarse-grained trajectories. To search
-for consecutive base pairs, we implemented an FFT-based technique that uses a
-mirror encoding. Once a stem is formed, the sequence is split into two
-independent segments on which one can recursively search for new stems. For one
-sequence, the algorithm can follow $k$ folding paths.
+We have proposed a heuristic of the RNA fast-fold paths called RAFFT. This
+heuristic uses a greedy rules. First, it searches for groups of consecutive base
+pairs, stems, and from them if they improve the energy. Hence, it produces
+smooth and coarse-grained trajectories. To search for consecutive base pairs, we
+implemented an FFT-based technique that uses a mirror encoding. Once a stem is
+formed, the sequence is split into two independent segments on which one can
+recursively search for new stems. For one sequence, the algorithm can follow
+multiple folding paths.
 
 # performance comparable to MFE estimation but less good than the ML method
 To assess the relevance of the folding trajectories produced, we compared the
-algorithm performance for the folding task. We considered three methods to
-compare with: the MFE structure computed using RNAfold, the ML-based estimate
+algorithm performance for the folding task. Two structure estimates were
+compared with: the MFE structure computed using RNAfold, the ML-based estimate
 using MxFold2. Other thermodynamic-based and ML-based tools were investigated
 but not shown here. We chose the MFE since it provides an intuitive
 interpretation in the structure landscape, and the MEA prediction was not found
-to be significantly more accurate cite:mathews19_how_to_bench_rna_secon.
+to be significantly more accurate cite:mathews19_how_to_bench_rna_secon. The ML
+estimates gives a data view of the structure spaces.
 
 # 
 From our experiments, RAFFT had an overall performance below the MFE predictions
 by 8.1% of PVV and 10.3% of sensitivity. The ML-based approach dominated the
 predictions (70.4% of PPV and 77.1% of sensitivity). We observed some drastic
 loss of accuracies when the known structures contained large unpaired regions.
-However, those sequences were anecdotal in the dataset. Moreover, these regions
-are unlikely to be stable and assumed to be very flexible. However, the effect
-of unpaired regions seemed less dramatic for the ML method since it can produce
-some of those atypical structures. Also, we found no striking evidence of the
-length effect on prediction quality. Moreover, no empirical effect of the base
-spanning was observed (see supp mat) as already pointed out in
+However, those sequences were anecdotal in the dataset. Moreover, those regions
+are unlikely to be stable and assumed to be very flexible. Nevertheless, the
+effect of unpaired regions seemed less dramatic for the ML method since it can
+produce some of those atypical structures. No striking evidences of the length
+effect on prediction quality. In addition, no empirical effects of the base
+spanning was observed (see supp. mat.) as already pointed out in
 cite:amman13_troub_long_range_base_pairs_rna_foldin.
 
 # structure space organization
 The PCA performed on the known structure compositions revealed a structure space
-prone to elongated structures where large unpaired hairpins loops and exterior
+prone to elongated structures where large unpaired hairpin loops and exterior
 loops can be observed. The PCA analysis performed on the structures predicted by
 the thermodynamic-based methods (RAFFT and MFE) shown similar structure space,
-where flexible loops such as long hairpins or exterior loops are of limited
-number. On the other hand, the ML method seemed to be closer to the natural
-structure space. According to the thermodynamic model, those unpaired regions
-have local stability equal to zero. Hence, those regions are not stable at
-regular experimental conditions in the sense that they may not have a unique
-stable structure. However, the ML-method was able to identify such structure
-more consistently than thermodynamic methods. The PCA revealed a group
-structures with high percents of hairpins. This may suggest some overfitting
-effects. We argue that not being able to recover such structures is proof of
-robustness.
+where unpaired regions are of limited number. On the other hand, the ML method
+seemed to be closer to the natural structure space. According to the
+thermodynamic model, those unpaired regions have local stability equal to zero.
+Hence, those regions are not stable at regular experimental conditions in the
+sense that they may not have a unique stable structure. However, the ML-method
+was able to identify such structure more consistently than thermodynamic
+methods. The PCA revealed a group structures with high percents of hairpins.
+This may suggest some overfitting effects. Therefore, not being able to recover
+such structures would be proof of robustness.
 
 # one trajectory found to be near native for short sequences, near native smooth
 # folding path
-Although the overall performance of RAFFT was weak compared to the state of the
-art in the folding task, we found one among the $k=50$ predicted trajectories
-that had better accuracy than the low energy trajectory displayed. In fact, the
-gain of performance is substantial for the sequences of length lesser than 200
-nucleotides with about 16% better in PPV than the MFE predictions. The
-performance is significantly similar to the ML-base method for that length
-range. Sequences of length \lt 200 nucleotides represent 86.4% of the total
-dataset. However, for the 140 sequences of length greater than 300 nucleotides,
-all $k$ predictions per sequence were similar and performed worst than the other
-methods. This could be partially explained by the greediness of the algorithm,
-however, we also believe that the thermodynamic could be a complementary
-explanation. Indeed, the additivity of the loop contributions to the stability
-assumed is likely to be doomed for large sequences cite:tinoco99_how_rna_folds.
-However, the MFE did not show any notable discrepancy for large sequences (\gt
-600 nucleotides). This could be explained by the observation used in kinwalker,
-where locally optimal substructures composed the native structures. We tried
-RAFFT with a larger number of saved structures in the stack, however, it only
-got closer to the MFE prediction quality and did not perform better (see supp
-mat) on large sequences.
+Although the overall performance of RAFFT was only fair compared in the folding
+task, we found one among the $k=50$ predicted trajectories that had better
+accuracy than the low energy structure displayed. In fact, the gain of
+performance is substantial for the sequences of length below 200 nucleotides
+with 16% better in PPV than the MFE predictions. The performance is
+significantly similar to the ML-base method for that length range. Sequences of
+length \lt 200 nucleotides represent 86.4% of the total dataset. For the 140
+sequences of length greater than 300 nucleotides, all $k$ predictions per
+sequence were similar and performed worst than the other methods. This could be
+partially explained by the greediness of the algorithm, however, we also believe
+that the thermodynamic energy model could give a complementary explanation.
+Indeed, the additivity of the loop contributions to the stability is likely to
+be doomed for large sequences cite:tinoco99_how_rna_folds. However, the MFE did
+not show any notable discrepancy for large sequences (\gt 300 nucleotides)
+except for a few structures with large unpaired regions. This could be explained
+by the observation used in kinwalker, where locally optimal substructures
+composed the native structures. Therefore, we assume that the MFE structure is
+more often composed of locally optimal structures. We tried RAFFT with a larger
+number of saved structures in the stack, however, it only got closer to the MFE
+prediction quality and did not perform better (see supp. mat.) on large
+sequences.
 
 # limit of the thermodynamic model
 
@@ -601,7 +558,7 @@ the fast-folding path since it can produce predictions of high accuracy for
 86.4% of this dataset. The folding paths as calculated by RAFFT are smooth and
 coarse-grained since whole stems are formed, if it improves the energy, and
 leads to near-native structures. This near-native coarse-grained folding path is
-an intuitive idea that gets along with the funnel protein folding landscape. We
+an intuitive idea that is similar to the funnel protein folding landscape. We
 expect this heuristic to give valuable and complementary information to the
 MFE-like predictions. However, additional efforts are necessary to determine
 whether the folding paths followed were experimentally observed.

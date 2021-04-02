@@ -31,6 +31,12 @@ FLAMM, C., FONTANA, W., HOFACKER, I.~L., and SCHUSTER, P. (2000).
 \newblock Rna folding at elementary step resolution.
 \newblock {\em RNA}, 6(3):325--338.
 
+\bibitem[Geis et~al., 2008]{geis2008folding}
+Geis, M., Flamm, C., Wolfinger, M.~T., Tanzer, A., Hofacker, I.~L., Middendorf,
+  M., Mandl, C., Stadler, P.~F., and Thurner, C. (2008).
+\newblock Folding kinetics of large rnas.
+\newblock {\em Journal of molecular biology}, 379(1):160--173.
+
 \bibitem[Hofacker, 2003]{hofacker03_vienn_rna_secon_struc_server}
 Hofacker, I.~L. (2003).
 \newblock Vienna rna secondary structure server.
