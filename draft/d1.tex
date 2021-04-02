@@ -1,4 +1,4 @@
-% Created 2021-04-02 ven. 16:02
+% Created 2021-04-02 ven. 21:47
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -7,22 +7,23 @@
 
 
 \usepackage{amsmath}
-\usepackage{caption,graphicx,subcaption}
+\usepackage{caption,graphicx}
 \usepackage[boxed]{algorithm2e}
 \usepackage{authblk,tikz}
-\usetikzlibrary{arrows,positioning}
-\tikzset{
->=stealth',
-pil/.style={ ->, thick, shorten <=2pt, shorten >=2pt,}}
+\usepackage[left]{lineno}
+\linenumbers
+\usepackage{setspace}
+\doublespacing
 \author[]{Vaitea Opuu}
 \author[]{Nono S. C. Merleau}
 \author[]{Matteo Smerlak}
 \affil[]{Max Planck Institute for Mathematics in the Sciences, D-04103 Leipzig, Germany}
 \date{\today}
-\title{RNA fast-folding paths}
+\title{An RNA fast-folding path heuristic}
 \begin{document}
 
 \maketitle
+\begin{abstract}
 We propose a heuristic to the folding dynamic making use of a mirror encoding
 and the fast Fourier transform (FFT) called RAFFT. Based on simple folding
 rules, it can create many parallel folding paths. The performance in the folding
@@ -38,17 +39,18 @@ which are intuitive to analyze and get along with the traditional two states
 view of the protein folding landscape. Hence, those paths could well approximate
 fast-folding paths. Since the algorithm was designed toward speed, it can
 readily be applied to large RNAs.
+\end{abstract}
 
 \section{Introduction}
-\label{sec:orgf6a759d}
+\label{sec:org42c9c3e}
 Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA\ldots{}), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
 functions can be better understood through the light of their static
-tri-dimensional structure. However, with the discovery of riboswitch RNA
-molecules (\textbf{ref}), the dynamic behavior of RNA got more interest. Several other
-RNA systems were found to allow multiple metastable structures allowing for
-highly tunable functions (\textbf{ref from kinwalker}).
+tri-dimensional structure. However, some important regulatory RNAs like
+riboswitch have their biological function tightly bound to their dynamic
+behavior \cite{vitreschak04_ribos}. Therefore, a good understanding of RNAs
+dynamical aspects is important.
 
 RNA molecules are bio-polymers composed of nucleotides. These nucleotides are
 simple molecules composed of a phosphate-based backbone, a ribose, and a
@@ -155,7 +157,7 @@ element \cite{baranov05_progr_ribos_frames_decod_sars_cov_genom}, where it
 found closer structures than the MFE.
 
 \section{FFT based folding dynamic heuristic}
-\label{sec:org24fb77c}
+\label{sec:org6fe6021}
 We now describe the heuristic starting from one sequence S and its associated
 unfolded structure of length L. We first create a numerical representation of S
 where each type of nucleotide is replaced by a unit vector of 4 components:
@@ -226,13 +228,12 @@ that has the best overall stability.
 The algorithm described so far tends to be stuck in the first local minima found
 along the folding trajectory. To alleviate this, we propose a stacking procedure
 where the best trajectories are stored in a stack and evolved in parallel.
-Hence, it offers the flexibility of overcoming some energy barriers. \textbf{Figure}
-shows the whole procedure. Once no stem can be formed, the algorithm stops and
-output the structure with the best energy found among the structures saved in
-the stack.
+Hence, it offers the flexibility of overcoming some energy barriers. Once no
+stem can be formed, the algorithm stops and output the structure with the best
+energy found among the structures saved in the stack.
 
 \section{Application to the folding task}
-\label{sec:orgac48060}
+\label{sec:orgd6fb94a}
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
@@ -254,14 +255,14 @@ performance for sequences of length greater than 300 nucleotides.
 Among the 50 structures produced by RAFFT, we found on average at least one
 prediction with 59\% of PPV and 63\% of sensitivity as shown figure \ref{perf_fig}.
 The overall gain of performances is not significantly different from the MFE
-predictions. However, for the sequences of length lesser than 200 nucleotides,
-this gain was found to be substantial and significant (\(\approx\) 16 \% better than
-the MFE) with PVV \(\approx\) 79\% and sensitivity \(\approx\) 81\%. The accuracy for
-those sequences is equivalent to ML performances. For sequence lengths greater
-than 300 nucleotides, we observed the same drastic loss of accuracy, although we
-took only the best prediction among the 50 saved configurations for each
-sequence. We investigated the dependency to the base pair spanning, however, we
-did not find any significant effect (see supp. mat.).
+predictions. However, for the sequences of length below 200 nucleotides, this
+gain was found to be substantial and significant (\(\approx\) 16 \% better than the
+MFE) with PVV \(\approx\) 79\% and sensitivity \(\approx\) 81\%. The accuracy for those
+sequences is equivalent to ML performances. For sequence lengths greater than
+300 nucleotides, we observed the same drastic loss of accuracy, although we took
+only the best prediction among the 50 saved configurations for each sequence. We
+investigated the dependency to the base pair spanning, however, we did not find
+any significant effect (see supp. mat.).
 
 Two regions of lack of performance were observed for all methods. A group of 28
 sequences of length shorter than 80 nucleotides have their known structures at
@@ -276,7 +277,7 @@ sequences also displayed large unpaired regions \ref{diff_struct}.
   \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_sens.png}}
   \caption{\textbf{Predicted positive values and sensitivity
       results\label{perf_fig}.} RAFFT (blue) displayed the best energy found.
-    RAFFT* shows the best score found among 50 saved structures. Left pans show
+    RAFFT* shows the best score found among 50 saved structures. Right pans show
     the density (sequence-wise) of the accuracy measures.}
 \end{figure}
 
@@ -334,16 +335,17 @@ regions in long hairpins which tend to be closer to the dataset structure space.
   \centering
   \includegraphics[scale=0.5]{img/pca_known.png}\\
   \includegraphics[scale=0.7]{img/pca_predicted.png} 
-  \caption{\textbf{PCA analysis of the known structure and predicted structures. \label{pca_struct}}
-    First row shows two PCA for the known structures.
-    The left side shows the mapped of predictions where RAFFT obtained $\leq$ 10 of PPV.
-    The right side shows the mapped of preditions where MFE obtained $\leq$ 10 of PPV.
-    The second row shows the PCA of the predicted strucrures for RAFFT, the MFE, and the ML predictions.}
+  \caption{\textbf{PCA analysis of the known structure and predicted
+      structures. \label{pca_struct}} The first row shows two PCAs for the known
+    structures. In the left side, RAFFT predictions with PPV $\leq$ 10 are
+    colored in blue. In the left side, MFE structures with PPV $\leq$ 10 are
+    colored in orange. The second row shows the PCA of the predicted strucrures
+    for RAFFT, the MFE, and the ML method.}
 \end{figure}[!ht]
 
 \clearpage
 \section{Test case to predict fast-folding paths}
-\label{sec:org74ed67c}
+\label{sec:org3e617cc}
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
 with a secondary structure determined by sequence analysis and obtained from the
@@ -370,7 +372,7 @@ tested with 20 saved structure (see supp. mat.), and obtained similar results.
 
 \clearpage
 \section{Concluding discussion}
-\label{sec:org8e7f763}
+\label{sec:org387b1cf}
 We have proposed a heuristic of the RNA fast-fold paths called RAFFT. This
 heuristic uses a greedy rules. First, it searches for groups of consecutive base
 pairs, stems, and from them if they improve the energy. Hence, it produces
@@ -459,7 +461,7 @@ an ML-base scoring to discriminate the folding path that is likely to be
 observed.
 
 \section{Methods}
-\label{sec:org16c0721}
+\label{sec:org29b71bf}
 Starting from the ArchiveII dataset, we first removed all the structures with
 pseudoknots since all tools considered here don't handle pseudoknots. Next, we
 removed all the structures which were evaluated with positive or null energy
@@ -511,6 +513,9 @@ those sizes into percents of types of loops from which we computed the principal
 components. For visual conveniences, the structure compositions were projected
 onto the first two principal components. The composition arrows represent the
 eigenvectors obtained from the diagonalization of the covariance matrix.
+
+The secondary structure representations were obtained with VARNA
+\cite{darty09_varna}.
 
 \bibliographystyle{apalike}
 \bibliography{../../bibliography/references}

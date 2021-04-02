@@ -15,6 +15,12 @@ Baranov, P.~V., Henderson, C.~M., Anderson, C.~B., Gesteland, R.~F., Atkins,
 \newblock Programmed ribosomal frameshifting in decoding the sars-cov genome.
 \newblock {\em Virology}, 332(2):498--510.
 
+\bibitem[Darty et~al., 2009]{darty09_varna}
+Darty, K., Denise, A., and Ponty, Y. (2009).
+\newblock Varna: Interactive drawing and editing of the rna secondary
+  structure.
+\newblock {\em Bioinformatics}, 25(15):1974--1975.
+
 \bibitem[Dill, 1997]{dill97_addit_princ_bioch}
 Dill, K.~A. (1997).
 \newblock Additivity principles in biochemistry.
@@ -124,6 +130,12 @@ Turner, D.~H. and Mathews, D.~H. (2009).
 \newblock Nndb: the nearest neighbor parameter database for predicting
   stability of nucleic acid secondary structure.
 \newblock {\em Nucleic Acids Research}, 38(suppl_1):D280--D282.
+
+\bibitem[Vitreschak, 2004]{vitreschak04_ribos}
+Vitreschak, A. (2004).
+\newblock Riboswitches: the oldest mechanism for the regulation of gene
+  expression?
+\newblock {\em Trends in Genetics}, 20(1):44--50.
 
 \bibitem[Zuker, 2003]{zuker03_mfold_web_server_nucleic_acid}
 Zuker, M. (2003).

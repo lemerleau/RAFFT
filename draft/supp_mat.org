@@ -32,4 +32,4 @@
 file:img/bp_spanning.png
 
 #+caption: *Fast-folding paths with 20 saved structures for the Coronavirus frameshifting stimulation element.*
-file:img/path_20.png
+file:img/frame_shift/path_20.png

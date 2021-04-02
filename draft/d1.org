@@ -1,17 +1,16 @@
-#+TITLE: RNA fast-folding paths
+#+TITLE: An RNA fast-folding path heuristic
 #+OPTIONS: H:4 toc:nil
 #+OPTIONS: author:nil
 #+LaTeX_CLASS: orgReadme
 #+LaTeX_HEADER: \usepackage{amsmath}
-#+LaTeX_HEADER: \usepackage{caption,graphicx,subcaption}
+#+LaTeX_HEADER: \usepackage{caption,graphicx}
 #+LaTeX_HEADER: \usepackage[boxed]{algorithm2e}
 #+latex_header: \usepackage{authblk,tikz} 
+#+latex_header: \usepackage[left]{lineno}
+#+latex_header: \linenumbers
+#+latex_header: \usepackage{setspace}
+#+latex_header: \doublespacing
 
-
-#+latex_header: \usetikzlibrary{arrows,positioning} 
-#+latex_header:   \tikzset{
-#+latex_header:    >=stealth',
-#+latex_header:    pil/.style={ ->, thick, shorten <=2pt, shorten >=2pt,}}
 #+latex_header: \author[]{Vaitea Opuu}
 #+latex_header: \author[]{Nono S. C. Merleau}
 #+latex_header: \author[]{Matteo Smerlak}
@@ -33,12 +32,13 @@
 # - intraloop interactions can sause sequence-dependent loop free energy + folding
 #   pk and tertiary structures are nonadditive (RNA conf statistics).
 
+\begin{abstract}
 We propose a heuristic to the folding dynamic making use of a mirror encoding
 and the fast Fourier transform (FFT) called RAFFT. Based on simple folding
 rules, it can create many parallel folding paths. The performance in the folding
 task on a well-curated dataset when compared to the state-of-the-art folding
 tools was fair. However, when all parallel folding paths were analyzed, it
-revealed near-native predictions (79% PPV and 81% sensitivity) for sequences of
+revealed near-native predictions (79\% PPV and 81\% sensitivity) for sequences of
 length below 200 nucleotides. On average, those predictions were found to be of
 similar quality to recent deep-learning-based methods. The folding paths were
 built with the stem rate model which displays coarse-grained folding paths.
@@ -48,6 +48,7 @@ which are intuitive to analyze and get along with the traditional two states
 view of the protein folding landscape. Hence, those paths could well approximate
 fast-folding paths. Since the algorithm was designed toward speed, it can
 readily be applied to large RNAs.
+\end{abstract}
 
 * Introduction
 # ** RNA folding introduction
@@ -76,10 +77,10 @@ Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA...), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
 functions can be better understood through the light of their static
-tri-dimensional structure. However, with the discovery of riboswitch RNA
-molecules (*ref*), the dynamic behavior of RNA got more interest. Several other
-RNA systems were found to allow multiple metastable structures allowing for
-highly tunable functions (*ref from kinwalker*).
+tri-dimensional structure. However, some important regulatory RNAs like
+riboswitch have their biological function tightly bound to their dynamic
+behavior cite:vitreschak04_ribos. Therefore, a good understanding of RNAs
+dynamical aspects is important.
 
 # general introduction on RNA structures
 # hierarchical
@@ -293,10 +294,9 @@ that has the best overall stability.
 The algorithm described so far tends to be stuck in the first local minima found
 along the folding trajectory. To alleviate this, we propose a stacking procedure
 where the best trajectories are stored in a stack and evolved in parallel.
-Hence, it offers the flexibility of overcoming some energy barriers. *Figure*
-shows the whole procedure. Once no stem can be formed, the algorithm stops and
-output the structure with the best energy found among the structures saved in
-the stack.
+Hence, it offers the flexibility of overcoming some energy barriers. Once no
+stem can be formed, the algorithm stops and output the structure with the best
+energy found among the structures saved in the stack.
 
 * Application to the folding task
 # 1) comparisons to DP folding algorithm -> RNAfold and MFE prediction or MEA
@@ -321,7 +321,7 @@ for each of the 50 structures.
 
 # basic performance comparison
 Figure ref:perf_fig shows the performance in predicted positive values (PPV) and
-sensitivity for the four methods. It shows that the ML method is consistently
+sensitivity for the three methods. It shows that the ML method is consistently
 better than thermodynamic-based methods. Length-wise T-test between the MFE and
 ML predictions showed that this difference is significant (p-value \approx
 10^{-12}) with a substantial improvement of about 10%. Although RAFFT
@@ -333,14 +333,14 @@ performance for sequences of length greater than 300 nucleotides.
 Among the 50 structures produced by RAFFT, we found on average at least one
 prediction with 59% of PPV and 63% of sensitivity as shown figure ref:perf_fig.
 The overall gain of performances is not significantly different from the MFE
-predictions. However, for the sequences of length lesser than 200 nucleotides,
-this gain was found to be substantial and significant (\approx 16 % better than
-the MFE) with PVV \approx 79% and sensitivity \approx 81%. The accuracy for
-those sequences is equivalent to ML performances. For sequence lengths greater
-than 300 nucleotides, we observed the same drastic loss of accuracy, although we
-took only the best prediction among the 50 saved configurations for each
-sequence. We investigated the dependency to the base pair spanning, however, we
-did not find any significant effect (see supp. mat.).
+predictions. However, for the sequences of length below 200 nucleotides, this
+gain was found to be substantial and significant (\approx 16 % better than the
+MFE) with PVV \approx 79% and sensitivity \approx 81%. The accuracy for those
+sequences is equivalent to ML performances. For sequence lengths greater than
+300 nucleotides, we observed the same drastic loss of accuracy, although we took
+only the best prediction among the 50 saved configurations for each sequence. We
+investigated the dependency to the base pair spanning, however, we did not find
+any significant effect (see supp. mat.).
 
 # where it fails here when the structure is small
 # unpaired regions are difficult to predict if that's a signal of something.
@@ -358,7 +358,7 @@ sequences also displayed large unpaired regions ref:diff_struct.
   \subfloat[]{\includegraphics[scale=0.5]{img/fold_perf_sens.png}}
   \caption{\textbf{Predicted positive values and sensitivity
       results\label{perf_fig}.} RAFFT (blue) displayed the best energy found.
-    RAFFT* shows the best score found among 50 saved structures. Left pans show
+    RAFFT* shows the best score found among 50 saved structures. Right pans show
     the density (sequence-wise) of the accuracy measures.}
 \end{figure}
 
@@ -418,11 +418,12 @@ regions in long hairpins which tend to be closer to the dataset structure space.
   \centering
   \includegraphics[scale=0.5]{img/pca_known.png}\\
   \includegraphics[scale=0.7]{img/pca_predicted.png} 
-  \caption{\textbf{PCA analysis of the known structure and predicted structures. \label{pca_struct}}
-    First row shows two PCA for the known structures.
-    The left side shows the mapped of predictions where RAFFT obtained $\leq$ 10 of PPV.
-    The right side shows the mapped of preditions where MFE obtained $\leq$ 10 of PPV.
-    The second row shows the PCA of the predicted strucrures for RAFFT, the MFE, and the ML predictions.}
+  \caption{\textbf{PCA analysis of the known structure and predicted
+      structures. \label{pca_struct}} The first row shows two PCAs for the known
+    structures. In the left side, RAFFT predictions with PPV $\leq$ 10 are
+    colored in blue. In the left side, MFE structures with PPV $\leq$ 10 are
+    colored in orange. The second row shows the PCA of the predicted strucrures
+    for RAFFT, the MFE, and the ML method.}
 \end{figure}[!ht]
 #+end_src
 
@@ -653,6 +654,10 @@ those sizes into percents of types of loops from which we computed the principal
 components. For visual conveniences, the structure compositions were projected
 onto the first two principal components. The composition arrows represent the
 eigenvectors obtained from the diagonalization of the covariance matrix.
+
+# structure representations
+The secondary structure representations were obtained with VARNA
+cite:darty09_varna.
 
 bibliographystyle:apalike
 bibliography:~/project_ori/bibliography/references.bib

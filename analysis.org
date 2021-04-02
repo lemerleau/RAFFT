@@ -802,7 +802,7 @@ struct=(
 output="img/frame_shift/step_1"
 resolution=3
 for i in {0..4}; do
-    java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+    java -cp  ./utility/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
          -sequenceDBN $seq -structureDBN ${struct[$i]} -o ${output}_${i}.png -resolution $resolution\
          -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.5 -baseInner "#051C2C"\
          -baseName "#051C2C" -background "#000000" -periodNum 1000
@@ -817,7 +817,7 @@ struct=".......((((((((..((.....)).))))))))..((.((((.(((....))))).)).)).........
 
 output="img/frame_shift/wt.png"
 resolution=3
-java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+java -cp  ./utility/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
         -sequenceDBN $seq -structureDBN $struct -o $output -resolution $resolution\
         -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
         -background "#000000" -periodNum 1000
@@ -880,28 +880,28 @@ struct_wts="(((((((............((((.(.......).).................................
 rna_name=tmRNA_Cyan
 output_fft=img/illed_img/${rna_name}_fft.png
 resolution=2
-java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+java -cp  ./utility/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
         -sequenceDBN $seq -structureDBN $struct_fft -o $output_fft -resolution $resolution\
         -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
         -background "#000000" -periodNum 1000
 
 output_mfe=img/illed_img/${rna_name}_mfe.png
 resolution=2
-java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+java -cp  ./utility/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
      -sequenceDBN $seq -structureDBN $struct_mfe -o $output_mfe -resolution $resolution\
      -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
      -background "#000000" -periodNum 1000
 
 output_mle=img/illed_img/${rna_name}_mle.png
 resolution=2
-java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+java -cp  ./utility/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
      -sequenceDBN $seq -structureDBN $struct_mle -o $output_mle -resolution $resolution\
      -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
      -background "#000000" -periodNum 1000
 
 output_wts=img/illed_img/${rna_name}_wts.png
 resolution=2
-java -cp  ~/Downloads/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
+java -cp  ./utility/VARNAv3-93.jar fr.orsay.lri.varna.applications.VARNAcmd \
      -sequenceDBN $seq -structureDBN $struct_wts -o $output_wts -resolution $resolution\
      -algorithm naview -bpStyle "line" -fillBases True -spaceBetweenBases 0.7 -baseInner "#051C2C"\
      -background "#000000" -periodNum 1000
