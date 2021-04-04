@@ -15,7 +15,7 @@
 #+latex_header: \author[]{Vaitea Opuu}
 #+latex_header: \author[]{Nono S. C. Merleau}
 #+latex_header: \author[]{Matteo Smerlak}
-#+latex_header: \affil[]{Max Planck Institute for Mathematics in the Sciences, D-04103 Leipzig, Germany}
+#+latex_header: \affil[]{Max Planck Institute for Mathematics in the Sciences, Leipzig, Germany}
 
 
 #+begin_src latex :results output

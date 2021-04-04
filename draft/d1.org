@@ -1,6 +1,6 @@
 #+TITLE: An RNA fast-folding path heuristic
 #+OPTIONS: H:4 toc:nil
-#+OPTIONS: author:nil
+#+OPTIONS: author:nil num:nil
 #+LaTeX_CLASS: orgReadme
 #+LaTeX_HEADER: \usepackage{amsmath}
 #+LaTeX_HEADER: \usepackage{caption,graphicx}
@@ -14,7 +14,7 @@
 #+latex_header: \author[]{Vaitea Opuu}
 #+latex_header: \author[]{Nono S. C. Merleau}
 #+latex_header: \author[]{Matteo Smerlak}
-#+latex_header: \affil[]{Max Planck Institute for Mathematics in the Sciences, D-04103 Leipzig, Germany}
+#+latex_header: \affil[]{Max Planck Institute for Mathematics in the Sciences, Leipzig, Germany}
 
 # * Abstract
 # - Simple and fast heuristic for the folding path of RNAs.
@@ -366,26 +366,26 @@ sequences also displayed large unpaired regions ref:diff_struct.
   \centering
   \subfloat[\texttt{srp\_Synt.wolf.\_CP000448}]{
   \begin{tikzpicture}
-    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.03]{./img/illed_img/srp_Heli_fft.png}}};
-    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.03]{./img/illed_img/srp_Heli_mfe.png}}};
-    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.07]{./img/illed_img/srp_Heli_mle.png}}};
-    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.07]{./img/illed_img/srp_Heli_wts.png}}};
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.05]{./img/illed_img/srp_Heli_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.09]{./img/illed_img/srp_Heli_mle.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.09]{./img/illed_img/srp_Heli_wts.png}}};
   \end{tikzpicture}
   }
   \subfloat[\texttt{srp\_Meth.mari.\_CP000745}]{
   \begin{tikzpicture}
-    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_fft.png}}};
-    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_mfe.png}}};
-    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_mle.png}}};
-    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.08]{./img/illed_img/srp_Meth_wts.png}}};
+    \node (s11) at (0cm,3cm) {\subfloat[RAFFT]{\includegraphics[scale=0.10]{./img/illed_img/srp_Meth_fft.png}}};
+    \node (s12) at (3cm,3cm) {\subfloat[MFE]{\includegraphics[scale=0.10]{./img/illed_img/srp_Meth_mfe.png}}};
+    \node (s13) at (0cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.10]{./img/illed_img/srp_Meth_mle.png}}};
+    \node (s14) at (3cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.10]{./img/illed_img/srp_Meth_wts.png}}};
   \end{tikzpicture}
   }\\
   \subfloat[\texttt{tmRNA\_Cyan.mero.\_AY286123\_1\-236}]{
   \begin{tikzpicture}
-    \node (s11) at (0cm,0cm) {\subfloat[RAFFT]{\includegraphics[scale=0.06]{./img/illed_img/tmRNA_Cyan_fft.png}}};
-    \node (s12) at (3cm,0cm) {\subfloat[MFE]{\includegraphics[scale=0.06]{./img/illed_img/tmRNA_Cyan_mfe.png}}};
-    \node (s13) at (6cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.08]{./img/illed_img/tmRNA_Cyan_mle.png}}};
-    \node (s14) at (9cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.08]{./img/illed_img/tmRNA_Cyan_wts.png}}};
+    \node (s11) at (0cm,0cm) {\subfloat[RAFFT]{\includegraphics[scale=0.08]{./img/illed_img/tmRNA_Cyan_fft.png}}};
+    \node (s12) at (3cm,0cm) {\subfloat[MFE]{\includegraphics[scale=0.08]{./img/illed_img/tmRNA_Cyan_mfe.png}}};
+    \node (s13) at (6cm,0cm) {\subfloat[ML]{\includegraphics[scale=0.1]{./img/illed_img/tmRNA_Cyan_mle.png}}};
+    \node (s14) at (9cm,0cm) {\subfloat[WT]{\includegraphics[scale=0.1]{./img/illed_img/tmRNA_Cyan_wts.png}}};
   \end{tikzpicture}
   }
 
@@ -416,7 +416,7 @@ regions in long hairpins which tend to be closer to the dataset structure space.
 #+begin_src latex :results output
 \begin{figure}[!ht]
   \centering
-  \includegraphics[scale=0.5]{img/pca_known.png}\\
+  \includegraphics[scale=0.6]{img/pca_known.png}\\
   \includegraphics[scale=0.7]{img/pca_predicted.png} 
   \caption{\textbf{PCA analysis of the known structure and predicted
       structures. \label{pca_struct}} The first row shows two PCAs for the known
@@ -424,10 +424,9 @@ regions in long hairpins which tend to be closer to the dataset structure space.
     colored in blue. In the left side, MFE structures with PPV $\leq$ 10 are
     colored in orange. The second row shows the PCA of the predicted strucrures
     for RAFFT, the MFE, and the ML method.}
-\end{figure}[!ht]
+\end{figure}
 #+end_src
 
-\clearpage
 * Test case to predict fast-folding paths
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
@@ -441,12 +440,15 @@ explored were not saved or evolved since no further improvement (relative to all
 possibilities) was found. RAFFT was able to recover near-native structures,
 found to be closer than the MFE, and depicted simple folding paths. We also
 tested with 20 saved structure (see supp. mat.), and obtained similar results.
+However, we observed the greediness effect of the algorithm where a better path
+in term of stability. Indeed, a better path was achieve since a more stable
+structure was found by allowing less stable intermediates.
 
 # show the natural distribution of structures for methods.
 #+begin_src latex :results output
 \begin{figure}[!h]
   \begin{tikzpicture}
-    \node (s11) at (0cm,0cm) {\includegraphics[scale=0.5]{img/frame_shift/path_5.png}};
+    \node (s11) at (0cm,0cm) {\includegraphics[scale=0.33]{img/frame_shift/path_5.png}};
     \node (wt) at  (9cm,-2cm) {\includegraphics[scale=0.1]{img/frame_shift/wt.png}};
     \node (wtn) at  (8cm,-3cm) {WT};
     \node (mfe) at (9cm,3cm) {\includegraphics[scale=0.1]{img/frame_shift/mfe.png}};
@@ -456,7 +458,22 @@ tested with 20 saved structure (see supp. mat.), and obtained similar results.
 \end{figure}
 #+end_src
 
-\clearpage
+# landscape -> two state folding landscape drawn
+To visualize the landscape drawn by RAFFT, we produced 300 trajectories with 100
+positional lags explored for stems. All unique structures obtained along each
+trajectory were mapped onto a plan using the multidimensional scaling (MDS)
+algorithm. In the landscape, the MDS optimized the mapping in such a way that
+the structure base pair distances were mostly preserved. Figure ref:landscape
+shows the landscape interpolated with the 751 unique structures found. It
+illustrates the two states folding state where all trajectories started from the
+high peak in the center, and smoothly roll down to the blue area.
+
+
+#+attr_latex: :scale 0.85 :placement [h!]
+#+name: landscape
+#+caption: *Landscape built from 300 parallel trajectories.*
+file:img/landscape.png
+
 * Concluding discussion
 # ** Good stuff
 # 1) Simple heuristic to compute folding path
@@ -552,6 +569,10 @@ prediction quality and did not perform better (see supp. mat.) on large
 sequences.
 
 # limit of the thermodynamic model
+As an illustrative example, we applied the heuristic on a natural RNA, the
+Coronavirus frameshifting element. It showed the two states folding landscape
+naturally drawn. All trajectories started from the unfolded state to the stable
+structures.
 
 # near native pathways
 Given the experiment results, we believe that RAFFT is a robust heuristic for
@@ -659,5 +680,5 @@ eigenvectors obtained from the diagonalization of the covariance matrix.
 The secondary structure representations were obtained with VARNA
 cite:darty09_varna.
 
-bibliographystyle:apalike
-bibliography:~/project_ori/bibliography/references.bib
+bibliographystyle:acm
+bibliography:./d1.bib
