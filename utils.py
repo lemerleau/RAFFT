@@ -37,8 +37,8 @@ def paired_positions(structure):
 def prep_sequence(sequence, gc_wei=1.0, au_wei=1.0, gu_wei=1.0):
     """Encode the sequence into two mirror strands
     """
-    ENCODING = {"A": [1., 0, 0, 0], "G": [0, 1., 0, 0], "C": [0, 0, 1., 0], "U": [0, 0, 0, 1.], ".": [0, 0, 0, 0]}
-    CENCODING = {"A": [0, 0, 0, au_wei], "G": [0, 0, gc_wei, gu_wei], "C": [0, gc_wei, 0, 0], "U": [au_wei, gu_wei, 0, 0], ".": [0, 0, 0, 0]}
+    ENCODING = {"A": [1., 0, 0, 0], "G": [0, 1., 0, 0], "C": [0, 0, 1., 0], "U": [0, 0, 0, 1.], "N": [0, 0, 0, 0]}
+    CENCODING = {"A": [0, 0, 0, au_wei], "G": [0, 0, gc_wei, gu_wei], "C": [0, gc_wei, 0, 0], "U": [au_wei, gu_wei, 0, 0], "N": [0, 0, 0, 0]}
     CAN_PAIR = [('A', 'U'), ('U', 'A'), ('G', 'C'), ('C', 'G'), ('G', 'U'), ('U', 'G')]
 
     # the foward strand use the normal encoding

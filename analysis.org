@@ -508,6 +508,92 @@ plt.show()
 
 #+RESULTS:
 
+#+begin_src python :results output
+from utils import paired_positions
+from numpy import mean, std, median, linspace, arange, array
+import numpy as np
+from scipy.stats import kde, ttest_ind
+from RNA import fold_compound, bp_distance
+from utils_analysis import get_loop_content, read_csv, read_true_struct
+from math import isnan, log
+import matplotlib.pyplot as plt
+from matplotlib import rcParams, artist
+from matplotlib.patches import Patch
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.weight"] = "bold"
+plt.rcParams["font.size"] = 6.7
+plt.rcParams["figure.figsize"] = 7, 4.5
+
+fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
+mx_pred = read_csv("./benchmark_results/mxfold_scores.csv")
+fftb_pred = read_csv("./benchmark_results/fft_100n_50ms_scores.csv")
+vrna_pred = read_csv("./benchmark_results/mfe_scores.csv")
+true_str = read_true_struct()
+fft_all_v, mfe_all_v, fftb_all_v, mx_all_v = [], [], [], []
+fft_to_plot, mfe_to_plot, fftb_to_plot, mx_to_plot = {}, {}, {}, {}
+results_mfe, results_fft, results_mx, results = [], [], [], []
+struct_list = []
+
+for seq in true_str:
+    if seq in fft_pred and seq in vrna_pred and seq in fftb_pred and seq in mx_pred:
+        len_seq, fft_st, fft_nrj, fft_nbp, fft_pvv, fft_sens = fft_pred[seq]
+        len_seq, mfe_st, mfe_nrj, mfe_nbp, mfe_pvv, mfe_sens = vrna_pred[seq]
+        len_seq, mx_st, mx_nrj, mx_nbp, mx_pvv, mx_sens = mx_pred[seq]
+        len_seq, fftb_st, fftb_nrj, fftb_nbp, fftb_pvv, fftb_sens = fftb_pred[seq]
+        save_fft, save_mfe, save_line = fft_pvv, mfe_pvv, fftb_pvv
+
+        true_struct, name = true_str[seq]
+        struct_list += [true_struct]
+        int_l, sta_l, mul_l, hai_l, ext_l, bul_l = get_loop_content(true_struct)
+        results += [[int_l, sta_l, mul_l, hai_l, bul_l, ext_l]]
+
+        int_l, sta_l, mul_l, hai_l, ext_l, bul_l = get_loop_content(fft_st)
+        results_fft += [[int_l, sta_l, mul_l, hai_l, bul_l, ext_l]]
+        
+        int_l, sta_l, mul_l, hai_l, ext_l, bul_l = get_loop_content(mfe_st)
+        results_mfe += [[int_l, sta_l, mul_l, hai_l, bul_l, ext_l]]
+        
+        int_l, sta_l, mul_l, hai_l, ext_l, bul_l = get_loop_content(mx_st)
+        results_mx += [[int_l, sta_l, mul_l, hai_l, bul_l, ext_l]]
+
+from scipy.stats import kde
+from scipy import stats
+fig = plt.figure(1)
+entro = lambda el_l: -sum([el * log(el) for el in el_l if el > 0.0])
+# entro = lambda el_l: sum([1.0 for el in el_l if el > 0.1])
+# entro = lambda el_l: el_l[0] + el_l[1]
+test_cond = lambda i: len(struct_list[i]) > 80
+ent_l = [entro(res) for i, res in enumerate(results) if test_cond(i)]
+ent_lfft = [entro(res) for i, res in enumerate(results_fft) if test_cond(i)]
+ent_lmfe = [entro(res) for i, res in enumerate(results_mfe) if test_cond(i)]
+ent_lmx = [entro(res) for i, res in enumerate(results_mx) if test_cond(i)]
+
+print(len(ent_l))
+print(np.mean(ent_l))
+print(np.mean(ent_lfft))
+print(np.mean(ent_lmfe))
+
+x_l = np.linspace(min(ent_l), max(ent_l), 200)
+
+dens_ent = kde.gaussian_kde(ent_l)
+dens_ent_fft = kde.gaussian_kde(ent_lfft)
+dens_ent_mfe = kde.gaussian_kde(ent_lmfe)
+dens_ent_mx = kde.gaussian_kde(ent_lmx)
+
+fft_f = fig.add_subplot(111)
+fft_f.plot(x_l, dens_ent(x_l), c="grey")
+fft_f.plot(x_l, dens_ent_fft(x_l), c="skyblue")
+fft_f.plot(x_l, dens_ent_mfe(x_l), c="orangered")
+fft_f.plot(x_l, dens_ent_mx(x_l), c="blueviolet")
+plt.show()
+#+end_src
+
+#+RESULTS:
+: 1846
+: 1.3922613394107306
+: 1.3495400319683735
+: 1.3389043223233053
+
 * Extract loop composition from predicted structures
 
 #+begin_src python :results output

@@ -76,7 +76,7 @@ def main():
                cmap=cm.coolwarm, alpha=1.0)
 
     ax.set_zlabel(f"Stability (kcal/mol)")
-    plt.savefig("test.png", dpi=300)
+    plt.savefig("test.png", dpi=300, transparent=True)
 
 
 if __name__ == '__main__':
