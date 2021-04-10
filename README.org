@@ -80,6 +80,7 @@ GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGAC
 #+end_example
 
 * Analysis
+** Fast-paths plot
 To create path figures, one can use the utility ~utility/plot_path.py~ with on
 rafft output:
 
@@ -97,7 +98,34 @@ python ../utility/plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o tmp_rafft_fig/
 With 20 saved structures:
 
 [[example/path_20.png]]
+** Kinetic trajectory
+From the above fast-folding paths, one can compute a derived kinetic model. It
+uses the transitions obtained from the graphs shown above and simulate the
+evolution of structure populations. The initial population is completely
+unfolded.
 
+#+begin_src bash :results output
+cd example
+python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 5 -n 300 --verbose > rafft_300.out
+python ../utility/kinetic.py rafft_300.out -ns 50 -fs 12 -o kinetic.png
+#+end_src
+
+where ~-ns~ is the number of integration steps.
+
+In the output, the format is (the ~seq_id~ is also shown in the figure legend):
+
+~<structure> <final population> <stability> <seq_id>~
+
+#+begin_example
+[...]
+.......((((((.(((((...((((..........)))).....))))).))))))((((((.............)))))) 0.000 -16.9 471
+..((((((((((((((.((.....))))))))))))).))).(((.........)))((((((.............)))))) 0.000 -20.5 639
+..((((((((((((((.((.....))))))))))))).)))..((((.((.(((.((....))..))).))))))....... 0.000 -18.5 405
+.....(((((((((((.((.....)))))))))))))...((.((((.((.(((.((....))..))).)))))).)).... 0.000 -19.0 387
+.....(((((((((((.((.....)))))))))))))(((((..((........))..)))))................... 1.000 -21.0 347
+#+end_example
+
+[[example/kinetic.png]]
 * Reproducibility of the benchmarks
 The dataset curated we used for the benchmarks is in
 ~benchmarks_results/benchmark_cleaned_all_length.csv~.
