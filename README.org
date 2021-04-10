@@ -110,6 +110,12 @@ python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGA
 python ../utility/kinetic.py rafft_300.out -ns 50 -fs 12 -o kinetic.png
 #+end_src
 
+where ~-ns~ is the number of integration steps.
+
+In the output, the format is (the ~seq_id~ is also shown in the figure legend):
+
+~<structure> <final population> <stability> <seq_id>~
+
 #+begin_example
 [...]
 .......((((((.(((((...((((..........)))).....))))).))))))((((((.............)))))) 0.000 -16.9 471

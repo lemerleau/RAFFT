@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument('--width', '-wi', help="figure width", type=int, default=8)
     parser.add_argument('--height', '-he', help="figure height", type=int, default=5)
     parser.add_argument('--n_steps', '-ns', help="integration steps", type=int, default=50)
-    parser.add_argument('--line_thick', '-lt', help="line thickness", type=int, default=2)
+    parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.1)
     parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=3)
     return parser.parse_args()
 
@@ -126,7 +126,7 @@ def main():
     kin_f.set_xlim([0, args.n_steps])
     kin_f.set_ylim([-0.01, 1.01])
     for si, st in enumerate(struct_list):
-        if any([el > 0.1 for el in trajectory[:, si]]):
+        if any([el > args.show_thres for el in trajectory[:, si]]):
             kin_f.plot(trajectory[:, si], alpha=0.8, label=si)
 
     kin_f.legend()
