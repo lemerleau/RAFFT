@@ -474,6 +474,29 @@ high peak in the center, and smoothly roll down to the blue area.
 #+caption: *Landscape built from 300 parallel trajectories.*
 file:img/landscape.png
 
+# kinetic
+The graph shown in figure ref:folding_dynamics can be use to describe a folding
+kinetic where transition can occur from left to right (and right to left) but
+not vertically. This follows the idea that parallel paths quickly reach their
+end points. However, if the end points are non-native states, it will slowly
+fold back into the native state. The kinetic is modeled as a Markov process as
+usually done cite:lorenz20_effic_comput_base_probab_multi_rna_foldin. The
+transition rates $r(x\rightarowy)$ between structures $x$ and $y$ are given by:
+\begin{equation}
+r(x\rightarrow y) \propto \text{exp}\{-\beta \Delta \Delta G(x\rightarrow y)\}
+\end{equation}
+where $\beta=1/kT$ (kcal/mol) is the inverse thermal energy. $\Delta \Delta
+G(x\rightarrow y)\$ is the stability change between structure $x$ and $y$. Given
+an initial population of only unfolded structures, one can simulate the
+evolution of structure populations. The structure 347 which dominates the
+kinetic at the end has a stability of -21.0 kcal/mol, and the MFE (also found by
+RAFFT) structure has a stability of 25.8 kcal/mol.
+
+#+attr_latex: :scale 0.85 :placement [h!]
+#+name: landscape
+#+caption: *Folding kinetic derived from the fast-folding scheme with 300 saved structures.*
+file:img/kinetic_comb.png
+
 * Concluding discussion
 # ** Good stuff
 # 1) Simple heuristic to compute folding path
@@ -570,9 +593,16 @@ sequences.
 
 # limit of the thermodynamic model
 As an illustrative example, we applied the heuristic on a natural RNA, the
-Coronavirus frameshifting element. It showed the two states folding landscape
-naturally drawn. All trajectories started from the unfolded state to the stable
-structures.
+Coronavirus frameshifting element. All trajectories started from the unfolded
+state to the stable structures in a "two-states" fashion. Furthermore, we showed
+that the fast-folding paths model can be used as a kinetic model where
+transitions are given by the parallel paths and intermediate structures found.
+Because the folding trajectories are already coarse grained and smooth, the
+kinetic can be drawn without any additional coarsening. Indeed, usual kinetic
+frameworks (cite:lorenz20_effic_comput_base_probab_multi_rna_foldin) need a
+coarse-grained representation of all attraction basins and the saddle points
+that separate them. The structure dominating the kinetic was a structure close
+to the native one although lower energy structures where found.
 
 # near native pathways
 Given the experiment results, we believe that RAFFT is a robust heuristic for

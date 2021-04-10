@@ -69,6 +69,13 @@
 \newblock Viennarna package 2.0.
 \newblock {\em Algorithms for Molecular Biology 6}, 1 (2011), 26.
 
+\bibitem{lorenz20_effic_comput_base_probab_multi_rna_foldin}
+{\sc Lorenz, R., Flamm, C., Hofacker, I., and Stadler, P.}
+\newblock Efficient computation of base-pairing probabilities in multi-strand
+  rna folding.
+\newblock In {\em Proceedings of the 13th International Joint Conference on
+  Biomedical Engineering Systems and Technologies\/} (- 2020), p.~nil.
+
 \bibitem{martinez84_rna_foldin_rule}
 {\sc Martinez, H.~M.}
 \newblock An rna folding rule.

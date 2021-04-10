@@ -1,4 +1,4 @@
-% Created 2021-04-04 dim. 01:58
+% Created 2021-04-10 sam. 11:50
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,12pt]{article}
 \usepackage[position=top,labelformat=empty]{subfig}
@@ -18,6 +18,7 @@
 \author[]{Nono S. C. Merleau}
 \author[]{Matteo Smerlak}
 \affil[]{Max Planck Institute for Mathematics in the Sciences, Leipzig, Germany}
+\usetheme{default}
 \date{\today}
 \title{An RNA fast-folding path heuristic}
 \begin{document}
@@ -42,7 +43,7 @@ readily be applied to large RNAs.
 \end{abstract}
 
 \section*{Introduction}
-\label{sec:org87ec717}
+\label{sec:orgccb777f}
 Natural RNA molecules as proteins have biologically relevant functions in many
 cellular contexts such as protein translation (mRNA, tRNA\ldots{}), but also in
 protein-like functions where RNA can perform enzyme functions. Generally, those
@@ -157,7 +158,7 @@ element \cite{baranov05_progr_ribos_frames_decod_sars_cov_genom}, where it
 found closer structures than the MFE.
 
 \section*{FFT based folding dynamic heuristic}
-\label{sec:orgf62f68a}
+\label{sec:org3f46004}
 We now describe the heuristic starting from one sequence S and its associated
 unfolded structure of length L. We first create a numerical representation of S
 where each type of nucleotide is replaced by a unit vector of 4 components:
@@ -233,7 +234,7 @@ stem can be formed, the algorithm stops and output the structure with the best
 energy found among the structures saved in the stack.
 
 \section*{Application to the folding task}
-\label{sec:org6344f53}
+\label{sec:orgbf52117}
 To evaluate the relevance of the folding dynamic heuristic, we compared its
 performance for the folding task. Also, to assess the effect of sequence
 lengthens on these predictions, we analyzed their performance length-wise. To
@@ -344,7 +345,7 @@ regions in long hairpins which tend to be closer to the dataset structure space.
 \end{figure}
 
 \section*{Test case to predict fast-folding paths}
-\label{sec:orgf17903d}
+\label{sec:org305ed0a}
 Finally, to illustrate RAFFT folding heuristic, we applied it to the Coronavirus
 frameshifting stimulation element. It is an RNA sequence of about 82 nucleotides
 with a secondary structure determined by sequence analysis and obtained from the
@@ -388,8 +389,31 @@ high peak in the center, and smoothly roll down to the blue area.
 \caption{\label{landscape}\textbf{Landscape built from 300 parallel trajectories.}}
 \end{figure}
 
+The graph shown in figure \ref{folding_dynamics} can be use to describe a folding
+kinetic where transition can occur from left to right (and right to left) but
+not vertically. This follows the idea that parallel paths quickly reach their
+end points. However, if the end points are non-native states, it will slowly
+fold back into the native state. The kinetic is modeled as a Markov process as
+usually done \cite{lorenz20_effic_comput_base_probab_multi_rna_foldin}. The
+transition rates \(r(x\rightarowy)\) between structures \(x\) and \(y\) are given by:
+\begin{equation}
+r(x\rightarrow y) \propto \text{exp}\{-\beta \Delta \Delta G(x\rightarrow y)\}
+\end{equation}
+where \(\beta=1/kT\) (kcal/mol) is the inverse thermal energy. \(\Delta \Delta
+G(x\rightarrow y)\\) is the stability change between structure \(x\) and \(y\). Given
+an initial population of only unfolded structures, one can simulate the
+evolution of structure populations. The structure 347 which dominates the
+kinetic at the end has a stability of -21.0 kcal/mol, and the MFE (also found by
+RAFFT) structure has a stability of 25.8 kcal/mol.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.85]{img/kinetic_comb.png}
+\caption{\label{landscape}\textbf{Folding kinetic derived from the fast-folding scheme with 300 saved structures.}}
+\end{figure}
+
 \section*{Concluding discussion}
-\label{sec:orga7fdd72}
+\label{sec:org90b93cd}
 We have proposed a heuristic of the RNA fast-fold paths called RAFFT. This
 heuristic uses a greedy rules. First, it searches for groups of consecutive base
 pairs, stems, and from them if they improve the energy. Hence, it produces
@@ -457,9 +481,16 @@ prediction quality and did not perform better (see supp. mat.) on large
 sequences.
 
 As an illustrative example, we applied the heuristic on a natural RNA, the
-Coronavirus frameshifting element. It showed the two states folding landscape
-naturally drawn. All trajectories started from the unfolded state to the stable
-structures.
+Coronavirus frameshifting element. All trajectories started from the unfolded
+state to the stable structures in a "two-states" fashion. Furthermore, we showed
+that the fast-folding paths model can be used as a kinetic model where
+transitions are given by the parallel paths and intermediate structures found.
+Because the folding trajectories are already coarse grained and smooth, the
+kinetic can be drawn without any additional coarsening. Indeed, usual kinetic
+frameworks (\cite{lorenz20_effic_comput_base_probab_multi_rna_foldin}) need a
+coarse-grained representation of all attraction basins and the saddle points
+that separate them. The structure dominating the kinetic was a structure close
+to the native one although lower energy structures where found.
 
 Given the experiment results, we believe that RAFFT is a robust heuristic for
 the fast-folding path since it can produce predictions of high accuracy for
@@ -483,7 +514,7 @@ an ML-base scoring to discriminate the folding path that is likely to be
 observed.
 
 \section*{Methods}
-\label{sec:org766cd35}
+\label{sec:orgaa6074d}
 Starting from the ArchiveII dataset, we first removed all the structures with
 pseudoknots since all tools considered here don't handle pseudoknots. Next, we
 removed all the structures which were evaluated with positive or null energy
@@ -540,5 +571,5 @@ The secondary structure representations were obtained with VARNA
 \cite{darty09_varna}.
 
 \bibliographystyle{acm}
-\bibliography{../../bibliography/references}
+\bibliography{d1}
 \end{document}
