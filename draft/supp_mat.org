@@ -30,6 +30,3 @@
 
 #+caption: *Base pair spanning: It shows the percent of base pairs predicted found in the known structures per number of nucleotides between them.*
 file:img/bp_spanning.png
-
-#+caption: *Fast-folding paths with 20 saved structures for the Coronavirus frameshifting stimulation element.*
-file:img/frame_shift/path_20.png

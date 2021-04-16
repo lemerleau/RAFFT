@@ -89,15 +89,16 @@ download directly from its website*
 
 #+begin_src bash :results output
 cd example
-python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 5 -n 100 --verbose > rafft.out
-python ../utility/plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o tmp_rafft_fig/paths.png
+python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 20 --verbose > rafft.out
+python ../utility/plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o path_20.png
 #+end_src
 
-[[img/path_5.png]]
+[[example/path_5.png]]
 
 With 20 saved structures:
 
 [[img/path_20.png]]
+
 ** Kinetic trajectory
 From the above fast-folding paths, one can compute a derived kinetic model. It
 uses the transitions obtained from the graphs shown above and simulate the
@@ -106,9 +107,10 @@ unfolded.
 
 #+begin_src bash :results output
 cd example
-python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 5 -n 300 --verbose > rafft_300.out
-python ../utility/kinetic.py rafft_300.out -ns 50 -fs 12 -o kinetic.png
+python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 20 --verbose > rafft_20.out
+python ../utility/kinetic.py rafft_20.out -ns 5000 -o kinetic.png
 #+end_src
+
 
 where ~-ns~ is the number of integration steps.
 
@@ -118,14 +120,32 @@ In the output, the format is (the ~seq_id~ is also shown in the figure legend):
 
 #+begin_example
 [...]
-.......((((((.(((((...((((..........)))).....))))).))))))((((((.............)))))) 0.000 -16.9 471
-..((((((((((((((.((.....))))))))))))).))).(((.........)))((((((.............)))))) 0.000 -20.5 639
-..((((((((((((((.((.....))))))))))))).)))..((((.((.(((.((....))..))).))))))....... 0.000 -18.5 405
-.....(((((((((((.((.....)))))))))))))...((.((((.((.(((.((....))..))).)))))).)).... 0.000 -19.0 387
-.....(((((((((((.((.....)))))))))))))(((((..((........))..)))))................... 1.000 -21.0 347
+.....(((((((((((.((.....)))))))))))))(((((................)))))...................  0.000 -0.000 -17.6 26
+.....(((((((((((..........)))))))))))......................(((........))).........  0.000 -0.000 -16.1 34
+.....(((((((((((..........))))))))))).............................................  0.000 -0.000 -14.0 1
+.....(((((((((((.((.....)))))))))))))(((((..((........))..)))))...................  0.001 -0.001 -21.0 50
+.....(((((((((((.((.....)))))))))))))......................(((........))).........  0.003 -0.000 -17.0 28
+.....(((((((((((..........)))))))))))....................((((((.............))))))  0.007 -0.000 -17.3 27
+.....(((((((((((.((.....)))))))))))))....................((((((.............))))))  0.193 -0.000 -18.2 25
+.....(((((((((((.((.....)))))))))))))((((((((.........))).)))))...................  0.795 -1.000 -23.2 44
 #+end_example
 
-[[img/kinetic.png]]
+[[example/kinetic.png]]
+** Folding landscape
+From the fast-folding paths graph, on can also derived a landscape using the
+multidimensional scaling algorithm to map the structures onto a plan. It tries
+to preserve as much as possible the base pair distance between structures.
+
+#+begin_src bash :results output
+cd example
+python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 20 --verbose > rafft_20.out
+python ../utility/surface.py rafft_20.out -o landscape.png
+#+end_src
+
+#+RESULTS:
+
+[[example/landscape.png]]
+
 * Reproducibility of the benchmarks
 The dataset curated we used for the benchmarks is in
 ~benchmarks_results/benchmark_cleaned_all_length.csv~.
