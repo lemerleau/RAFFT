@@ -488,11 +488,9 @@ where the sum is running over the neighborhood $\mathcal{X}$ of $x$. The
 Arrhenius formulation is commonly called to derived such rates. However, the
 energy considered is the activation energy, the barrier free energy height
 between two states. Here, we used the direct change of stability $\Delta \Delta
-G (x \rightarrow y)$. The transition matrix derived is non-symmetric and
-violates the detail-balance condition. As a consequence the Markov process
-described here is non-reversible. Therefore, this does not yield the traditional
-kinetic analysis but an ansatz of the RNA kinetics, which may not converge
-toward a unique distribution.
+G (x \rightarrow y)$. Therefore, this does not yield the traditional kinetic
+analysis but an ansatz of the RNA kinetics, which may not converge toward a
+unique distribution.
 
 Figure ref:test_case shows the kinetic obtained from the fast-folding graph. The
 structure 44 dominates the kinetic at the end and it has a stability of -23.2
