@@ -104,6 +104,7 @@ def main():
     surf = ax.scatter(pos[:, 0], pos[:, 1], c=nrjs, s=30, lw=0, label='MDS',
                       cmap=cm.coolwarm, alpha=1.0)
 
+    id_struct = [0, -1]
     ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c="black", s=80, lw=0, alpha=1.0)
     ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c=array(nrjs)[id_struct], s=30, lw=0,
                label='MDS', cmap=cm.coolwarm, alpha=1.0)
@@ -120,7 +121,6 @@ def main():
     #         ax.text(px+1.0, py-1.5, ist, fontsize=20)
 
     cb = fig.colorbar(surf, ax=ax)
-    # cb.set_label("Stability (kcal/mol)", rotation=270)
 
     if args.out:
         plt.savefig(args.out, dpi=300, transparent=True)

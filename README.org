@@ -138,6 +138,7 @@ From the fast-folding paths graph, on can also derived a landscape using the
 multidimensional scaling algorithm to map the structures onto a plan. It tries
 to preserve as much as possible the base pair distance between structures.
 
+
 #+begin_src bash :results output
 cd example
 python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 20 --verbose > rafft_20.out
@@ -145,6 +146,8 @@ python ../utility/surface.py rafft_20.out -o landscape.png
 #+end_src
 
 #+RESULTS:
+
+(Initial and minimum energy structure are circled in black)
 
 [[example/landscape.png]]
 
