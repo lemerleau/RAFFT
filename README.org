@@ -93,11 +93,11 @@ python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGA
 python ../utility/plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o tmp_rafft_fig/paths.png
 #+end_src
 
-[[example/path_5.png]]
+[[img/path_5.png]]
 
 With 20 saved structures:
 
-[[example/path_20.png]]
+[[img/path_20.png]]
 ** Kinetic trajectory
 From the above fast-folding paths, one can compute a derived kinetic model. It
 uses the transitions obtained from the graphs shown above and simulate the
@@ -125,7 +125,7 @@ In the output, the format is (the ~seq_id~ is also shown in the figure legend):
 .....(((((((((((.((.....)))))))))))))(((((..((........))..)))))................... 1.000 -21.0 347
 #+end_example
 
-[[example/kinetic.png]]
+[[img/kinetic.png]]
 * Reproducibility of the benchmarks
 The dataset curated we used for the benchmarks is in
 ~benchmarks_results/benchmark_cleaned_all_length.csv~.

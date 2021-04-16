@@ -14,8 +14,9 @@ from colour import Color
 
 
 def get_gradient(quant):
-    blue = Color("LightSkyBlue")
-    colors = list(blue.range_to(Color("DarkBlue"),20))
+    # blue = Color("LightSkyBlue")
+    blue = Color("LightCyan")
+    colors = list(blue.range_to(Color("MidnightBlue"),40))
     col = min(int(quant * len(colors)), len(colors)-1)
     color = tuple([int(el * 255) for el in colors[col].rgb])
     return color
