@@ -16,7 +16,8 @@ plt.rcParams["font.size"] = 8
 plt.rcParams["figure.figsize"] = 7, 4
 
 fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
-fftb_pred = read_csv("./benchmark_results/fft_200n_200ms_scores.csv")
+# fftb_pred = read_csv("./benchmark_results/fft_200n_200ms_scores.csv")
+fftb_pred = read_csv("./old/results_fft_20_scores.csv")
 mx_pred = read_csv("./benchmark_results/mxfold_scores.csv")
 vrna_pred = read_csv("./benchmark_results/mfe_scores.csv")
 true_str = read_true_struct()

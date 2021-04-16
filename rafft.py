@@ -1,11 +1,12 @@
-"""RAFFT is a folding tool that builds fast-folding path for a given sequence.
+"""
+RAFFT is a folding tool that builds fast-folding paths for a given sequence.
 Starting from the completely unfolded structure, it quickly identifies stems
 with an FFT-based technique. Then, forms them if they improve the overall
 stability in a sequential fashion. Multiple folding paths can be explored and
 displayed.
 
 Usage:
-To display only the k=10 structures found
+To display only the k=10 structures found at the end
 python rafft.py [-s <SEQ> | -sf <SEQ_FILE>] -ms 10
 
 To display the k=10 visited at each folding steps
@@ -201,8 +202,8 @@ def bfs_pairs(glob_tree, step=0):
         return all_pairs
 
     # Combine stems formed in independent sub segments
+    nb_branch = 0
     for tree in tmp_glob_tree:
-        nb_branch = 0
         if len(tree) > 1:
             for comp in product(*tree):
                 tmp_tree = []
@@ -251,7 +252,7 @@ def bfs_pairs(glob_tree, step=0):
 def parse_arguments():
     """Parsing command line
     """
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--sequence', '-s', help="sequence")
     parser.add_argument('--seq_file', '-sf', help="sequence file")
     parser.add_argument('--n_mode', '-n', help="Number of positional lags to search for stems", type=int, default=100)
