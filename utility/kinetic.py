@@ -36,11 +36,12 @@ def parse_arguments():
     parser.add_argument('--out', '-o', help="output file")
     parser.add_argument('--width', '-wi', help="figure width", type=int, default=8)
     parser.add_argument('--height', '-he', help="figure height", type=int, default=5)
-    parser.add_argument('--n_steps', '-ns', help="integration steps", type=int, default=50)
+    parser.add_argument('--n_steps', '-ns', help="integration steps", type=int, default=10000)
     parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.01)
     parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=15)
     parser.add_argument('--init_pop', '-ip', help="initialization of the population <POS>:<WEI>", nargs="*")
     parser.add_argument('--temp', '-t', help="kT (kcal/mol)", type=float, default=0.6)
+    parser.add_argument('--plot', action="store_true", help="plot kinetics")
     return parser.parse_args()
 
 
@@ -105,17 +106,16 @@ def main():
                     prev_st, prev_nrj = fast_paths[step_i-1][si]
                     delta_nrj = nrj - prev_nrj
                     map_cur, map_prev = struct_map[struct], struct_map[prev_st]
-                    transition_mat[map_cur, map_prev] = exp(-delta_nrj/KT)
-                    transition_mat[map_prev, map_cur] = exp(delta_nrj/KT)
-
+                    transition_mat[map_cur, map_prev] = exp(delta_nrj/KT)
+                    transition_mat[map_prev, map_cur] = exp(-delta_nrj/KT)
 
     # normalize per line
-    # norm_h = transition_mat.sum(axis=1)
-    # transition_mat = (transition_mat.T/norm_h).T
+    norm_h = transition_mat.sum(axis=1)
+    transition_mat = (transition_mat.T/norm_h).T
 
     # normalize per column
-    norm_v = transition_mat.sum(axis=0)
-    transition_mat = transition_mat/norm_v
+    # norm_v = transition_mat.sum(axis=0)
+    # transition_mat = transition_mat/norm_v
 
     V, W = eig(transition_mat)
     idx = V.argsort()[::-1]
@@ -132,8 +132,9 @@ def main():
     trajectory += [deepcopy(init_pop)]
 
     for st in range(args.n_steps):
-        # dp_pop = matmul(init_pop, transition_mat)
-        init_pop = matmul(transition_mat, init_pop)
+        # init_pop = matmul(transition_mat, init_pop.T)
+        init_pop = matmul(init_pop, transition_mat)
+        # if st % 5000 == 0:
         trajectory += [init_pop]
 
     res = []
@@ -148,30 +149,31 @@ def main():
     for st, fp, nrj in res:
         print("{} {:6.3f} {:6.3f} {:5.1f} {:d}".format(st, fp, final_diag_pop[struct_map[st]], nrj, struct_map[st]))
 
-    trajectory = array(trajectory)
+    if args.plot:
+        trajectory = array(trajectory)
 
-    left, width = 0.10, 0.85
-    bottom, height = 0.10, 0.85
-    spacing = 0.000
-    rect_scatter = [left, bottom, width, height]
-    rect_histy = [left + width + spacing, bottom, 0.2, height]
-    fig = plt.figure(1)
-    kin_f = fig.add_axes(rect_scatter)
-    kin_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+        left, width = 0.10, 0.85
+        bottom, height = 0.10, 0.85
+        spacing = 0.000
+        rect_scatter = [left, bottom, width, height]
+        rect_histy = [left + width + spacing, bottom, 0.2, height]
+        fig = plt.figure(1)
+        kin_f = fig.add_axes(rect_scatter)
+        kin_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 
-    kin_f.set_xlim([1, args.n_steps])
-    kin_f.set_ylim([0.0, 1.01])
+        kin_f.set_xlim([1, args.n_steps])
+        kin_f.set_ylim([0.0, 1.01])
 
-    for si, st in enumerate(struct_list):
-        if any(trajectory[:, si] > args.show_thres):
-            kin_f.plot(trajectory[:, si], alpha=0.8, label=si)
+        for si, st in enumerate(struct_list):
+            if any(trajectory[:, si] > args.show_thres):
+                kin_f.plot(trajectory[:, si], alpha=0.8, label=si)
 
-    kin_f.set_xscale("log")
-    kin_f.legend()
-    if args.out is not None:
-        plt.savefig(args.out, dpi=300, transparent=True)
-    else:
-        plt.show()
+        kin_f.set_xscale("log")
+        kin_f.legend()
+        if args.out is not None:
+            plt.savefig(args.out, dpi=300, transparent=True)
+        else:
+            plt.show()
 
 
 if __name__ == '__main__':

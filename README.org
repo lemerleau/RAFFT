@@ -110,7 +110,7 @@ unfolded.
 #+begin_src bash :results output
 cd example
 python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 20 --verbose > rafft_20.out
-python ../utility/kinetic.py rafft_20.out -ns 5000 -o kinetic.png
+python ../utility/kinetic.py rafft_20.out -ns 5000 -o kinetic.png --plot
 #+end_src
 
 
