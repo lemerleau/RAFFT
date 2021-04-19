@@ -111,7 +111,7 @@ def main():
     path_img = Image.new('RGBA', canvas, 'white')
     # to draw the paths
     nb_steps = len(fast_paths)
-    nb_saved = len(fast_paths[-1])
+    nb_saved = max((len(el) for el in fast_paths))
     rate_w, rate_h = float(width)/float(nb_steps), float(height)/float(nb_saved)
 
     # save position in the canvas for each structure
@@ -171,8 +171,12 @@ def main():
             actual_position[(step_i, str_i)] = (pos_hor + n_fig_w, height//2)
             tmp_left = n_fig_w
 
+        if pos_vert > height:
+            print("error", step_i, pos_vert)
+
         crop_side = pos_hor + tmp_left
         pos_hor += max(int(tmp_left), int(rate_w))
+
 
     # past the paths
     for step_i, fold_step in enumerate(fast_paths):
@@ -202,6 +206,7 @@ def main():
 
     fnt_pos = ImageFont.truetype("{}/Times_New_Roman.ttf".format(dirname(realpath(__file__))), args.font_size)
     path_img = path_img.crop((0, 0, crop_side, height))
+
     if not args.no_col:
         add_grad_img(path_img, 0, min_change, fnt_pos)
 
