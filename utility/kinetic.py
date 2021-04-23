@@ -172,9 +172,9 @@ def main():
         res += [(struct_list[si], final_p, nrj)]
         tot_pop += final_p
 
-    # res.sort(key=lambda el: el[1])
-    # for st, fp, nrj in res:
-    #     print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, struct_map[st]))
+    res.sort(key=lambda el: el[1])
+    for st, fp, nrj in res:
+        print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, struct_map[st]))
 
     if args.plot:
         trajectory = array(trajectory)
