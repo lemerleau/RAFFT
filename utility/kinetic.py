@@ -17,6 +17,21 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 
 
+def diag_evo(V, W, init_pop, time):
+    final_pop = zeros(len(init_pop))
+
+    for i in range(len(init_pop)):
+        final_pop[i] = 0.0
+        for k in range(len(init_pop)):
+            for j in range(len(init_pop)):
+                final_pop[i] += W[i, k] * exp(V[k] * time) * (1.0/W[k, j]) * init_pop[j]
+
+    # for pi, pop in enumerate(init_pop):
+    #     final_pop += pop * W[pi, :] * exp(-V[pi] * time)
+
+    return final_pop
+
+
 def get_connected_prev(cur_struct, prev_pos):
     "get the connected structures"
     cur_pairs = set(paired_positions(cur_struct))
@@ -40,6 +55,7 @@ def parse_arguments():
     parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.01)
     parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=15)
     parser.add_argument('--init_pop', '-ip', help="initialization of the population <POS>:<WEI>", nargs="*")
+    parser.add_argument('--uni', action="store_true", help="uniform distribution")
     parser.add_argument('--temp', '-t', help="kT (kcal/mol)", type=float, default=0.6)
     parser.add_argument('--plot', action="store_true", help="plot kinetics")
     return parser.parse_args()
@@ -66,6 +82,7 @@ def main():
     nb_steps = len(fast_paths)
     nb_saved = len(fast_paths[-1])
 
+
     # transition matrix
     # struct_list = [st for el in fast_paths for st, _ in el]
     struct_list = []
@@ -90,7 +107,7 @@ def main():
     crop_side = 0
     # store best change
     min_change = 0
-    KT = args.temp
+    KT = 0.6
 
     transition_mat[0, 0] = 1.0
     for step_i, fold_step in enumerate(fast_paths):
@@ -100,27 +117,29 @@ def main():
                 nrj_changes[(step_i, str_i)] = {}
                 map2_struct[struct_map[struct]] = (step_i, str_i)
                 map_cur = struct_map[struct]
-                transition_mat[map_cur, map_cur] = 1.0
 
                 for si in lprev_co:
                     prev_st, prev_nrj = fast_paths[step_i-1][si]
                     delta_nrj = nrj - prev_nrj
                     map_cur, map_prev = struct_map[struct], struct_map[prev_st]
-                    transition_mat[map_cur, map_prev] = exp(delta_nrj/KT)
-                    transition_mat[map_prev, map_cur] = exp(-delta_nrj/KT)
+                    if prev_st != struct:
+                        transition_mat[map_cur, map_prev] = exp(delta_nrj/KT)
+                        transition_mat[map_prev, map_cur] = exp(-delta_nrj/KT)
 
-    # normalize per line
+    
+
+    # # normalize per line
     norm_h = transition_mat.sum(axis=1)
     transition_mat = (transition_mat.T/norm_h).T
+
+    for si, struct in enumerate(struct_list):
+        transition_mat[si, si] = -transition_mat[si,:].sum()
 
     # normalize per column
     # norm_v = transition_mat.sum(axis=0)
     # transition_mat = transition_mat/norm_v
-
     V, W = eig(transition_mat)
-    idx = V.argsort()[::-1]
-    W = W[:, idx].real
-    final_diag_pop = W[:, 0]
+    V, W = V.real, W.real
 
     trajectory = []
     if args.init_pop is None:
@@ -129,13 +148,21 @@ def main():
         init_pop = array([0.0 for _ in range(nb_struct)])
         for p, w in init_population:
             init_pop[p] = w
+
+    if args.uni:
+        uni_wei = 1.0/nb_struct
+        for p in range(nb_struct):
+            init_pop[p] = uni_wei
+
     trajectory += [deepcopy(init_pop)]
 
     for st in range(args.n_steps):
-        # init_pop = matmul(transition_mat, init_pop.T)
-        init_pop = matmul(init_pop, transition_mat)
-        # if st % 5000 == 0:
-        trajectory += [init_pop]
+        init_pop += matmul(init_pop, transition_mat) * 0.01
+        trajectory += [init_pop/sum(init_pop)]
+
+        # tmp_pop = diag_evo(V, W, init_pop, float(st))
+        # trajectory += [tmp_pop/sum(tmp_pop)]
+    
 
     res = []
     tot_pop = 0.0
@@ -145,9 +172,9 @@ def main():
         res += [(struct_list[si], final_p, nrj)]
         tot_pop += final_p
 
-    res.sort(key=lambda el: el[1])
-    for st, fp, nrj in res:
-        print("{} {:6.3f} {:6.3f} {:5.1f} {:d}".format(st, fp, final_diag_pop[struct_map[st]], nrj, struct_map[st]))
+    # res.sort(key=lambda el: el[1])
+    # for st, fp, nrj in res:
+    #     print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, struct_map[st]))
 
     if args.plot:
         trajectory = array(trajectory)

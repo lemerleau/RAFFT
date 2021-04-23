@@ -74,8 +74,8 @@ def read_log_file(infile):
 
 
 def test_one_seq(record):
-    # cmd_line = "/home/vaitea/programs/RNAstructure/exe/scorer {} {} {}"
-    cmd_line = "../RNAstructure/exe/scorer {} {} {}"
+    cmd_line = "/home/vaitea/programs/RNAstructure/exe/scorer {} {} {}"
+    # cmd_line = "../RNAstructure/exe/scorer {} {} {}"
     raw_file = "../raw_data/archiveII/{}.ct"
     val = record
     seq, name, conf = val[0], val[1], val[2:]
@@ -89,8 +89,9 @@ def test_one_seq(record):
         pred_pvv, pred_sens = read_log_file(f"./log/{name}_pred.log")
         if pred_pvv >= max_pvv:
             max_pvv, max_sens, max_struct = pred_pvv, pred_sens, struct
+        if ONE:
+            break
     return max_pvv, max_sens, max_struct, seq, name
-
 
 
 def parse_arguments():
@@ -99,17 +100,21 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('input_file', help="input")
     parser.add_argument('output_file', help="input")
+    parser.add_argument('true_struct', help="input")
+    parser.add_argument('--one', action="store_true", help="best structure only")
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
+    global ONE
+    ONE = args.one
     prediction = read_csv(args.input_file)
-    true_str = read_true_struct()
+    true_str = read_true_struct(args.true_struct)
     system("rm -r log")
     system("mkdir -p log")
     pool = Pool(4)
-    # results = pool.map(test_one_seq, prediction[:2])
+    # results = map(test_one_seq, prediction[:2])
     results = pool.map(test_one_seq, prediction)
 
     with open(args.output_file, "w") as out:
@@ -121,6 +126,7 @@ def main():
             len_seq = len(seq)
             nbbp = pred_struct.count("(")
             out.write(f"{seq},{len_seq},{pred_struct},{pred_nrj},{nbbp},{pred_pvv},{pred_sens},{name}\n")
+
 
 if __name__ == '__main__':
     main()

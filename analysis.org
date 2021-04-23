@@ -17,7 +17,8 @@ plt.rcParams["figure.figsize"] = 7, 4
 
 fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
 # fftb_pred = read_csv("./benchmark_results/fft_200n_200ms_scores.csv")
-fftb_pred = read_csv("./old/results_fft_20_scores.csv")
+# fftb_pred = read_csv("./old/results_fft_20_scores.csv")
+fftb_pred = read_csv("./benchmark_results/fft_kin_scores.csv")
 mx_pred = read_csv("./benchmark_results/mxfold_scores.csv")
 vrna_pred = read_csv("./benchmark_results/mfe_scores.csv")
 true_str = read_true_struct()
@@ -148,7 +149,7 @@ name_mx = "ML"
 fft_f.set_title(f"Sensitivity", fontsize=10)
 fft_f.legend((fft_l,fftb_l,mfe_l,mx_l), (f"{name_fft}({fft_mean:4.1f})", f"{name_fftb}({fftb_mean:4.1f})",
                                     f"{name_mfe}({mfe_mean:4.1f})", f"{name_mx}({mx_mean:4.1f})"), loc="lower center", ncol=4)
-plt.savefig("img/fold_perf_sens_200.png", dpi=300)
+# plt.savefig("img/fold_perf_sens_200.png", dpi=300)
 plt.show()
 #+end_src
 
