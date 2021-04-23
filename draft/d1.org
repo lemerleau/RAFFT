@@ -504,6 +504,8 @@ as shown in the fast-folding graph (Figure ref:test_case).
 #+caption: A) Fast-folding path in four steps and 20 saved structures. The edges are colored according to the $\Delta \Delta G$ of stability. At each step, the structures are ordered by their stability from top to bottom. The minimum energy structure found is at the top left of the graph. Visited structures in the kinetic are annotated by a unique ID. B) MFE (computed with RNAfold) and the native structures of the Coronavirus frameshifting element. C) Kinetic of structures with an arbitrary time. D) Fast-folding landscape drawn by all unique structures. The axes are the components optimized by the MDS algorithm so the base pair distances are mostly preserved. Observed structures are also annotated using the unique ID.
 file:img/test_case.png
 
+file:img/kinetic_treekin/kinetic_treekin.png
+
 * Concluding discussion
 # ** Good stuff
 # 1) Simple heuristic to compute folding path

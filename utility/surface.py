@@ -13,6 +13,7 @@ from sklearn import manifold
 from RNA import bp_distance
 from numpy import zeros, meshgrid, array, mgrid
 from numpy.random import RandomState
+from random import uniform
 
 
 def get_distance_matrix(structures):
@@ -39,18 +40,49 @@ def parse_rafft_output(infile):
     return results, seq
 
 
+def parse_barrier_output(infile):
+    results = []
+    with open(infile) as barrier_out:
+        seq = barrier_out.readline().strip()
+        for l in barrier_out:
+            val = l.strip().split()
+            struct, nrj = val[1], float(val[2])
+            results += [(struct, float(nrj))]
+    return results, seq
+
+
+def parse_subopt_output(infile, prob=1.0):
+    results = []
+    with open(infile) as barrier_out:
+        seq = barrier_out.readline().strip()
+        for l in barrier_out:
+            val = l.strip().split()
+            if uniform(0, 1) <= prob:
+                struct, nrj = val[0], float(val[1])
+                results += [(struct, float(nrj))]
+    return results, seq
+
+
 def parse_arguments():
     """Parsing command line
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('rafft_out', help="rafft_output")
     parser.add_argument('--out', "-o", help="outfile")
+    parser.add_argument('--bar', action="store_true", help="read barrier output")
+    parser.add_argument('--sub', action="store_true", help="read barrier output")
+    parser.add_argument('--samp_prob', "-sp", type=float, help="sample from subopt file", default=1.0)
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
-    structures, seq = parse_rafft_output(args.rafft_out)
+    if args.bar:
+        structures, seq = parse_barrier_output(args.rafft_out)
+    if args.sub:
+        structures, seq = parse_subopt_output(args.rafft_out, args.samp_prob)
+    else:
+        structures, seq = parse_rafft_output(args.rafft_out)
     dist_mat = get_distance_matrix(structures)
     plt.rcParams["font.family"] = "serif"
     fsize = 13
@@ -103,11 +135,9 @@ def main():
 
     surf = ax.scatter(pos[:, 0], pos[:, 1], c=nrjs, s=30, lw=0, label='MDS',
                       cmap=cm.coolwarm, alpha=1.0)
-
-    id_struct = [0, -1]
-    ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c="black", s=80, lw=0, alpha=1.0)
-    ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c=array(nrjs)[id_struct], s=30, lw=0,
-               label='MDS', cmap=cm.coolwarm, alpha=1.0)
+    # ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c="black", s=80, lw=0, alpha=1.0)
+    # ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c=array(nrjs)[id_struct], s=30, lw=0,
+    #            label='MDS', cmap=cm.coolwarm, alpha=1.0)
 
     # print some structure ids
     # for px, py, ist in zip(pos[id_struct, 0], pos[id_struct, 1], id_struct):

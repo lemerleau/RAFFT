@@ -92,7 +92,6 @@ def test_one_seq(record):
     return max_pvv, max_sens, max_struct, seq, name
 
 
-
 def parse_arguments():
     """Parsing command line
     """
