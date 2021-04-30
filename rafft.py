@@ -201,6 +201,7 @@ def bfs_pairs(glob_tree, step=0):
             all_pairs += [tree[0][2]]
         return all_pairs
 
+
     # Combine stems formed in independent sub segments
     nb_branch = 0
     for tree in tmp_glob_tree:

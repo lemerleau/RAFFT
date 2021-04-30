@@ -97,13 +97,13 @@ def main():
     system(f"mkdir -p {out_dir}")
     varna_jar = "{}/VARNAv3-93.jar".format(dirname(realpath(__file__))) if args.varna_jar is None else args.varna_jar
     varna = f"{varna_jar} fr.orsay.lri.varna.applications.VARNAcmd"
-    cmd_line = "java -cp {}  -sequenceDBN {} -structureDBN '{}' -o {} -resolution {} -algorithm naview -bpStyle 'line' -fillBases True -spaceBetweenBases 0.5 -baseInner '#051C2C' -baseName '#051C2C' -background '#000000' -periodNum 1000 2>&1 1> /dev/null"
+    cmd_line = "java -cp {}  -sequenceDBN {} -structureDBN '{}' -o {} -resolution {} -algorithm naview -bpStyle 'simple' -fillBases True -spaceBetweenBases 0.5 -baseInner '#051C2C' -baseName '#051C2C' -background '#000000' -periodNum 1000 2>&1 1> /dev/null"
 
     if not args.no_fig:
         for step_i, fold_step in enumerate(fast_paths):
             for str_i, (struct, nrj) in enumerate(fold_step):
                 out_file = f"{out_dir}/s{step_i}_{str_i}.png"
-                cmd_line_c = cmd_line.format(varna, seq, struct, out_file, args.res_varna)
+                cmd_line_c = cmd_line.format(varna, "' '"*len(seq), struct, out_file, args.res_varna)
                 subprocess.Popen(cmd_line_c, stdout=subprocess.PIPE, shell=True).communicate()
 
     width, height = args.width, args.height
