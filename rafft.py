@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 RAFFT is a folding tool that builds fast-folding paths for a given sequence.
 Starting from the completely unfolded structure, it quickly identifies stems

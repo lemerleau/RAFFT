@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Take the output of rafft and produce a latex file to display the fold paths.
 
 It uses varna to produce 2ndary structures.
@@ -79,7 +80,7 @@ def parse_arguments():
     parser.add_argument('--width', '-wi', help="figure width", type=int, default=500)
     parser.add_argument('--height', '-he', help="figure height", type=int, default=300)
     parser.add_argument('--res_varna', '-rv', help="change varna resolution", type=float, default=1.0)
-    parser.add_argument('--line_thick', '-lt', help="line thickness", type=int, default=1)
+    parser.add_argument('--line_thick', '-lt', help="line thickness", type=float, default=1)
     parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=20)
     parser.add_argument('--varna_jar', help="varna jar (please download it from VARNA website)")
     parser.add_argument('--no_col', action="store_true", help="don't use the color gradient for the edges")
@@ -97,13 +98,13 @@ def main():
     system(f"mkdir -p {out_dir}")
     varna_jar = "{}/VARNAv3-93.jar".format(dirname(realpath(__file__))) if args.varna_jar is None else args.varna_jar
     varna = f"{varna_jar} fr.orsay.lri.varna.applications.VARNAcmd"
-    cmd_line = "java -cp {}  -sequenceDBN {} -structureDBN '{}' -o {} -resolution {} -algorithm naview -bpStyle 'simple' -fillBases True -spaceBetweenBases 0.5 -baseInner '#051C2C' -baseName '#051C2C' -background '#000000' -periodNum 1000 2>&1 1> /dev/null"
+    cmd_line = "java -cp {}  -sequenceDBN '{}' -structureDBN '{}' -o {} -resolution {} -algorithm naview -bpStyle 'simple' -fillBases True -spaceBetweenBases 0.5 -baseInner '#051C2C' -baseName '#FFFFFF00' -baseName '#051C2C' -background '#00000000' -periodNum 1000 -baseNum '#00FFFFFF' 2>&1 1> /dev/null"
 
     if not args.no_fig:
         for step_i, fold_step in enumerate(fast_paths):
             for str_i, (struct, nrj) in enumerate(fold_step):
                 out_file = f"{out_dir}/s{step_i}_{str_i}.png"
-                cmd_line_c = cmd_line.format(varna, "' '"*len(seq), struct, out_file, args.res_varna)
+                cmd_line_c = cmd_line.format(varna, " "*len(seq), struct, out_file, args.res_varna)
                 subprocess.Popen(cmd_line_c, stdout=subprocess.PIPE, shell=True).communicate()
 
     width, height = args.width, args.height
@@ -131,9 +132,14 @@ def main():
         pos_vert = 0
         tmp_left = 0
         if len(fold_step) > 1:
+            # store resize rates
             for str_i, (struct, nrj) in enumerate(fold_step):
                 out_file = f"{out_dir}/s{step_i}_{str_i}.png"
                 cur_str = Image.open(out_file)
+                fig_w, fig_h = cur_str.size
+                if fig_w < fig_h:
+                    cur_str = cur_str.transpose(Image.ROTATE_90)
+
                 fig_w, fig_h = cur_str.size
                 resize_rate = min(rate_w/float(fig_w), rate_h/float(fig_h))
 
@@ -196,6 +202,7 @@ def main():
                                                                      int(prev_w + (cur_w - prev_w)//2), int(prev_h),
                                                                      int(prev_w + (cur_w - prev_w)//2), int(cur_h),
                                                                      int(cur_w), int(cur_h))
+
                     symbol = aggdraw.Symbol(pathstring)
                     if args.no_col:
                         outline = aggdraw.Pen("black", pw)
