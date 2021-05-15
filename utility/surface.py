@@ -98,6 +98,7 @@ def main():
                        dissimilarity="precomputed", n_jobs=20)
     pos = mds.fit_transform(dist_mat)
 
+    min_id, mfe_id= 0, min(list(enumerate(structures)), key=lambda el: el[1][1])[0]
     nrjs = [nrj for st, nrj in structures]
 
     # print the id of some structures
@@ -132,12 +133,12 @@ def main():
     # print(id_struct)
     # print(pos[id_struct, 0])
 
-
     surf = ax.scatter(pos[:, 0], pos[:, 1], c=nrjs, s=30, lw=0, label='MDS',
                       cmap=cm.coolwarm, alpha=1.0)
-    # ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c="black", s=80, lw=0, alpha=1.0)
-    # ax.scatter(pos[id_struct, 0], pos[id_struct, 1], c=array(nrjs)[id_struct], s=30, lw=0,
-    #            label='MDS', cmap=cm.coolwarm, alpha=1.0)
+
+    ax.scatter(pos[[min_id, mfe_id], 0], pos[[min_id, mfe_id], 1], c="black", s=80, lw=0, alpha=1.0)
+    ax.scatter(pos[[min_id, mfe_id], 0], pos[[min_id, mfe_id], 1], c=array(nrjs)[[min_id, mfe_id]], s=30, lw=0,
+               label='MDS', cmap=cm.coolwarm, alpha=1.0)
 
     # print some structure ids
     # for px, py, ist in zip(pos[id_struct, 0], pos[id_struct, 1], id_struct):
