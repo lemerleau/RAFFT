@@ -5,7 +5,7 @@ from multiprocessing import Pool
 from os import popen
 from sys import argv
 
-cmd_line = "python ../rafft.py -n 100 -ms 50 --fasta -s {}"
+cmd_line = "python ../rafft.py -n 100 -ms 50 --bench -s {}"
 
 def run_bench(args):
     seq, struct, name = args

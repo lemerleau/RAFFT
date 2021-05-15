@@ -28,3 +28,18 @@ def parse_rafft_output(infile):
                 results[-1] += [(struct, float(nrj))]
     return results, seq
 
+
+def parse_rafft_output_(infile, map2_struct):
+    results = []
+    with open(infile) as rafft_out:
+        seq = rafft_out.readline().strip()
+        print(seq.strip())
+        for l in rafft_out:
+            if l.startswith("# --"):
+                results += [[]]
+                print(l.strip())
+            else:
+                struct, nrj = l.strip().split()
+                results[-1] += [(struct, float(nrj))]
+                print(l.strip(), map2_struct[struct])
+    return results, seq

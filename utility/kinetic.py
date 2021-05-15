@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """From RAFFT output, build a kinetic model. Starting from only unfolded
 structures, it generates a folding kinetic trajectory.
 
@@ -9,12 +10,14 @@ python kinetic.py rafft.out
 import argparse
 import subprocess
 from os.path import realpath, dirname
-from utils import paired_positions, parse_rafft_output
+from utils import paired_positions, parse_rafft_output, parse_rafft_output_
 from numpy import array, zeros, exp, matmul, reshape, diag
 from numpy.linalg import eig, inv
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import numpy as np
+
 
 def get_connected_prev(cur_struct, prev_pos):
     "get the connected structures"
@@ -27,38 +30,52 @@ def get_connected_prev(cur_struct, prev_pos):
     return res
 
 
-def get_transition_mat(fast_paths, nb_struct, map2_struct, struct_map, struct_list, metro=False):
+def get_connected_next(cur_struct, prev_pos):
+    "get the connected structures"
+    cur_pairs = set(paired_positions(cur_struct))
+    res = []
+    for si, (struct, nrj) in enumerate(prev_pos):
+        pairs = set(paired_positions(struct))
+        if len(cur_pairs - pairs) == 0:
+            return True
+
+
+def get_transition_mat(fast_paths, nb_struct, map2_struct, struct_map,
+                       struct_list, temp, other_rate=False):
     KT = 0.61
     nrj_changes = {}
-    transition_mat = zeros((nb_struct, nb_struct))
+    transition_mat = zeros((nb_struct, nb_struct), dtype=np.double)
 
     for step_i, fold_step in enumerate(fast_paths):
-        if len(fold_step) > 1:
-            for str_i, (struct, nrj) in enumerate(fold_step):
-                lprev_co = get_connected_prev(struct, fast_paths[step_i - 1])
-                nrj_changes[(step_i, str_i)] = {}
-                map2_struct[struct_map[struct]] = (step_i, str_i)
-                map_cur = struct_map[struct]
+        # if len(fold_step) > 1:
+        for str_i, (struct, nrj) in enumerate(fold_step):
+            lprev_co = get_connected_prev(struct, fast_paths[step_i - 1])
+            nrj_changes[(step_i, str_i)] = {}
+            map2_struct[struct_map[struct]] = (step_i, str_i)
+            map_cur = struct_map[struct]
+            # if (step_i + 1 < len(fast_paths) and get_connected_next(struct, fast_paths[step_i + 1])) \
+               # or step_i >= 4:
+            # print(step_i + 1, len(fast_paths))
+            # if step_i + 1 == len(fast_paths) or get_connected_next(struct, fast_paths[step_i + 1]): 
+            # if step_i >= 6 or get_connected_next(struct, fast_paths[step_i + 1]): 
+            for si in lprev_co:
+                prev_st, prev_nrj = fast_paths[step_i-1][si]
+                delta_nrj = nrj - prev_nrj
+                map_cur, map_prev = struct_map[struct], struct_map[prev_st]
+                if prev_st != struct:
+                    # M_ij = k(j -> i)
+                    if other_rate:
+                        transition_mat[map_cur, map_prev] = exp(temp * delta_nrj/KT)
+                        transition_mat[map_prev, map_cur] = exp(-temp * delta_nrj/KT)
+                    else:
+                        transition_mat[map_cur, map_prev] = min(1.0, exp(temp * delta_nrj/KT))
+                        transition_mat[map_prev, map_cur] = min(1.0, exp(-temp * delta_nrj/KT))
 
-                for si in lprev_co:
-                    prev_st, prev_nrj = fast_paths[step_i-1][si]
-                    delta_nrj = nrj - prev_nrj
-                    map_cur, map_prev = struct_map[struct], struct_map[prev_st]
-                    if prev_st != struct:
-                        # M_ij = k(j -> i)
-                        if not metro:
-                            transition_mat[map_cur, map_prev] = exp(delta_nrj/KT)
-                            transition_mat[map_prev, map_cur] = exp(-delta_nrj/KT)
-                        else:
-                            transition_mat[map_cur, map_prev] = min(1.0, exp(delta_nrj/KT))
-                            transition_mat[map_prev, map_cur] = min(1.0, exp(-delta_nrj/KT))
-
-    # # # normalize per line
-    if not metro:
+    # normalize input and output flows
+    if other_rate:
         norm_h = transition_mat.sum(axis=1)
-        transition_mat = (transition_mat.T/norm_h).T
-
-    # transition_mat *= 2.0
+        norm_v = transition_mat.sum(axis=0)
+        transition_mat = (transition_mat.T/(norm_h + norm_v)).T
 
     for si, struct in enumerate(struct_list):
         transition_mat[si, si] = -transition_mat[si,:].sum()
@@ -72,16 +89,16 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('rafft_out', help="rafft_output")
     parser.add_argument('--out', '-o', help="output file")
-    parser.add_argument('--width', '-wi', help="figure width", type=int, default=8)
+    parser.add_argument('--width', '-wi', help="figure width", type=int, default=7)
     parser.add_argument('--height', '-he', help="figure height", type=int, default=5)
     parser.add_argument('--n_steps', '-ns', help="integration steps", type=int, default=100)
-    parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.01)
+    parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.08)
     parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=15)
     parser.add_argument('--init_pop', '-ip', help="initialization of the population <POS>:<WEI>", nargs="*")
     parser.add_argument('--uni', action="store_true", help="uniform distribution")
-    parser.add_argument('--met', action="store_true", help="use metropolis rate")
-    parser.add_argument('--temp', '-t', help="kT (kcal/mol)", type=float, default=0.6)
-    parser.add_argument('--max_time', '-mt', help="max time (exp scale)", type=float, default=15)
+    parser.add_argument('--other_rate', action="store_true", help="use the other rate")
+    parser.add_argument('--temp', '-t', help="exp(t * delta_G/kT), t is a scaling constant", type=float, default=1.0)
+    parser.add_argument('--max_time', '-mt', help="max time (exp scale)", type=float, default=30)
     parser.add_argument('--plot', action="store_true", help="plot kinetics")
     return parser.parse_args()
 
@@ -99,7 +116,8 @@ def main():
             pos, wei = el.split(":")
             init_population += [(int(pos), float(wei))]
             tot += float(wei)
-        init_population = [(pos, wei/tot) for pos, wei in init_population]
+        # init_population = [(pos, wei/tot) for pos, wei in init_population]
+        init_population = [(pos, wei) for pos, wei in init_population]
 
     fast_paths, seq = parse_rafft_output(args.rafft_out)
 
@@ -121,11 +139,16 @@ def main():
     nb_struct = len(struct_list)
 
     transition_mat = get_transition_mat(fast_paths, nb_struct, map2_struct,
-                                        struct_map, struct_list, args.met)
+                                        struct_map, struct_list, args.temp,
+                                        args.other_rate)
+
+    # parse_rafft_output_(args.rafft_out, struct_map)
+    # np.set_printoptions(threshold=np.inf)
 
     V, W = eig(transition_mat.T)
     iW = inv(W)
     idx_max = V.argsort()[::-1][0]
+    idx2_max = V.argsort()[::-1][1]
 
     trajectory = []
     if args.init_pop is None:
@@ -145,7 +168,6 @@ def main():
     time_step = args.max_time/args.n_steps
     times = []
     times += [exp(-4)]
-    tmp_p = iW @ init_pop
 
     for st in range(args.n_steps):
 
@@ -157,11 +179,12 @@ def main():
 
         time = exp(time_step * st-4)
         times += [time]
-        tmp_pop = W @ diag(exp(V * time)) @ iW @ init_pop
+        tmp_pop = W @ diag(exp(V * time)) @ (iW @ init_pop)
         trajectory += [tmp_pop/tmp_pop.sum()]
 
     # take last population
-    init_pop = trajectory[-1].real
+    # init_pop = W[] @ diag(exp(V[0] * time)) @ iW @ init_pop
+    init_pop = trajectory[-1]
 
     res = []
     tot_pop = 0.0
@@ -173,14 +196,13 @@ def main():
 
     res.sort(key=lambda el: el[1])
     for st, fp, nrj in res:
-        print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, struct_map[st]))
-
+        print("{} {:6.3f} {:5.1f} {:d}".format(st, fp.real, nrj, struct_map[st]))
 
     if args.plot:
         trajectory = array(trajectory).real
 
-        left, width = 0.10, 0.85
-        bottom, height = 0.10, 0.85
+        left, width = 0.10, 0.88
+        bottom, height = 0.10, 0.88
         spacing = 0.000
         rect_scatter = [left, bottom, width, height]
         rect_histy = [left + width + spacing, bottom, 0.2, height]
@@ -189,14 +211,14 @@ def main():
         kin_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
 
         kin_f.set_xlim([times[0], times[-1]])
-        kin_f.set_ylim([0.0, 1.01])
+        # kin_f.set_ylim([0.0, 1.01])
 
         for si, st in enumerate(struct_list):
             if any(trajectory[:, si] > args.show_thres):
                 kin_f.plot(times, trajectory[:, si], alpha=0.8, label=si)
 
         kin_f.set_xscale("log")
-        kin_f.legend()
+        kin_f.legend(ncol=2, fontsize=int(args.font_size * 0.8))
         if args.out is not None:
             plt.savefig(args.out, dpi=300, transparent=True)
         else:

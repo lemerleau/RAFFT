@@ -11,8 +11,8 @@ def dot_bracket(pair_list, len_seq, SEQ=None):
     """
     str_struct = list("."*len_seq)
     for pi, pj in pair_list:
-        if SEQ is not None:
-            print(SEQ[pi], SEQ[pj])
+        # if SEQ is not None:
+        #     print(SEQ[pi], SEQ[pj])
         str_struct[pi], str_struct[pj] = "(", ")"
     return "".join(str_struct)
 
@@ -51,11 +51,39 @@ def prep_sequence(sequence, gc_wei=1.0, au_wei=1.0, gu_wei=1.0):
     return e_seq, c_seq
 
 
+def slice_string(seq):
+    "return a list of overlapping slices"
+    len_s = len(seq)
+    return [tuple(seq[i: i+2]) for i in range(len_s-1)]
+
+
+def prep_sequence_stacks(sequence):
+    """Encode the sequence into two mirror strands
+    """
+    NUC = ['A', 'G', 'C', 'U']
+    cc = {'A': 'U', 'G': 'C', 'C': 'G', 'U': 'A'}
+    pairs = [(aa, aa_) for aa in NUC for aa_ in NUC]
+    ENCODING = {p: [(1.0 if i == pi else 0.0) for i in range(16)] for pi, p in enumerate(pairs)}
+
+    sliced_seq = slice_string(sequence)
+    # rev_sliced_seq = slice_string("".join([cc[el] for el in sequence[::-1]]))
+    rev_sliced_seq = slice_string("".join([cc[el] for el in sequence[::-1]]))
+
+    # the foward strand use the normal encoding
+    ENCODE = lambda s: array([ENCODING[n] for n in s])
+    # take the complementary nucleotides
+    C_ENCODE = lambda s: array([ENCODING[n] for n in s])
+
+    e_seq = ENCODE(sliced_seq).T
+    c_seq = C_ENCODE(rev_sliced_seq).T
+    return e_seq, c_seq
+
+
 def seq_conv(seq, cseq):
     "Compute the autocorrelation for the 4 components then sum per position"
     cseq = flip(cseq, axis=1)
     cor_ = []
-    for i in range(4):
+    for i in range(seq.shape[0]):
         # the convolution routine will use the fft if faster
         cor_ += [convolve(seq[i, ], cseq[i, ])]
     return npsum(array(cor_), axis=0)
@@ -67,7 +95,7 @@ def auto_cor(seq, cseq, pad=1.0):
     len_seq = seq.shape[1]
     cor = seq_conv(seq, cseq)
     norm = [(el+pad) for el in list(range(len_seq)) + list(range(len_seq-1))[::-1]]
-    cor_l = [(i, c) for i, c in enumerate(cor/norm)]
+    cor_l = [[i, c] for i, c in enumerate(cor/norm)]
     return cor_l
 
 
@@ -99,10 +127,9 @@ def get_inner_loop(seq, cseq, max_i, max_j, max_bp, pos_list, len_seq):
 
 
 def merge_pair_list(pair_1, pair_2):
-    pair_3 = set(pair_1) | set(pair_2)
-    for el in pair_2:
-        if el not in pair_1:
-            pair_1 += [el]
+    "merge pair_2 into pair_1"
+    for el in set(pair_2) - set(pair_1):
+        pair_1 += [el]
     
 
 def read_fasta(infile):
