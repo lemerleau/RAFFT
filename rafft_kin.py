@@ -80,11 +80,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('rafft_out', help="rafft_output")
     parser.add_argument('--out', '-o', help="output file")
-    parser.add_argument('--width', '-wi', help="figure width", type=int, default=2)
-    parser.add_argument('--height', '-he', help="figure height", type=int, default=1.5)
+    parser.add_argument('--width', '-wi', help="figure width", type=int, default=7)
+    parser.add_argument('--height', '-he', help="figure height", type=int, default=5)
     parser.add_argument('--n_steps', '-ns', help="integration steps", type=int, default=100)
     parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.08)
-    parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=5)
+    parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=15)
     parser.add_argument('--init_pop', '-ip', help="initialization of the population <POS>:<WEI>", nargs="*")
     parser.add_argument('--uni', action="store_true", help="uniform distribution")
     parser.add_argument('--other_rate', action="store_true", help="use the other rate")
@@ -185,13 +185,13 @@ def main():
         rect_scatter = [left, bottom, width, height]
         fig = plt.figure(1)
         kin_f = fig.add_axes(rect_scatter)
-        kin_f.grid(True, color="grey", linestyle="--", linewidth=0.5)
+        kin_f.grid(True, color="grey", linestyle="--", linewidth=0.2)
 
         kin_f.set_xlim([times[0], times[-1]])
 
         for si, st in enumerate(struct_list):
             if any(trajectory[:, si] > args.show_thres):
-                kin_f.plot(times, trajectory[:, si], alpha=0.8, label=si, linewidth=0.8)
+                kin_f.plot(times, trajectory[:, si], alpha=0.8, label=si)
 
         kin_f.set_xscale("log")
         kin_f.legend(ncol=2, fontsize=int(args.font_size * 0.8))
