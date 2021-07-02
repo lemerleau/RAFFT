@@ -34,14 +34,6 @@ import argparse
 from RNA import fold_compound
 
 
-# window size when searching for pairs
-PK_MODE = False
-# Min number of BP
-MIN_BP = 1
-# Min number of internal unpaired positions
-MIN_HP = 3
-
-
 def window_slide(seq, cseq, pos, pos_list):
     """Slide a window along the align pair of sequence to find the consecutive paired positions
     """
@@ -95,7 +87,6 @@ def window_slide(seq, cseq, pos, pos_list):
 def find_best_consecutives(seq, cseq, pos_list, pair_list, cor_l):
     # find largest bp region
     best_sol = []
-    seen = set()
     max_bp, max_i, max_j, max_s, tmp_nrj = 0, 0, 0, 0, MIN_NRJ
     best_nrj = MIN_NRJ
     for pos, c in cor_l[::-1][:NB_MODE]:
@@ -136,14 +127,16 @@ def create_childs(seq, cseq, pair_list, pos_list):
 
         if max_j - max_i > 1:
             # Inner loop case
-            iseq, icseq, ipos_list_2 = get_inner_loop(seq, cseq, max_i, max_j, max_bp, pos_list, len_seq)
+            iseq, icseq, ipos_list_2 = get_inner_loop(seq, cseq, max_i, max_j,
+                                                      max_bp, pos_list, len_seq)
             in_side = (iseq, icseq, ipos_list_2)
         else:
             in_side = None
 
         if max_i - (max_bp - 1) > 0 or max_j + max_bp < len_seq:
             # Outer loop case
-            oseq, ocseq, opos_list_2 = get_outer_loop(seq, cseq, max_i, max_j, max_bp, pos_list, len_seq)
+            oseq, ocseq, opos_list_2 = get_outer_loop(seq, cseq, max_i, max_j,
+                                                      max_bp, pos_list, len_seq)
             out_side = (oseq, ocseq, opos_list_2)
         else:
             out_side = None
@@ -160,12 +153,12 @@ def bfs_pairs(glob_tree, step=0):
 
     if VERBOSE:
         print("# {:-^20}".format(step))
-        # print(SEQ)
         for tree in glob_tree:
             if len(tree) > 0:
                 tmp_pair_l = tree[0][2]
                 tmp_str = dot_bracket(tmp_pair_l, LEN_SEQ)
-                print(tmp_str, "{:6.1f}".format(eval_one_struct(SEQ_COMP, tmp_pair_l, LEN_SEQ, SEQ)))
+                print(tmp_str, "{:6.1f}".format(eval_one_struct(SEQ_COMP, tmp_pair_l,
+                                                                LEN_SEQ, SEQ)))
 
     new_sol = False
     # split current nodes

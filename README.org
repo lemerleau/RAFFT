@@ -90,8 +90,6 @@ python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGA
 python ../utility/plot_path.py rafft.out -he 500 -wi 900 -rv 1 -o path_5.png
 #+end_src
 
-#+RESULTS:
-
 [[example/path_5.png]]
 
 With 20 saved structures:
@@ -107,10 +105,15 @@ unfolded.
 #+begin_src bash :results output
 cd example
 python ../rafft.py -s GGGUUUGCGGUGUAAGUGCAGCCCGUCUUACACCGUGCGGCACAGGCACUAGUACUGAUGUCGUAUACAGGGCUUUUGACAU -ms 20 --verbose > rafft_20.out
-python ../utility/kinetic.py rafft_20.out -o kinetic.png --plot -mt 40
+python ../rafft_kin.py rafft_20.out -o kinetic.png --plot -mt 40
 #+end_src
 
-#+RESULTS:
+where ~-ns~ is the number of integration steps.
+
+In the output, the format is (the ~seq_id~ is also shown in the figure legend):
+
+~<structure> <final population> <stability> <seq_id>~
+
 #+begin_example
 [...]
 .....(((((((((((.((.....)))))))))))))((((((((.........))).)))))...................  0.009 -23.2 44
@@ -125,23 +128,8 @@ python ../utility/kinetic.py rafft_20.out -o kinetic.png --plot -mt 40
 (((((.(((.......))))))))(((.....(((((((((((((.........))).))))))))...))......)))..  0.531 -25.8 59
 #+end_example
 
-where ~-ns~ is the number of integration steps.
-
-In the output, the format is (the ~seq_id~ is also shown in the figure legend):
-
-~<structure> <final population> <stability> <seq_id>~
-
-#+begin_example
-[...]
-........((((((((.((.....))))))))))(((((((((((.........))).))))))))................  0.000 -24.0 42
-........((((((((.((.....))))))))))(((((((((((((....)).))).))))))))................  0.000 -24.0 43
-.....(((((((((((.((.....)))))))))))))(((((..((........))..)))))...................  0.012 -21.0 50
-.....(((((((((((.((.....))))))))))))).....(((.........))).........................  0.052 -16.3 32
-.....(((((((((((.((.....)))))))))))))(((((................)))))...................  0.448 -17.6 26
-.....(((((((((((.((.....)))))))))))))((((((((.........))).)))))...................  0.488 -23.2 44
-#+end_example
-
 [[example/kinetic.png]]
+
 ** Folding landscape
 From the fast-folding paths graph, on can also derived a landscape using the
 multidimensional scaling algorithm to map the structures onto a plan. It tries

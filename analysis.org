@@ -9,15 +9,15 @@ from matplotlib.patches import Patch
 from numpy import mean, std, median, linspace, arange
 from scipy.stats import kde
 from RNA import fold_compound, bp_distance
-from utils_analysis import get_loop_content, read_csv, read_true_struct
+from utility.utils_analysis import get_loop_content, read_csv, read_true_struct
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.size"] = 12
 plt.rcParams["figure.figsize"] = 7, 4
 
-fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
-# fftb_pred = read_csv("./benchmark_results/fft_200n_200ms_scores.csv")
-fftb_pred = read_csv("./benchmark_results/fft_2_scores.csv")
-# fftb_pred = read_csv("./benchmark_results/fft_100n_50ms_scores.csv")
+# fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
+fft_pred = read_csv("./benchmark_results/fft_200n_200ms_scores.csv")
+# fftb_pred = read_csv("./benchmark_results/fft_2_scores.csv")
+fftb_pred = read_csv("./benchmark_results/fft_100n_50ms_scores.csv")
 mx_pred = read_csv("./benchmark_results/mxfold_scores.csv")
 vrna_pred = read_csv("./benchmark_results/mfe_scores.csv")
 true_str = read_true_struct()
@@ -157,7 +157,7 @@ plt.show()
 #+end_src
 
 #+RESULTS:
-: 53.0 63.6 63.3 77.1
+: 68.1 62.8 63.3 77.1
 
 * Resutls statistical significance
 
@@ -166,7 +166,7 @@ from utils import paired_positions
 from numpy import mean, std, median, linspace, arange
 from scipy.stats import kde, ttest_ind
 from RNA import fold_compound, bp_distance
-from utils_analysis import get_loop_content, read_csv, read_true_struct
+from utility.utils_analysis import get_loop_content, read_csv, read_true_struct
 from math import isnan
 
 fft_pred = read_csv("./benchmark_results/fft_100n_50ms_best_nrj_scores.csv")
@@ -236,7 +236,7 @@ from numpy import mean, std, median, linspace, arange, array
 import numpy as np
 from scipy.stats import kde, ttest_ind
 from RNA import fold_compound, bp_distance
-from utils_analysis import get_loop_content, read_csv, read_true_struct
+from utility.utils_analysis import get_loop_content, read_csv, read_true_struct
 from math import isnan
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, artist
@@ -359,7 +359,7 @@ from numpy import mean, std, median, linspace, arange, array
 import numpy as np
 from scipy.stats import kde, ttest_ind
 from RNA import fold_compound, bp_distance
-from utils_analysis import get_loop_content, read_csv, read_true_struct
+from utility.utils_analysis import get_loop_content, read_csv, read_true_struct
 from math import isnan, log
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, artist
@@ -447,7 +447,7 @@ from numpy import mean, std, median, linspace, arange, array
 import numpy as np
 from scipy.stats import kde, ttest_ind
 from RNA import fold_compound, bp_distance
-from utils_analysis import get_loop_content, read_csv, read_true_struct
+from utility.utils_analysis import get_loop_content, read_csv, read_true_struct
 from math import isnan
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, artist
@@ -609,7 +609,7 @@ from numpy import mean, std, median, linspace, arange, array
 import numpy as np
 from scipy.stats import kde, ttest_ind
 from RNA import fold_compound, bp_distance
-from utils_analysis import get_loop_content, read_csv, read_true_struct
+from utility.utils_analysis import get_loop_content, read_csv, read_true_struct
 from math import isnan
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, artist

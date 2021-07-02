@@ -3,20 +3,17 @@
 structures, it generates a folding kinetic trajectory.
 
 Usage:
-python kinetic.py rafft.out
+python rafft_kin.py rafft.out --plot
 
 """
 
 import argparse
-import subprocess
-from os.path import realpath, dirname
-from utils import paired_positions, parse_rafft_output, parse_rafft_output_
-from numpy import array, zeros, exp, matmul, reshape, diag
+from utils import paired_positions, parse_rafft_output
+from numpy import array, zeros, exp, diag
 from numpy.linalg import eig, inv
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
-import numpy as np
 
 
 def get_connected_prev(cur_struct, prev_pos):
@@ -33,7 +30,6 @@ def get_connected_prev(cur_struct, prev_pos):
 def get_connected_next(cur_struct, prev_pos):
     "get the connected structures"
     cur_pairs = set(paired_positions(cur_struct))
-    res = []
     for si, (struct, nrj) in enumerate(prev_pos):
         pairs = set(paired_positions(struct))
         if len(cur_pairs - pairs) == 0:
@@ -47,17 +43,12 @@ def get_transition_mat(fast_paths, nb_struct, map2_struct, struct_map,
     transition_mat = zeros((nb_struct, nb_struct), dtype=np.double)
 
     for step_i, fold_step in enumerate(fast_paths):
-        # if len(fold_step) > 1:
         for str_i, (struct, nrj) in enumerate(fold_step):
             lprev_co = get_connected_prev(struct, fast_paths[step_i - 1])
             nrj_changes[(step_i, str_i)] = {}
             map2_struct[struct_map[struct]] = (step_i, str_i)
             map_cur = struct_map[struct]
-            # if (step_i + 1 < len(fast_paths) and get_connected_next(struct, fast_paths[step_i + 1])) \
-               # or step_i >= 4:
-            # print(step_i + 1, len(fast_paths))
-            # if step_i + 1 == len(fast_paths) or get_connected_next(struct, fast_paths[step_i + 1]): 
-            # if step_i >= 6 or get_connected_next(struct, fast_paths[step_i + 1]): 
+
             for si in lprev_co:
                 prev_st, prev_nrj = fast_paths[step_i-1][si]
                 delta_nrj = nrj - prev_nrj
@@ -121,10 +112,6 @@ def main():
 
     fast_paths, seq = parse_rafft_output(args.rafft_out)
 
-    # to draw the paths
-    nb_steps = len(fast_paths)
-    nb_saved = max([len(el) for el in fast_paths])
-
     # transition matrix
     # struct_list = [st for el in fast_paths for st, _ in el]
     struct_list = []
@@ -144,11 +131,8 @@ def main():
 
     # parse_rafft_output_(args.rafft_out, struct_map)
     # np.set_printoptions(threshold=np.inf)
-
     V, W = eig(transition_mat.T)
     iW = inv(W)
-    idx_max = V.argsort()[::-1][0]
-    idx2_max = V.argsort()[::-1][1]
 
     trajectory = []
     if args.init_pop is None:
@@ -169,13 +153,8 @@ def main():
     times = []
     times += [exp(-4)]
 
+    # Eigen method
     for st in range(args.n_steps):
-
-        # dp = p x Q x dt
-
-        # init_pop += init_pop @ transition_mat * 0.01
-        # trajectory += [init_pop/sum(init_pop)]
-        # times += [st]
 
         time = exp(time_step * st-4)
         times += [time]
@@ -203,15 +182,12 @@ def main():
 
         left, width = 0.10, 0.88
         bottom, height = 0.10, 0.88
-        spacing = 0.000
         rect_scatter = [left, bottom, width, height]
-        rect_histy = [left + width + spacing, bottom, 0.2, height]
         fig = plt.figure(1)
         kin_f = fig.add_axes(rect_scatter)
-        kin_f.grid(True, color="grey",linestyle="--", linewidth=0.2)
+        kin_f.grid(True, color="grey", linestyle="--", linewidth=0.2)
 
         kin_f.set_xlim([times[0], times[-1]])
-        # kin_f.set_ylim([0.0, 1.01])
 
         for si, st in enumerate(struct_list):
             if any(trajectory[:, si] > args.show_thres):

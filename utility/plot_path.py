@@ -9,15 +9,31 @@ import subprocess
 from os import system
 from os.path import realpath, dirname
 from PIL import Image, ImageDraw, ImageFont
-from utils import paired_positions
 import aggdraw
 from colour import Color
+
+
+def paired_positions(structure):
+    "return a list of pairs (paired positions)"
+    # save open bracket in piles
+    pile_reg, pile_pk = [], []
+    pairs = []
+    for i, sstruc in enumerate(structure):
+        if sstruc in ["<", "("]:
+            pile_reg += [i]
+        elif sstruc == "[":
+            pile_pk += [i]
+        elif sstruc in [">", ")"]:
+            pairs += [(pile_reg.pop(), i)]
+        elif sstruc == "]":
+            pairs += [(pile_pk.pop(), i)]
+    return pairs
 
 
 def get_gradient(quant):
     # blue = Color("LightSkyBlue")
     blue = Color("LightCyan")
-    colors = list(blue.range_to(Color("MidnightBlue"),40))
+    colors = list(blue.range_to(Color("MidnightBlue"), 40))
     col = min(int(quant * len(colors)), len(colors)-1)
     color = tuple([int(el * 255) for el in colors[col].rgb])
     return color
@@ -70,21 +86,29 @@ def get_connected_prev(cur_struct, prev_pos):
     return res
 
 
-
 def parse_arguments():
     """Parsing command line
     """
-    parser = argparse.ArgumentParser(description="Uses VARNA to plot the fast-paths predicted by RAFFT. !! It creates a temporary directory in the current folder!!")
+    parser = argparse.ArgumentParser(
+        description="Uses VARNA to plot the fast-paths predicted by RAFFT. !! It creates a temporary directory in the current folder!!")
     parser.add_argument('rafft_out', help="rafft_output")
     parser.add_argument('--out', '-o', help="output file")
-    parser.add_argument('--width', '-wi', help="figure width", type=int, default=500)
-    parser.add_argument('--height', '-he', help="figure height", type=int, default=300)
-    parser.add_argument('--res_varna', '-rv', help="change varna resolution", type=float, default=1.0)
-    parser.add_argument('--line_thick', '-lt', help="line thickness", type=float, default=1)
-    parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=20)
-    parser.add_argument('--varna_jar', help="varna jar (please download it from VARNA website)")
-    parser.add_argument('--no_col', action="store_true", help="don't use the color gradient for the edges")
-    parser.add_argument('--no_fig', action="store_true", help="you already computed the structures previously?")
+    parser.add_argument(
+        '--width', '-wi', help="figure width", type=int, default=500)
+    parser.add_argument('--height', '-he',
+                        help="figure height", type=int, default=300)
+    parser.add_argument('--res_varna', '-rv',
+                        help="change varna resolution", type=float, default=1.0)
+    parser.add_argument('--line_thick', '-lt',
+                        help="line thickness", type=float, default=1)
+    parser.add_argument('--font_size', '-fs',
+                        help="font size for the colors", type=int, default=20)
+    parser.add_argument(
+        '--varna_jar', help="varna jar (please download it from VARNA website)")
+    parser.add_argument('--no_col', action="store_true",
+                        help="don't use the color gradient for the edges")
+    parser.add_argument('--no_fig', action="store_true",
+                        help="you already computed the structures previously?")
     return parser.parse_args()
 
 
@@ -96,7 +120,8 @@ def main():
     # draw structures
     out_dir = "./tmp_rafft_fig"
     system(f"mkdir -p {out_dir}")
-    varna_jar = "{}/VARNAv3-93.jar".format(dirname(realpath(__file__))) if args.varna_jar is None else args.varna_jar
+    varna_jar = "{}/VARNAv3-93.jar".format(
+        dirname(realpath(__file__))) if args.varna_jar is None else args.varna_jar
     varna = f"{varna_jar} fr.orsay.lri.varna.applications.VARNAcmd"
     cmd_line = "java -cp {}  -sequenceDBN '{}' -structureDBN '{}' -o {} -resolution {} -algorithm naview -bpStyle 'simple' -fillBases True -spaceBetweenBases 0.5 -baseInner '#051C2C' -baseName '#FFFFFF00' -baseName '#051C2C' -background '#00000000' -periodNum 1000 -baseNum '#00FFFFFF' 2>&1 1> /dev/null"
 
@@ -104,8 +129,10 @@ def main():
         for step_i, fold_step in enumerate(fast_paths):
             for str_i, (struct, nrj) in enumerate(fold_step):
                 out_file = f"{out_dir}/s{step_i}_{str_i}.png"
-                cmd_line_c = cmd_line.format(varna, " "*len(seq), struct, out_file, args.res_varna)
-                subprocess.Popen(cmd_line_c, stdout=subprocess.PIPE, shell=True).communicate()
+                cmd_line_c = cmd_line.format(
+                    varna, " "*len(seq), struct, out_file, args.res_varna)
+                subprocess.Popen(
+                    cmd_line_c, stdout=subprocess.PIPE, shell=True).communicate()
 
     width, height = args.width, args.height
     canvas = (width, height)
@@ -113,7 +140,8 @@ def main():
     # to draw the paths
     nb_steps = len(fast_paths)
     nb_saved = max((len(el) for el in fast_paths))
-    rate_w, rate_h = float(width)/float(nb_steps), float(height)/float(nb_saved)
+    rate_w, rate_h = float(
+        width)/float(nb_steps), float(height)/float(nb_saved)
 
     # save position in the canvas for each structure
     actual_position, actual_sizes = {}, {}
@@ -143,22 +171,26 @@ def main():
                 fig_w, fig_h = cur_str.size
                 resize_rate = min(rate_w/float(fig_w), rate_h/float(fig_h))
 
-                n_fig_w, n_fig_h = int(fig_w * resize_rate), int(fig_h * resize_rate)
+                n_fig_w, n_fig_h = int(
+                    fig_w * resize_rate), int(fig_h * resize_rate)
 
                 cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIAS)
 
                 actual_sizes[(step_i, str_i)] = (n_fig_w, n_fig_h)
-                actual_position[(step_i, str_i)] = (pos_hor+n_fig_w, pos_vert+n_fig_h//2)
+                actual_position[(step_i, str_i)] = (
+                    pos_hor+n_fig_w, pos_vert+n_fig_h//2)
 
                 lprev_co = get_connected_prev(struct, fast_paths[step_i - 1])
                 nrj_changes[(step_i, str_i)] = {}
 
                 for si in lprev_co:
                     prev_st, prev_nrj = fast_paths[step_i-1][si]
-                    nrj_changes[(step_i, str_i)][(step_i-1, si)] = nrj - prev_nrj
+                    nrj_changes[(step_i, str_i)][(
+                        step_i-1, si)] = nrj - prev_nrj
 
                     if nrj_changes[(step_i, str_i)][(step_i-1, si)] <= min_change:
-                        min_change = nrj_changes[(step_i, str_i)][(step_i-1, si)]
+                        min_change = nrj_changes[(
+                            step_i, str_i)][(step_i-1, si)]
 
                 path_img.paste(cur_str, (pos_hor, pos_vert))
                 pos_vert += int(n_fig_h)
@@ -171,7 +203,8 @@ def main():
             cur_str = Image.open(out_file)
             fig_w, fig_h = cur_str.size
             resize_rate = min(rate_w/float(fig_w), rate_h/float(fig_h))
-            n_fig_w, n_fig_h = int(fig_w * resize_rate), int(fig_h * resize_rate)
+            n_fig_w, n_fig_h = int(
+                fig_w * resize_rate), int(fig_h * resize_rate)
             cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIAS)
             path_img.paste(cur_str, (pos_hor, height//2 - n_fig_h//2))
             actual_position[(step_i, str_i)] = (pos_hor + n_fig_w, height//2)
@@ -182,7 +215,6 @@ def main():
 
         crop_side = pos_hor + tmp_left
         pos_hor += max(int(tmp_left), int(rate_w))
-
 
     # past the paths
     for step_i, fold_step in enumerate(fast_paths):
@@ -199,19 +231,23 @@ def main():
                     cur_w -= n_fig_w
 
                     pathstring = " M{},{} C{},{},{},{},{},{}".format(int(prev_w), int(prev_h),
-                                                                     int(prev_w + (cur_w - prev_w)//2), int(prev_h),
-                                                                     int(prev_w + (cur_w - prev_w)//2), int(cur_h),
+                                                                     int(prev_w + (cur_w -
+                                                                         prev_w)//2), int(prev_h),
+                                                                     int(prev_w + (cur_w -
+                                                                         prev_w)//2), int(cur_h),
                                                                      int(cur_w), int(cur_h))
 
                     symbol = aggdraw.Symbol(pathstring)
                     if args.no_col:
                         outline = aggdraw.Pen("black", pw)
                     else:
-                        outline = aggdraw.Pen(get_gradient(nrj_sta/min_change), pw)
+                        outline = aggdraw.Pen(
+                            get_gradient(nrj_sta/min_change), pw)
                     draw_path.symbol((0, 0), symbol, outline)
                     draw_path.flush()
 
-    fnt_pos = ImageFont.truetype("{}/Times_New_Roman.ttf".format(dirname(realpath(__file__))), args.font_size)
+    fnt_pos = ImageFont.truetype(
+        "{}/Times_New_Roman.ttf".format(dirname(realpath(__file__))), args.font_size)
     path_img = path_img.crop((0, 0, crop_side, height))
 
     if not args.no_col:
