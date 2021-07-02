@@ -75,6 +75,9 @@ def parse_arguments():
                         help="read barrier output")
     parser.add_argument('--samp_prob', "-sp", type=float,
                         help="sample from subopt file", default=1.0)
+    parser.add_argument('--width', '-wi', help="figure width", type=int, default=2)
+    parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=5)
+    parser.add_argument('--dot_size', '-ds', help="dot size", type=int, default=10)
     return parser.parse_args()
 
 
@@ -88,9 +91,10 @@ def main():
         structures, seq = parse_rafft_output(args.rafft_out)
     dist_mat = get_distance_matrix(structures)
     plt.rcParams["font.family"] = "serif"
-    fsize = 13
+    fsize = args.font_size
     plt.rcParams["font.size"] = fsize
     plt.rcParams['text.usetex'] = True
+    plt.rcParams["figure.figsize"] = args.width, args.width
 
     fig, ax = plt.subplots()
 
@@ -113,14 +117,15 @@ def main():
     surf = ax.contour(p1, p2, nrj_c, colors="k", linewidths=0.5, levels=7)
     surf = ax.contourf(p1, p2, nrj_c, cmap=cm.coolwarm, alpha=0.3, levels=7)
 
-    surf = ax.scatter(pos[:, 0], pos[:, 1], c=nrjs, s=30, lw=0, label='MDS',
+    surf = ax.scatter(pos[:, 0], pos[:, 1], c=nrjs, s=args.dot_size, lw=0, label='MDS',
                       cmap=cm.coolwarm, alpha=1.0)
 
     ax.scatter(pos[[min_id, mfe_id], 0], pos[[min_id, mfe_id], 1],
-               c="black", s=80, lw=0, alpha=1.0)
+               c="black", s=int(args.dot_size*2), lw=0, alpha=1.0)
+
     ax.scatter(pos[[min_id, mfe_id], 0], pos[[min_id, mfe_id], 1],
-               c=array(nrjs)[[min_id, mfe_id]], s=30, lw=0,
-               label='MDS', cmap=cm.coolwarm, alpha=1.0)
+               c=array(nrjs)[[min_id, mfe_id]], s=args.dot_size, lw=0,
+               label='MDS', cmap=cm.coolwarm, alpha=0.9)
 
     if args.out:
         plt.savefig(args.out, dpi=300, transparent=True)
