@@ -75,7 +75,7 @@ def read_log_file(infile):
 
 def test_one_seq(record):
     # cmd_line = "/home/vaitea/programs/RNAstructure/exe/scorer {} {} {}"
-    cmd_line = "../RNAstructure/exe/scorer {} {} {}"
+    cmd_line = "/net/stzs3/export/clusterhome/vopuu/FFTRNAfold/RNAstructure/exe/scorer {} {} {}"
     raw_file = "../raw_data/archiveII/{}.ct"
     val = record
     seq, name, conf = val[0], val[1], val[2:]
@@ -85,7 +85,7 @@ def test_one_seq(record):
         struct, score = conf[istruct], conf[iscore]
         create_ct_file(struct, seq, f"./log/{name}_pred.ct", name+"_pred")
         pred_cmd_line = cmd_line.format(f"./log/{name}_pred.ct", raw_file.format(name), f"./log/{name}_pred.log").split()
-        subprocess.Popen(pred_cmd_line, stdout=subprocess.PIPE, env={'DATAPATH': '/home/vaitea/programs/RNAstructure/data_tables/'}).communicate()
+        subprocess.Popen(pred_cmd_line, stdout=subprocess.PIPE, env={'DATAPATH': '/net/stzs3/export/clusterhome/vopuu/FFTRNAfold//RNAstructure/data_tables/'}).communicate()
         pred_pvv, pred_sens = read_log_file(f"./log/{name}_pred.log")
         if pred_pvv >= max_pvv:
             max_pvv, max_sens, max_struct = pred_pvv, pred_sens, struct
@@ -104,10 +104,10 @@ def parse_arguments():
 def main():
     args = parse_arguments()
     prediction = read_csv(args.input_file)
-    true_str = read_true_struct()
+    true_str = read_true_struct("benchmark_cleaned_all_length.csv")
     system("rm -r log")
     system("mkdir -p log")
-    pool = Pool(4)
+    pool = Pool(30)
     # results = pool.map(test_one_seq, prediction[:2])
     results = pool.map(test_one_seq, prediction)
 

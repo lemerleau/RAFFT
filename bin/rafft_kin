@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""From RAFFT output, build a kinetic model. Starting from only unfolded
+structures, it generates a folding kinetic trajectory.
+
+Usage:
+python rafft_kin.py rafft.out --plot
+
+"""
+
+import argparse
+from rafft.utils import parse_rafft_output
+from rafft.rafft_kin import kinetics, plot_traj
+
+
+def parse_arguments():
+    """Parsing command line
+    """
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('rafft_out', help="rafft_output")
+    parser.add_argument('--out', '-o', help="output file")
+    parser.add_argument('--width', '-wi', help="figure width", type=int, default=7)
+    parser.add_argument('--height', '-he', help="figure height", type=int, default=5)
+    parser.add_argument('--n_steps', '-ns', help="integration steps", type=int, default=100)
+    parser.add_argument('--show_thres', '-st', help="threshold population to show", type=float, default=0.08)
+    parser.add_argument('--font_size', '-fs', help="font size for the colors", type=int, default=15)
+    parser.add_argument('--init_pop', '-ip', help="initialization of the population <POS>:<WEI>", nargs="*")
+    parser.add_argument('--uni', action="store_true", help="uniform distribution")
+    parser.add_argument('--other_rate', action="store_true", help="use the other rate")
+    parser.add_argument('--max_time', '-mt', help="max time (exp scale)", type=float, default=30)
+    parser.add_argument('--plot', action="store_true", help="plot kinetics")
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    init_population = None
+
+    if args.init_pop is not None:
+        tot = 0.0
+        for el in args.init_pop:
+            pos, wei = el.split(":")
+            init_population += [(int(pos), float(wei))]
+            tot += float(wei)
+        # init_population = [(pos, wei/tot) for pos, wei in init_population]
+        init_population = [(pos, wei) for pos, wei in init_population]
+
+    fast_paths, seq = parse_rafft_output(args.rafft_out)
+
+    trajectory, times, struct_list, equi_pop = kinetics(fast_paths, args.max_time, args.n_steps, init_population)
+    equi_pop.sort(key=lambda el: el[2])
+    for st, nrj, fp, si in equi_pop:
+        print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, si))
+
+    if args.plot:
+        plot_traj(trajectory, struct_list, times, args.font_size, args.width, args.height, args.show_thres)
+
+
+if __name__ == '__main__':
+    main()

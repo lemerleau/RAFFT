@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+
+import argparse
+from rafft import fold
+
+def parse_arguments():
+    """Parsing command line
+    """
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--sequence', '-s', help="sequence")
+    parser.add_argument('--seq_file', '-sf', help="sequence file")
+    parser.add_argument('--n_mode', '-n', help="Number of positional lags to search for stems", type=int, default=100)
+    parser.add_argument('--max_stack', '-ms', help="number of stored structures (default=1)", type=int, default=1)
+    parser.add_argument('--min_nrj', '-mn', help="minimum loop energy to be formed", type=float, default=0)
+    parser.add_argument('--min_bp', '-mb', help="minimum bp number to be detectable", type=int, default=1)
+    parser.add_argument('--min_hp', '-mh', help="minimum unpaired positions in hairpins", type=int, default=3)
+    parser.add_argument('--pad', '-p', help="padding, a normalization constant for the autocorrelation", type=float, default=1.0)
+    parser.add_argument('--max_branch', help="maximum branches to explor", type=int, default=1000)
+    parser.add_argument('--bp_only', action="store_true", help="don't use the NRJ")
+    parser.add_argument('--bench', action="store_true", help="output for benchmarks")
+    parser.add_argument('-tr', '--traj', action="store_true", help="output full trajectories")
+    parser.add_argument('--temp', type=float, help="output full trajectories", default=37.0)
+    parser.add_argument('-gc', '--gc_wei', type=float, help="GC weight", default=3.00)
+    parser.add_argument('-au', '--au_wei', type=float, help="GC weight", default=2.00)
+    parser.add_argument('-gu', '--gu_wei', type=float, help="GU weight", default=1.00)
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    # HANDLE INPUTS -----------------------------------------------------------
+    assert args.sequence is not None or args.seq_file is not None, "error, the sequence is missing!"
+
+    if args.sequence is not None:
+        sequence = args.sequence
+    else:
+        sequence = "".join([l.strip() for l in open(args.seq_file) if not l.startswith(">")]).replace("T", "U")
+    len_seq = len(sequence)
+
+    results = fold(sequence, args.n_mode, args.max_stack, args.max_branch,
+                   args.min_hp, args.min_nrj, args.traj, args.temp,
+                   args.gc_wei, args.au_wei, args.gu_wei)
+    if args.traj:
+        final_struct, trajectory = results
+    else:
+        final_struct = results
+
+    if not args.traj:
+        if not args.bench:
+            print(f"{sequence}")
+        for struct in final_struct:
+            str_struct = struct.str_struct
+            nrj_pred = struct.energy
+            if args.bench:
+                print(sequence, len_seq, str_struct, f"{nrj_pred:6.1f}", str_struct.count("("))
+            else:
+                print(f"{str_struct} {nrj_pred:6.1f}")
+    else:
+        print(f"{sequence}")
+        for si, fold_step in enumerate(trajectory):
+            print("# {:-^20}".format(si))
+            for struct in fold_step:
+                str_struct = struct.str_struct
+                nrj_pred = struct.energy
+                print(f"{str_struct} {nrj_pred:6.1f}")
+
+
+
+if __name__ == '__main__':
+    main()

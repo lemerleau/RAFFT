@@ -99,17 +99,10 @@ def auto_cor(seq, cseq, pad=1.0):
     return cor_l
 
 
-def eval_dynamic(seq_comp, pair_list, moves, len_seq, SEQ):
+def eval_one_struct(pair_list, glob_parms):
     "eval individual loop moves"
-    dot_struct = dot_bracket(pair_list, len_seq)
-    tmp_struct = dot_bracket(pair_list+moves, len_seq)
-    return seq_comp.eval_structure(tmp_struct) - seq_comp.eval_structure(dot_struct)
-
-
-def eval_one_struct(seq_comp, pair_list, len_seq, SEQ):
-    "eval individual loop moves"
-    dot_struct = dot_bracket(pair_list, len_seq)
-    return seq_comp.eval_structure(dot_struct)
+    dot_struct = dot_bracket(pair_list, glob_parms.len_seq)
+    return glob_parms.seq_comp.eval_structure(dot_struct)
 
 
 def get_outer_loop(seq, cseq, max_i, max_j, max_bp, pos_list, len_seq):
@@ -130,7 +123,7 @@ def merge_pair_list(pair_1, pair_2):
     "merge pair_2 into pair_1"
     for el in set(pair_2) - set(pair_1):
         pair_1 += [el]
-    
+
 
 def read_fasta(infile):
     results = {}
@@ -154,4 +147,3 @@ def parse_rafft_output(infile):
                 struct, nrj = l.strip().split()
                 results[-1] += [(struct, float(nrj))]
     return results, seq
-

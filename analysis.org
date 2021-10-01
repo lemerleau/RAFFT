@@ -159,6 +159,15 @@ plt.show()
 #+RESULTS:
 : 68.1 62.8 63.3 77.1
 
+#+begin_src python :results output
+def function(elems):
+    """something
+    """
+    return 0
+
+print(function(0))
+#+end_src
+
 * Resutls statistical significance
 
 #+begin_src python :results output

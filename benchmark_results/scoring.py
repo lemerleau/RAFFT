@@ -74,7 +74,7 @@ def read_log_file(infile):
 
 
 def test_one_seq(record):
-    cmd_line = "/home/vaitea/programs/RNAstructure/exe/scorer {} {} {}"
+    cmd_line = "/clusterhome/vopuu/programs/RNAstructure/exe/scorer {} {} {}"
     # cmd_line = "../RNAstructure/exe/scorer {} {} {}"
     raw_file = "../raw_data/archiveII/{}.ct"
     val = record
@@ -85,7 +85,7 @@ def test_one_seq(record):
         struct, score = conf[istruct], conf[iscore]
         create_ct_file(struct, seq, f"./log/{name}_pred.ct", name+"_pred")
         pred_cmd_line = cmd_line.format(f"./log/{name}_pred.ct", raw_file.format(name), f"./log/{name}_pred.log").split()
-        subprocess.Popen(pred_cmd_line, stdout=subprocess.PIPE, env={'DATAPATH': '/home/vaitea/programs/RNAstructure/data_tables/'}).communicate()
+        subprocess.Popen(pred_cmd_line, stdout=subprocess.PIPE, env={'DATAPATH': '/clusterhome/vopuu//programs/RNAstructure/data_tables/'}).communicate()
         pred_pvv, pred_sens = read_log_file(f"./log/{name}_pred.log")
         if pred_pvv >= max_pvv:
             max_pvv, max_sens, max_struct = pred_pvv, pred_sens, struct
