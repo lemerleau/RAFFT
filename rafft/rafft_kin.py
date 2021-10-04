@@ -8,7 +8,7 @@ python rafft_kin.py rafft.out --plot
 """
 
 import argparse
-from rafft.utils import paired_positions, parse_rafft_output
+from utils import paired_positions, parse_rafft_output
 from numpy import array, zeros, exp, diag
 from numpy.linalg import eig, inv
 from scipy.linalg import eig as sci_eig
@@ -37,7 +37,7 @@ def plot_traj(trajectory, struct_list, times, font_size, width, height,
 
     for si, (st, nrj) in enumerate(struct_list):
         if any(trajectory[:, si] > show_thres):
-            kin_f.plot(times, trajectory[:, si::int(trajectory.shape[0]/100)], alpha=0.8, label=si)
+            kin_f.plot(times[::int(trajectory.shape[0]/1000)], trajectory[::int(trajectory.shape[0]/1000), si], alpha=0.8, label=si)
 
     kin_f.set_xscale("log")
     kin_f.legend(ncol=2, fontsize=int(font_size * 0.8))
@@ -82,10 +82,9 @@ def get_transition_mat(fast_paths, nb_struct, struct_map):
                 map_prev, prev_nrj = struct_map[prev_st]
                 delta_nrj = cur_nrj - prev_nrj
                 if prev_st != struct:
-                    # M_ij = k(i -> j)
-                    transition_mat[map_cur, map_prev] = min(1.0, exp(delta_nrj/KT))
-                    # # M_ji = k(i -> j)
+                    # # M_ij = k(i -> j)
                     transition_mat[map_prev, map_cur] = min(1.0, exp(-delta_nrj/KT))
+                    transition_mat[map_cur, map_prev] = min(1.0, exp(delta_nrj/KT))
 
     # normalize input and output flows
     for si in range(nb_struct):
@@ -111,12 +110,12 @@ def kinetics(fast_paths, max_time, n_steps, initial_pop=None):
     transition_mat = get_transition_mat(fast_paths, nb_struct, struct_map)
 
     # for el in transition_mat:
-        # print(" ".join([str(eli) for eli in el]))
+    #     print(" ".join([str(eli) for eli in el]))
 
     # initialize the kinetic
     if initial_pop is None:
         # starts with the unfolded state
-        init_pop = array([1.0] + [0.0 for _ in range(nb_struct-1)])
+        init_pop = array([1.0] + [0.0 for _ in range(nb_struct-1)], dtype=np.longdouble)
     else:
         init_pop = array([0.0 for _ in range(nb_struct)])
         for p, w in initial_pop:
@@ -128,7 +127,8 @@ def kinetics(fast_paths, max_time, n_steps, initial_pop=None):
     V, W = eig(transition_mat.T)
     iW = inv(W)
 
-    residuals = abs(transition_mat.T - (W @ diag(V) @ iW)).sum(axis=0).sum()
+    # residuals = abs(transition_mat - (W @ diag(V) @ iW)).sum(axis=0).sum()
+    residuals = abs(transition_mat @ W - (W @ diag(V))).sum(axis=0).sum()
 
     # # equilibrium population
     min_p = np.argmin(abs(V))
@@ -136,24 +136,28 @@ def kinetics(fast_paths, max_time, n_steps, initial_pop=None):
     equi_pop /= equi_pop.sum()
     time_step = max_time / n_steps
     
-    if residuals < 10**-10:
-        times = [exp(-4)]
-        for st in range(n_steps):
-            time = exp(time_step * st-4)
-            times += [time]
-            tmp_pop = W @ diag(exp(V * time)) @ (iW @ init_pop)
-            trajectory += [tmp_pop]
-        equi_pop = trajectory[-1]
-    else:
-        # print("# ERROR: Using numerical integration")
-        dt = 0.01
-        time = 0.0
-        times = [time]
-        for st in range(n_steps):
-            init_pop += init_pop @ transition_mat * 0.01
-            trajectory += [init_pop/sum(init_pop)]
-            times += [times[-1] + dt]
-        equi_pop = trajectory[-1]
+    # if residuals < 10**-10:
+
+    # times = [exp(-4)]
+    # for st in range(n_steps):
+    #     time = exp(time_step * st-4)
+    #     times += [time]
+    #     tmp_pop = W @ diag(exp(V * time)) @ (iW @ init_pop)
+    #     trajectory += [tmp_pop]
+    # # equi_pop = trajectory[-1]
+
+    # else:
+    # print("# ERROR: Using numerical integration")
+
+    dt = 0.01
+    time = 1.0
+    times = [time]
+    for st in range(n_steps):
+        init_pop += transition_mat.T @ init_pop * dt
+        trajectory += [init_pop/sum(init_pop)]
+        # times += [times[-1] + dt]
+        times += [times[-1] + dt]
+    equi_pop = trajectory[-1]
 
     # get the equilibrium population
     str_equi_pop = [(str_, nrj, ep, struct_map[str_][0]) for (str_, nrj), ep in zip(struct_list, equi_pop.real)]
@@ -198,8 +202,8 @@ def main():
     # kinetics(fast_paths, args.max_time, args.n_steps, init_population)
     equi_pop.sort(key=lambda el: el[2])
 
-    for st, nrj, fp, si in equi_pop:
-        print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, si))
+    # for st, nrj, fp, si in equi_pop:
+    #     print("{} {:6.3f} {:5.1f} {:d}".format(st, fp, nrj, si))
 
     if args.plot:
         plot_traj(trajectory, struct_list, times, args.font_size, args.width, args.height, args.show_thres)

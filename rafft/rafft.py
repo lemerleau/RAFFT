@@ -264,7 +264,8 @@ def fold(sequence, nb_mode=100, max_stack=1, max_branch=100, min_hp=3,
     unfold_struct = Structure(node_list=[init_node], pair_list=[])
     unfold_struct.str_struct = "."*glob_parms.len_seq
 
-    structures, trajectory = bfs_pairs([unfold_struct], glob_parms)
+    structures, trajectory = bfs_pairs([unfold_struct], glob_parms,
+                                       step=0, glob_traj=[], seen=set())
 
     if traj:
         return structures, trajectory
