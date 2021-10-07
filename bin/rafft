@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+from rafft.rafft_nono import fold as fold_nono
 from rafft import fold
 
 def parse_arguments():
@@ -23,6 +24,10 @@ def parse_arguments():
     parser.add_argument('-gc', '--gc_wei', type=float, help="GC weight", default=3.00)
     parser.add_argument('-au', '--au_wei', type=float, help="GC weight", default=2.00)
     parser.add_argument('-gu', '--gu_wei', type=float, help="GU weight", default=1.00)
+
+
+    #Just for test purpose: to be removed
+    parser.add_argument('--nono', action="store_true", help="Use the nono implementation of rafft instead.")
     return parser.parse_args()
 
 
@@ -37,9 +42,15 @@ def main():
         sequence = "".join([l.strip() for l in open(args.seq_file) if not l.startswith(">")]).replace("T", "U")
     len_seq = len(sequence)
 
-    results = fold(sequence, args.n_mode, args.max_stack, args.max_branch,
+    if args.nono :
+        results,root = fold_nono(sequence, args.n_mode, args.max_stack, args.max_branch,
                    args.min_hp, args.min_nrj, args.traj, args.temp,
                    args.gc_wei, args.au_wei, args.gu_wei)
+    else :
+        results = fold(sequence, args.n_mode, args.max_stack, args.max_branch,
+                   args.min_hp, args.min_nrj, args.traj, args.temp,
+                   args.gc_wei, args.au_wei, args.gu_wei)
+
     if args.traj:
         final_struct, trajectory = results
     else:
@@ -55,6 +66,9 @@ def main():
                 print(sequence, len_seq, str_struct, f"{nrj_pred:6.1f}", str_struct.count("("))
             else:
                 print(f"{str_struct} {nrj_pred:6.1f}")
+        if args.nono :
+            print("====================== Full Tree ========================")
+            print(root)
     else:
         print(f"{sequence}")
         for si, fold_step in enumerate(trajectory):
