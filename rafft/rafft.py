@@ -11,7 +11,7 @@ To display only the k=10 structures found at the end
 python rafft.py [-s <SEQ> | -sf <SEQ_FILE>] -ms 10
 
 To display the k=10 visited at each folding steps
-python rafft.py [-s <SEQ> | -sf <SEQ_FILE>] -ms 10 --verbose
+python rafft.py [-s <SEQ> | -sf <SEQ_FILE>] -ms 10 --traj
 
 Inputs:
 -s <SEQ> is the sequence given in the standard input
@@ -24,47 +24,13 @@ The algorithm has two critical parameters:
 
 """
 
-import argparse
 from numpy import sum as npsum
 from rafft.utils import auto_cor, dot_bracket
 from rafft.utils import prep_sequence
 from rafft.utils import get_inner_loop, get_outer_loop, eval_one_struct
 from rafft.utils import merge_pair_list
+from rafft.utils import Glob_parms, Node, Structure
 from itertools import product
-from RNA import fold_compound, md
-
-
-class Glob_parms:
-    "Store all non redundant information"
-
-    def __init__(self, sequence, nb_mode, max_stack, max_branch, min_hp,
-                 min_nrj, traj, temp, gc_wei, au_wei, gu_wei):
-        self.sequence, self.temp, self.nb_mode, = sequence, temp, nb_mode,
-        self.max_stack, self.min_hp, self.min_nrj = max_stack, min_hp, min_nrj
-        self.traj, self.temp, self.max_branch = traj, temp, max_branch
-        self.gc_wei, self.au_wei, self.gu_wei = gc_wei, au_wei, gu_wei
-        self.model = md()
-        self.model.temperature = temp
-        self.len_seq = len(sequence)
-        self.seq_comp = fold_compound(sequence, self.model)
-
-
-class Node:
-    "unpaired regions"
-
-    def __init__(self, forward, backward, unpaired_pos):
-        self.forward, self.backward = forward, backward
-        self.pos_list = unpaired_pos
-
-
-class Structure:
-    "A structure is modeled as a tree; in bfs, the tree is a list of nodes"
-
-    def __init__(self, node_list, pair_list):
-        self.node_list = node_list
-        self.energy = 0.0
-        self.pair_list = pair_list
-        self.str_struct = ""
 
 
 def window_slide(seq, cseq, pos, pos_list, min_hp):

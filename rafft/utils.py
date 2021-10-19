@@ -4,6 +4,39 @@
 from numpy import array, flip, concatenate
 from numpy import sum as npsum
 from scipy.signal import convolve
+from RNA import fold_compound, md
+
+class Glob_parms:
+    "Store all non redundant information"
+
+    def __init__(self, sequence, nb_mode, max_stack, max_branch, min_hp,
+                 min_nrj, traj, temp, gc_wei, au_wei, gu_wei):
+        self.sequence, self.temp, self.nb_mode, = sequence, temp, nb_mode,
+        self.max_stack, self.min_hp, self.min_nrj = max_stack, min_hp, min_nrj
+        self.traj, self.temp, self.max_branch = traj, temp, max_branch
+        self.gc_wei, self.au_wei, self.gu_wei = gc_wei, au_wei, gu_wei
+        self.model = md()
+        self.model.temperature = temp
+        self.len_seq = len(sequence)
+        self.seq_comp = fold_compound(sequence, self.model)
+
+
+class Node:
+    "unpaired regions"
+
+    def __init__(self, forward, backward, unpaired_pos):
+        self.forward, self.backward = forward, backward
+        self.pos_list = unpaired_pos
+
+
+class Structure:
+    "A structure is modeled as a tree; in bfs, the tree is a list of nodes"
+
+    def __init__(self, node_list, pair_list):
+        self.node_list = node_list
+        self.energy = 0.0
+        self.pair_list = pair_list
+        self.str_struct = ""
 
 
 def dot_bracket(pair_list, len_seq, SEQ=None):
@@ -144,6 +177,9 @@ def parse_rafft_output(infile):
             if l.startswith("# --"):
                 results += [[]]
             else:
-                struct, nrj = l.strip().split()
-                results[-1] += [(struct, float(nrj))]
+                str_struct, nrj = l.strip().split()
+                struct = Structure([], [])
+                struct.str_struct = str_struct
+                struct.energy = float(nrj)
+                results[-1] += [struct]
     return results, seq
