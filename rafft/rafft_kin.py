@@ -138,7 +138,7 @@ def kinetics(fast_paths, max_time, n_steps, initial_pop=None):
         time = exp(time_step * st-4)
         times += [time]
         tmp_pop = W @ diag(exp(V * time)) @ (iW @ init_pop)
-        trajectory += [tmp_pop/tmp_pop.sum()]
+        trajectory += [tmp_pop.real/tmp_pop.real.sum()]
 
     equi_pop = trajectory[-1]
 
@@ -147,4 +147,4 @@ def kinetics(fast_paths, max_time, n_steps, initial_pop=None):
     # plt.show()
 
     str_equi_pop = [(struct.str_struct, struct.energy, ep, struct_map[struct.str_struct][0]) for struct, ep in zip(struct_list, equi_pop.real)]
-    return trajectory.real, times, struct_list, str_equi_pop
+    return trajectory, times, struct_list, str_equi_pop
