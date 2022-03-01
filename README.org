@@ -17,6 +17,13 @@ pip install . --user --upgrade
 Then two command line tools will be available: ~rafft~ for the folding and
 ~rafft_kin~ for the kinetic analysis.
 
+** Alternative Implementation
+Another more performant implementation of the core algorithm is available here: [[https://github.com/strevol-mpi-mis/RAFFT][~rafft-rs~]]
+This implementation is able to generate output in a compatible format that can be used for the same kinetic analysis using ~rafft_kin~.
+Please refer to this repository for documentation about differences in usage.
+
+~rafft-rs~ is also added as a submodule to this repository. Use ~git submodule init~ after cloning to pull its code.
+
 * Usage
 For the examples, we used the Coronavirus frameshifting stimulation element
 obtained from RFAM.
