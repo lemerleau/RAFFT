@@ -18,7 +18,7 @@ Then two command line tools will be available: ~rafft~ for the folding and
 ~rafft_kin~ for the kinetic analysis.
 
 ** Alternative Implementation
-Another more performant implementation of the core algorithm is available here: [[https://github.com/strevol-mpi-mis/RAFFT][~rafft-rs~]]
+Another more performant implementation of the core algorithm is available here: [[https://github.com/strevol-mpi-mis/RAFFT][rafft-rs]]
 This implementation is able to generate output in a compatible format that can be used for the same kinetic analysis using ~rafft_kin~.
 Please refer to this repository for documentation about differences in usage.
 
