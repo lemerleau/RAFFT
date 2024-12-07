@@ -57,9 +57,12 @@ def add_grad_img(path_img, max_val, min_val, fnt):
     path_img.paste(grad_img, (0, 0))
 
     draw = ImageDraw.Draw(path_img)
-    x_size, y_size = fnt.getsize("{:.1f}".format(max_val))
+    #x_size, y_size = fnt.getsize("{:.1f}".format(max_val)) ## DEPRECATED
+    bbox = fnt.getbbox("{:.1f}".format(max_val)) # update
+    x_size, y_size = bbox[2] - bbox[0], bbox[3] - bbox[1] # update
     draw.text((grad_y, 0), "{:.2f}".format(max_val), "black", fnt)
     draw.text((grad_y, grad_x-y_size), "{:.2f}".format(min_val), "black", fnt)
+    draw = ImageDraw.Draw(path_img)
 
 
 def parse_rafft_output(infile):
@@ -174,7 +177,8 @@ def main():
                 n_fig_w, n_fig_h = int(
                     fig_w * resize_rate), int(fig_h * resize_rate)
 
-                cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIAS)
+                #cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIAS) ## DEPRECATED
+                cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.Resampling.LANCZOS) # update
 
                 actual_sizes[(step_i, str_i)] = (n_fig_w, n_fig_h)
                 actual_position[(step_i, str_i)] = (
@@ -205,7 +209,8 @@ def main():
             resize_rate = min(rate_w/float(fig_w), rate_h/float(fig_h))
             n_fig_w, n_fig_h = int(
                 fig_w * resize_rate), int(fig_h * resize_rate)
-            cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIAS)
+            #cur_str = cur_str.resize((n_fig_w, n_fig_h), Image.ANTIALIA S) ## DEPRECATED
+            cur_str = cur_str.resize((n_fig_w, n_fig_h),Image.Resampling.LANCZOS) # update
             path_img.paste(cur_str, (pos_hor, height//2 - n_fig_h//2))
             actual_position[(step_i, str_i)] = (pos_hor + n_fig_w, height//2)
             tmp_left = n_fig_w
